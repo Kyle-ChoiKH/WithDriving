@@ -43,10 +43,17 @@
 
 - 테마 12개는 모두 처음부터 열려 있다. 등급 n → 모든 테마의 단계 1~n이 열린다(`model` 0..n−1).
 - 빌드·테스트:
-  - 명령은 `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Task "<gradle tasks>"`.
-  - 병렬 작업 사본은 `-Work C:\vroomi-build\<X>\Vroomi`로 빌드한다.
-  - 동시 Gradle 빌드는 2개까지만 돌린다(메모리).
-- 이 폴더는 git 저장소가 아니다. 커밋 단계는 없고, 각 작업의 관문은 테스트 통과 + 스냅샷 직접 확인이다. Paparazzi 결과는 빌드 사본(`C:\vroomi-build\...\src\test\snapshots\images`)에 생기며, 다음 build.ps1의 robocopy /MIR가 지우므로 기록 직후 scratchpad나 `docs/screenshots/`로 복사한다.
+  - Windows(이 PC): `powershell -ExecutionPolicy Bypass -File .\build.ps1 -Work C:\vroomi-build\<X>\Vroomi -Task "<gradle tasks>"`. 작업마다 `<X>`를 다르게 한다. 동시 Gradle 빌드는 2개까지(메모리 32 GB).
+  - Linux(클라우드): `./gradlew --no-daemon --console=plain <tasks>`. 준비는 `docs/superpowers/plans/cloud-agent-brief.md` 1장.
+  - Paparazzi 결과는 빌드 사본의 `src/test/snapshots/images`에 생긴다. Windows에서는 다음 build.ps1의 robocopy /MIR가 지우므로 기록 직후 복사한다.
+- git·GitHub(비공개 저장소 `Kyle-ChoiKH/WithDriving`):
+  - 작업마다 브랜치 하나. PR #1이 main에 합쳐지기 전에는 `origin/phase-a/foundation`에서, 합쳐진 뒤에는 `origin/main`에서 딴다.
+  - 브랜치 이름: Task 1+4 `phase-a/grade-ui`, Task 5~16 `theme/<theme 소문자>`(예: `theme/music_box`), Task 17 `phase-c/integration`.
+  - main에 직접 push하지 않는다. 작업 끝에 PR(base main)을 연다. 병합은 사용자가 승인한 뒤에만 한다(자동 권한 검사가 검토 없는 병합을 막는다).
+  - 커밋 끝줄 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`, PR 본문 끝줄 `🤖 Generated with [Claude Code](https://claude.com/claude-code)`. 작성자는 GitHub noreply 메일. 실명·연락처·비밀(keystore, jks)은 커밋하지 않는다.
+  - 기록한 PNG 중 작업이 이름 붙인 것만 `docs/screenshots/<짧은 이름>.png`로 커밋한다. `src/test/snapshots/`는 커밋하지 않는다.
+  - CI(`.github/workflows/ci.yml`: testDebugUnitTest + assembleDebug)가 PR마다 통과해야 한다.
+- 각 작업의 관문은 전체 테스트 통과 + 기록한 스냅샷을 직접 보고 확인하는 것이다.
 
 ## Review Focus
 
@@ -55,6 +62,30 @@
 3. **거리 0인 주행만 있는 기록:** 최근 점수 계산에서 0으로 나누지 않아야 한다 → Task 1 `zeroDistanceTripsDoNotDivideByZero`.
 4. **다이어리 초기화로 등급이 내려간 뒤 예전에 고른 높은 단계:** 지금 열린 최고 단계로 낮춰 써야 한다 → Task 1 `storedModelClampsToUnlocked`.
 5. **데모 드라이브 중 로봇 조립:** 실제 주행이 아니므로 저장되는 진행이 늘면 안 된다 → Task 11 `demoDoesNotAdvanceSavedAssembly`.
+
+## 실행 현황 (2026-11-09 갱신)
+
+| Task | 상태 | 브랜치 / PR |
+|---|---|---|
+| 2, 3 | 완료, CI 통과, 병합 승인 대기 | `phase-a/foundation` / PR #1 |
+| 1 + 4 | 진행 중(이 PC) | `phase-a/grade-ui` |
+| 5 | 진행 중(이 PC) | `theme/calibre` |
+| 6 ~ 16 | 대기 | 클라우드가 저장소에 접근할 수 있으면 클라우드에서 한꺼번에. 아니면 이 PC에서 2개씩 |
+| 17 | 대기 | 모든 PR이 합쳐진 뒤 |
+
+실행 순서:
+- Task 1+4와 Phase B는 서로 독립이다. Phase B는 Task 3의 `SceneOptions.model`만 쓴다.
+- 우선순위는 사용자가 직접 짚은 테마 먼저: 5 시계 → 6 엔진룸 → 7 오르골 → 10 플라즈마 → 11 격납고. 그다음 8, 9, 12~16.
+
+## 병렬 작업 규칙 (Phase B)
+
+- 사다리 그림 헬퍼(1000 × 1875, 8:3 띠 5개, 띠마다 "Lv.n")는 **각 테마 스냅샷 테스트 파일 안에 private으로** 만든다. 공용 `KitShots.kt`는 고치지 않는다. 통합 때 하나로 모은다(Task 17).
+- `PassageCostTest`는 고치지 않는다. 단계 5 비용 항목은 Task 17에서 한꺼번에 넣는다. 각 작업은 단계 5 그리기가 6 ms 안팎인지 스스로 잰다.
+- `Ambience.kt`는 자기 테마 줄만 고친다.
+- `theme_luminance.json`은 자기 브랜치에서 다시 만들어 커밋해도 된다. 충돌하면 Task 17에서 다시 만든다.
+- `ScenarioGoldenTest`(Task 10·11 둘 다 추가)는 Task 17에서 손으로 합친다.
+- 그 밖의 공용 파일(SceneTheme, ThemeCatalog, ThemeRegistry, Entrances, strings.xml, SettingsStore, SceneOptions)이 필요하면 고치지 말고 보고서에 적는다.
+- 보고서 형식은 `cloud-agent-brief.md` 4장. 단계마다 "이전 단계와 달라진 점"을 그림에서 실제로 보이는 대로 한 줄씩 적는다.
 
 ---
 
@@ -270,7 +301,7 @@ ScreensSnapshotTest에 새 스냅샷 6개(이름은 위)를 넣는다.
 
 - **(a) 스냅샷 테스트 먼저:**
   - 테마의 스냅샷 테스트 파일에 `<theme>_lv1_day` … `<theme>_lv5_day`, `<theme>_lv5_night`, `<theme>_lv3_blinker_left`, `<theme>_lv3_brake`를 추가한다. `KitShots.wide()`, 주행 50 km/h, 별 3개, 시뮬레이션 6~12초.
-  - `<theme>_ladder`도 추가한다: 1000 × 1875 세로 캔버스에 단계 1~5를 8:3 띠 5개로 위에서 아래로 그린 비교 그림. 띠마다 왼쪽 위에 작은 "Lv.n" 표시. 이 그림을 위해 `KitShots.ladder()`(1000×1875) 헬퍼를 이 Phase 첫 작업이 만든다.
+  - `<theme>_ladder`도 추가한다: 1000 × 1875 세로 캔버스에 단계 1~5를 8:3 띠 5개로 위에서 아래로 그린 비교 그림. 띠마다 왼쪽 위에 작은 "Lv.n" 표시. 헬퍼는 자기 테스트 파일 안의 private 함수로 만든다(병렬 작업 규칙).
   - 단계는 `SceneOptions(hourOfDay=14f, model=n)`으로 넘긴다. 기존 스냅샷은 지우지 않고 새 모습으로 다시 기록한다(기본 단계 0).
 - **(b) 구현:** spec 5장의 해당 절과 표 그대로. 단계 n의 그림 = 단계 n−1 그림 + 표의 "새로 생기는 것"(형태가 바뀌는 단계는 교체).
 - **(c) 기록·직접 보기:** `build.ps1 -Work C:\vroomi-build\<X>\Vroomi -Task ":character:recordPaparazziDebug --tests <TestClass>"`로 기록하고, PNG를 scratchpad로 복사해 Read로 본다. 사다리 그림부터 보고, 아래를 확인한다:
@@ -280,7 +311,8 @@ ScreensSnapshotTest에 새 스냅샷 6개(이름은 위)를 넣는다.
   - 앱 버튼 구역을 피했는가
   - 밤에도 읽히는가
 - **(d) 반복:** 고칠 점이 있으면 (b)~(c)를 반복한다. 최소 2회 본다.
-- **(e) 마무리 테스트:** `build.ps1 -Work ... -Task ":character:testDebugUnitTest :app:testDebugUnitTest --tests io.vroomi.app.ThemeContractTest"` → 0 failures. 단계 5의 그리기 비용이 `PassageCostTest`의 기존 한도 안이어야 한다(단계 5로 한 번 더 재는 항목 추가).
+- **(e) 마무리 테스트:** 전체 `testDebugUnitTest` → 0 failures. 단계 5 그리기 비용은 스스로 재서 보고서에 적는다(`PassageCostTest` 항목은 Task 17).
+- **(f) 올리기:** 지정 PNG를 `docs/screenshots/`에 복사 → 커밋 → `git push -u origin theme/<theme>` → `gh pr create -R Kyle-ChoiKH/WithDriving --base main`(제목 "Theme: <THEME> … (plan Task N)", 본문에 단계별 달라진 점·테스트 결과·스크린샷 이름) → CI 통과 확인.
 
 ### Task 5: 오토매틱 시계 — 밝은 공방 + 사다리 (spec 5.1)
 
@@ -541,12 +573,19 @@ ScreensSnapshotTest에 새 스냅샷 6개(이름은 위)를 넣는다.
   - `.work/theme-pack-progress.md`(진행 기록)
 - Test: 전체
 
-- [ ] **Step 1: 사본 합치기.** Phase B 사본에서 각 Task가 바꾼 파일만 원본으로 복사한다. 공용 파일 충돌은 Phase A에서 이미 끝났으므로, 충돌이 생기면 원인을 기록한다.
+- [ ] **Step 1: PR 합치기(사용자 승인 후).**
+  - 순서: PR #1 → `phase-a/grade-ui` → 테마 PR(번호 순).
+  - 각 PR은 합치기 전에 최신 main으로 rebase하고 CI 통과를 다시 확인한다.
+  - 충돌 처리: `theme_luminance.json`은 어느 쪽이든 받고 Step 2에서 다시 만든다. `ScenarioGoldenTest`는 두 테스트를 모두 남긴다. 그 밖의 충돌은 원인을 기록한다.
+  - 합친 뒤 `phase-c/integration` 브랜치에서 아래 Step을 진행한다.
+- [ ] **Step 1b: 공용 테스트 정리.**
+  - 테마별 private 사다리 헬퍼를 `KitShots.ladder()` 하나로 모으고 각 테스트가 그것을 쓰게 바꾼다(스냅샷 결과는 같아야 한다).
+  - `PassageCostTest`에 12개 테마의 단계 5(`model = 4`) 비용 항목을 넣고, 기존 한도 안인지 확인한다.
 - [ ] **Step 2: 밝기 재측정.** `VROOMI_LUMA=1`로 ThemeLuminanceSnapshotTest를 돌려 json을 갱신한 뒤 LuminanceFlashTest(12개 테마 132쌍) → PASS. 실패하는 쌍이 있으면 Entrances의 BRIGHT_ENTRANCE_MS 규칙이 적용되는지 확인한다.
 - [ ] **Step 3: 전체 빌드.** `build.ps1`(testDebugUnitTest assembleRelease) 뒤 `build.ps1 -Task "lint"` → 테스트 0 failures, lint 0 errors. 테스트 수·APK 크기를 기록한다.
 - [ ] **Step 4: 스냅샷 정리.** `:character:recordPaparazziDebug :app:recordPaparazziDebug` → `docs/screenshots/`를 갱신하고, marble_* 스냅샷 파일을 삭제한다.
 - [ ] **Step 5: 에뮬레이터 확인.**
-  - Pleos 에뮬레이터 콜드 부트 → `adb install -r -g apk/TEAMNAME_Vroomi_release.apk` → 실행.
+  - Pleos 에뮬레이터 콜드 부트 → `adb install -r -g apk/TEAMNAME_WithDriving_release.apk`(패키지 `io.withdriving.app`) → 실행.
   - 아래를 각각 `adb exec-out screencap -p`로 캡처해 직접 본다: 테마 탭(단계 태그), 등급 탭, 시계·엔진룸·오르골·플라즈마·격납고 쇼케이스 재생 화면.
   - 확인할 것: 크래시 없음, 10초 프레임 통계(`dumpsys gfxinfo`) jank 0% 근처.
 - [ ] **Step 6: 문서 갱신.** 위 Files의 문서를 고친다. `grep -rn "구슬\|marble"`로 구슬 장치 언급을 찾아 0개로 만든다(이 계획·spec 파일 제외).
