@@ -1,0 +1,24 @@
+{
+  "id": "rainy_night",
+  "title": "비 오는 밤 퇴근길 (2분)",
+  "description": "전조등, 비, 서리 제거, 길안내, 도착 축하",
+  "order": 2,
+  "durationS": 122,
+  "keyframes": [
+    {"t": 0, "gear": "P", "speed": 0, "lights": true, "fan": 2, "temp": 24, "wiper": false, "navi": true, "naviRemainingM": 3200, "caption": "밤 + 전조등 → 밤하늘, 별, 랜턴"},
+    {"t": 3, "gear": "D"},
+    {"t": 5, "note": "windshield fogs up", "defrost": true, "caption": "서리 제거 → 앞유리 쓱쓱"},
+    {"t": 8, "note": "rain starts: raincoat", "wiper": true, "speed": 0, "caption": "와이퍼 → 우비, 빗길, 물보라"},
+    {"t": 16, "speed": 32},
+    {"t": 30, "speed": 38},
+    {"t": 45, "defrost": false, "speed": 40},
+    {"t": 60, "speed": 35, "naviRemainingM": 1800, "caption": "길안내 → 지도 모자"},
+    {"t": 80, "note": "under 1 km: look ahead", "speed": 30, "naviRemainingM": 900, "caption": "1km 안 → 목적지 깃발"},
+    {"t": 100, "speed": 20, "naviRemainingM": 200},
+    {"t": 108, "speed": 5, "naviRemainingM": 20},
+    {"t": 110, "speed": 0, "brake": true, "naviRemainingM": 0},
+    {"t": 111, "note": "arrival celebration", "arrive": true, "caption": "도착 → 결승선, 축하 점프!"},
+    {"t": 114, "gear": "P", "brake": false, "wiper": false, "caption": "P단 → 오늘의 드라이브 카드"},
+    {"t": 120, "lights": false}
+  ]
+}

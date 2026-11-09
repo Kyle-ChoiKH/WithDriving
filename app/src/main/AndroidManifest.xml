@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Pleos Connect is Android Automotive OS -->
+    <uses-feature android:name="android.hardware.type.automotive" android:required="true" />
+
+    <!--
+      Read-only Pleos permissions (see docs/permissions.md). Each one is used by exactly the listed
+      Vehicle SDK domain. No CONTROL_* permission is declared by default:
+      climate control from voice needs CONTROL_CAR_CLIMATE approval from Pleos App Market first.
+    -->
+    <uses-permission android:name="pleos.car.permission.CAR_CLIMATE" />   <!-- HVAC states -->
+    <uses-permission android:name="pleos.car.permission.CAR_DRIVE" />     <!-- Brake, Gear, DrivingMode, Odometer -->
+    <uses-permission android:name="pleos.car.permission.CAR_LIGHTS" />    <!-- TurnSignal, low beam -->
+    <uses-permission android:name="pleos.car.permission.CAR_WINDOWS" />   <!-- Wiper -->
+    <uses-permission android:name="pleos.car.permission.CAR_DOORS" />     <!-- Door position -->
+    <uses-permission android:name="pleos.car.permission.CAR_ENERGY" />    <!-- EV battery / charge port -->
+    <uses-permission android:name="pleos.car.permission.CAR_SEATS" />     <!-- Seat heater / ventilation -->
+    <uses-permission android:name="pleos.car.permission.CAR_SAFETY" />    <!-- Seat-belt warning -->
+    <uses-permission android:name="pleos.car.permission.FUSED_LOCATION" /><!-- Speed from location -->
+    <uses-permission android:name="pleos.car.permission.NAVI_ROUTE" />    <!-- NaviHelper events (TODO verify) -->
+
+    <!-- Enable together with vroomi.allowHvacControl=true ONLY after approval:
+    <uses-permission android:name="pleos.car.permission.CONTROL_CAR_CLIMATE" />
+    -->
+    <!-- Enable together with vroomi.allowAaosSpeed=true ONLY after organizer confirmation:
+    <uses-permission android:name="android.car.permission.CAR_SPEED" />
+    -->
+
+    <application
+        android:name=".VroomiApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Vroomi"
+        tools:targetApi="34">
+
+        <uses-library android:name="android.car" android:required="false" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="uiMode|orientation|screenSize|screenLayout|smallestScreenSize|density|keyboard|keyboardHidden|navigation"
+            android:theme="@style/Theme.Vroomi">
+            <!-- AAOS: allowed to stay on screen while driving (UI follows CarUxRestrictions) -->
+            <meta-data android:name="distractionOptimized" android:value="true" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

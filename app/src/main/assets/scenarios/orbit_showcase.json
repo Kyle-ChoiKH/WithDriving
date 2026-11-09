@@ -1,0 +1,31 @@
+{
+  "id": "orbit_showcase",
+  "title": "작은 태양계 쇼케이스 (1분 30초)",
+  "description": "작은 우주선 VR-1이 행성을 돌아요. 1km를 달리면 한 바퀴, 별은 작은 위성이 돼요",
+  "order": 8,
+  "theme": "ORBIT",
+  "durationS": 94,
+  "keyframes": [
+    { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 70, "evCharging": false, "caption": "주차 중: VR-1이 고리 정거장에 도킹해 있어요" },
+    { "t": 3,  "gear": "D", "caption": "출발 → 정거장을 떠나 궤도를 돌아요. 1km = 한 바퀴" },
+    { "t": 5,  "speed": 0 },
+    { "t": 10, "speed": 60, "caption": "가속 → 주 엔진 불꽃이 길어져요" },
+    { "t": 18, "fan": 8, "caption": "바람 세게 → 태양풍 입자가 지나가요" },
+    { "t": 24, "fan": 1, "turn": "RIGHT", "caption": "오른쪽 깜빡이 → 오른쪽 자세 제어 분사가 깜빡이 박자에" },
+    { "t": 28, "turn": "NONE", "mode": "ECO", "caption": "에코 모드 → 푸른 이온 불꽃. 별을 받으면 작은 위성이 생겨요" },
+    { "t": 40, "wiper": true, "caption": "와이퍼 → 천천히 떨어지는 유성우 (2초에 하나 이하)" },
+    { "t": 47, "wiper": false, "lights": true, "caption": "전조등 → 더 깊은 별하늘, 희미한 성운, 우주선 조명" },
+    { "t": 53, "mode": "SPORT", "caption": "스포츠 모드 → 호박색 불꽃" },
+    { "t": 58, "speed": 70, "caption": "한 바퀴(1km)를 돌 때마다 궤도선에 눈금이 하나" },
+    { "t": 64, "speed": 70, "brake": true, "caption": "급제동 → 앞쪽 역추진, 우주선이 한 번 살짝 흔들려요" },
+    { "t": 65.5, "speed": 25 },
+    { "t": 66.5, "brake": false, "mode": "NORMAL", "lights": false },
+    { "t": 68, "speed": 30 },
+    { "t": 72, "speed": 0 },
+    { "t": 73, "gear": "R", "caption": "후진 → 역행 궤도로 거꾸로 돌아요" },
+    { "t": 74, "speed": 8 },
+    { "t": 78, "speed": 0 },
+    { "t": 79, "gear": "P", "arrive": true, "caption": "도착 → 정거장으로 돌아가 도킹, 조명이 어두워져요" },
+    { "t": 87, "evCharging": true, "battery": 72, "caption": "충전 중 → 태양전지판이 별 쪽으로 펼쳐져 빛나요" }
+  ]
+}

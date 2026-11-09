@@ -1,0 +1,57 @@
+    0.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    0.5s  v=  0.0 a= 0.00  IDLE WAVE_HELLO NEUTRAL FULL chip=null stars=0 CITY km=0
+    3.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    4.5s  v=  1.5 a= 0.65  WALK NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    4.9s  v=  3.4 a= 1.17  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    8.9s  v= 23.3 a= 1.39  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   17.9s  v= 63.2 a= 1.20  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   23.9s  v= 89.2 a= 1.20  RUN NONE NEUTRAL AMBIENT chip=별 1개 모았어요 stars=1 CITY km=0
+   26.9s  v= 97.4 a= 0.40  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   30.9s  v=103.1 a= 0.40  SPRINT NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   32.0s  v=104.7 a= 0.40  SPRINT NONE NEUTRAL AMBIENT chip=크루즈 중 stars=1 CITY km=0
+   32.9s  v=105.0 a= 0.06  SPRINT NONE NEUTRAL AMBIENT chip=별 2개 모았어요 stars=2 CITY km=0
+   35.9s  v=105.0 a= 0.00  SPRINT NONE NEUTRAL AMBIENT chip=크루즈 중 stars=2 CITY km=0
+   40.0s  v=105.0 a= 0.00  SPRINT BLOW COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   41.5s  v=105.0 a= 0.00  SPRINT BLOW COLD AMBIENT chip=바람 솔솔~ stars=3 CITY km=0
+   42.5s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=3 CITY km=0
+   43.2s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=3 PARK km=0
+   50.1s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=벌써 1km 왔어요 stars=4 PARK km=1
+   54.1s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=4 PARK km=1
+   58.6s  v=105.0 a= 0.00  SPRINT SPIN HAPPY AMBIENT chip=별 5개 연속! stars=5 PARK km=1
+   60.2s  v=105.0 a= 0.00  SPRINT NONE HAPPY AMBIENT chip=별 5개 연속! stars=5 PARK km=1
+   61.6s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=별 5개 연속! stars=5 PARK km=1
+   62.6s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=5 PARK km=1
+   67.2s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=6 PARK km=1
+   70.6s  v=105.0 a= 0.00  SPRINT NONE COLD AMBIENT chip=바람 솔솔~ stars=6 FIELD km=1
+   75.0s  v=105.0 a= 0.00  SPRINT THUMBS_UP RELAXED AMBIENT chip=크루즈 중 stars=6 FIELD km=1
+   75.8s  v=105.0 a= 0.00  SPRINT THUMBS_UP RELAXED AMBIENT chip=별 7개 모았어요 stars=7 FIELD km=1
+   76.5s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=별 7개 모았어요 stars=7 FIELD km=1
+   78.8s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=크루즈 중 stars=7 FIELD km=1
+   84.4s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=벌써 2km 왔어요 stars=8 FIELD km=2
+   88.4s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=크루즈 중 stars=8 FIELD km=2
+   92.9s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=별 9개 모았어요 stars=9 FIELD km=2
+   95.9s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=크루즈 중 stars=9 FIELD km=2
+   98.1s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=크루즈 중 stars=9 SEASIDE km=2
+  101.5s  v=105.0 a= 0.00  SPRINT SPIN HAPPY AMBIENT chip=별 10개 연속! stars=10 SEASIDE km=2
+  103.1s  v=105.0 a= 0.00  SPRINT NONE HAPPY AMBIENT chip=별 10개 연속! stars=10 SEASIDE km=2
+  104.5s  v=105.0 a= 0.00  SPRINT NONE RELAXED AMBIENT chip=별 10개 연속! stars=10 SEASIDE km=2
+  105.5s  v=103.9 a=-0.47  SPRINT NONE RELAXED AMBIENT chip=크루즈 중 stars=10 SEASIDE km=2
+  107.5s  v= 96.7 a=-1.02  RUN NONE RELAXED AMBIENT chip=크루즈 중 stars=10 SEASIDE km=2
+  110.0s  v= 87.5 a=-1.02  RUN NONE RELAXED AMBIENT chip=부드러운 주행 중 stars=10 SEASIDE km=2
+  110.6s  v= 85.3 a=-1.02  RUN NONE RELAXED AMBIENT chip=별 11개 모았어요 stars=11 SEASIDE km=2
+  113.6s  v= 74.3 a=-1.02  RUN NONE RELAXED AMBIENT chip=부드러운 주행 중 stars=11 SEASIDE km=2
+  115.8s  v= 66.3 a=-1.02  RUN LOOK_AHEAD RELAXED AMBIENT chip=곧 도착해요 stars=11 SEASIDE km=2
+  118.4s  v= 56.7 a=-1.02  JOG LOOK_AHEAD RELAXED AMBIENT chip=곧 도착해요 stars=11 SEASIDE km=2
+  125.9s  v= 36.8 a=-0.65  JOG LOOK_AHEAD RELAXED AMBIENT chip=곧 도착해요 stars=12 SEASIDE km=3
+  134.4s  v= 16.9 a=-0.65  WALK LOOK_AHEAD RELAXED AMBIENT chip=곧 도착해요 stars=12 SEASIDE km=3
+  139.8s  v=  0.0 a=-0.83  IDLE LOOK_AHEAD RELAXED AMBIENT chip=곧 도착해요 stars=12 SEASIDE km=3
+  141.0s  v=  0.0 a=-0.09  IDLE CELEBRATE HAPPY AMBIENT chip=잠깐 쉬어 가요 stars=12 SEASIDE km=3
+  144.0s  v=  0.0 a=-0.00  IDLE NONE HAPPY AMBIENT chip=잠깐 쉬어 가요 stars=12 SEASIDE km=3
+  145.0s  v=  0.0 a=-0.00  IDLE NONE HAPPY FULL chip=null stars=12 SEASIDE km=3
+  146.0s  v=  0.0 a=-0.00  IDLE NONE RELAXED FULL chip=null stars=12 SEASIDE km=3
+  148.0s  v=  0.0 a=-0.00  IDLE WAVE_BYE RELAXED FULL chip=null stars=12 SEASIDE km=3
+  150.5s  v=  0.0 a=-0.00  IDLE NONE RELAXED FULL chip=null stars=12 SEASIDE km=3
+
+voice events: [START, DOOR_HELLO, FAN_UP, TEMP_COLD, BIOME_PARK, MILESTONE, STAR_COMBO, BIOME_FIELD, MILESTONE, BIOME_SEASIDE, STAR_COMBO, MILESTONE, ARRIVAL, DOOR_GOODBYE]
+driving events: []
+trips: [TripRecord(id=1005300, startMs=1005300, endMs=1145000, distanceKm=3.0767314, bursts=0, harshAccel=0, harshBrakes=0, overspeedMs=0, climateMoments=1, rainMoments=0, score=100, stars=0, bestCombo=0, biomes=1, demo=false, sketch=null)]

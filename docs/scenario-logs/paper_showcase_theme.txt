@@ -1,0 +1,16 @@
+   0.00s v=  0.0 PARK chip=null
+   5.68s v=  4.8 DRIVE chip=책을 펼쳐요
+  22.70s v= 61.5 DRIVE chip=색종이 톡
+  26.56s v= 62.3 DRIVE chip=책을 펼쳐요
+  36.70s v= 64.7 DRIVE chip=종이 비
+  40.56s v= 65.5 DRIVE chip=색종이 톡
+  44.42s v= 66.4 DRIVE chip=종이 비
+  48.27s v= 67.3 DRIVE chip=달밤 이야기
+  52.13s v= 68.2 DRIVE chip=색종이 톡
+  55.98s v= 69.0 DRIVE chip=새 장면
+  59.84s v= 69.9 DRIVE chip=책을 펼쳐요
+  63.68s v= 70.0 DRIVE chip=색종이 톡
+  67.52s v= 31.8 DRIVE chip=책을 펼쳐요
+  77.92s v=  1.6 DRIVE chip=null
+  80.00s v=  0.0 PARK chip=도착
+  85.76s v=  0.0 PARK chip=null

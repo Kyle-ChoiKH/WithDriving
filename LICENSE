@@ -1,0 +1,14 @@
+Copyright (c) 2026 TEAMNAME. All rights reserved.
+
+This source code, the "Vroomi" character design and all related materials are provided to the
+organizers and judges of the Hyundai Motor Group Vehicle App Development Contest solely for
+evaluation, demonstration and exhibition purposes as described in the contest rules.
+No other license is granted. Third-party components remain under their own licenses
+(see THIRD_PARTY_NOTICES.md).
+
+Why not an open-source license:
+The contest rules keep the intellectual property of an entry with the entrant, while giving the
+organizer a non-exclusive license option and a 4-month priority negotiation right for winning
+entries. A permissive open-source license (e.g. Apache-2.0 or MIT) would grant the same rights to
+everyone and undermine both the team's ownership of the Vroomi character IP and that negotiation.
+The team can relicense later if it decides to open-source the project.

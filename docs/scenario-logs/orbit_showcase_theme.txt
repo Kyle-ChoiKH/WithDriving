@@ -1,0 +1,16 @@
+   0.00s v=  0.0 PARK chip=null
+   5.68s v=  4.8 DRIVE chip=궤도 비행
+  22.51s v= 62.6 DRIVE chip=위성 탄생
+  26.37s v= 63.3 DRIVE chip=궤도 비행
+  36.61s v= 65.5 DRIVE chip=위성 탄생
+  40.46s v= 66.3 DRIVE chip=궤도 비행
+  44.32s v= 67.1 DRIVE chip=유성우
+  48.18s v= 67.9 DRIVE chip=궤도 비행
+  52.03s v= 68.7 DRIVE chip=위성 탄생
+  55.89s v= 69.5 DRIVE chip=궤도 비행
+  62.91s v= 70.0 DRIVE chip=한 바퀴 완주
+  66.75s v= 27.0 DRIVE chip=위성 탄생
+  70.59s v= 13.0 DRIVE chip=궤도 비행
+  74.43s v=  7.3 REVERSE chip=역행 궤도
+  79.01s v=  0.0 PARK chip=도킹
+  98.02s v=  0.0 PARK chip=null (safety)

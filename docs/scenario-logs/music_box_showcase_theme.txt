@@ -1,0 +1,17 @@
+   0.00s v=  0.0 PARK chip=null
+   5.65s v=  2.8 DRIVE chip=태엽 감는 중
+  22.61s v= 75.0 DRIVE chip=별 장식음
+  26.46s v= 75.0 DRIVE chip=태엽 감는 중
+  34.61s v= 77.7 DRIVE chip=별 장식음
+  38.46s v= 92.5 DRIVE chip=태엽 감는 중
+  42.32s v= 84.1 DRIVE chip=비 오는 날
+  46.18s v= 79.3 DRIVE chip=별 장식음
+  50.03s v= 77.9 DRIVE chip=비 오는 날
+  54.70s v= 76.3 DRIVE chip=태엽 감는 중
+  58.56s v= 74.6 DRIVE chip=별 장식음
+  62.40s v= 70.1 DRIVE chip=태엽 감는 중
+  75.42s v=  0.0 DRIVE chip=페르마타
+  81.01s v=  0.0 PARK chip=오르골 연주
+  84.85s v=  0.0 PARK chip=도착
+  89.76s v=  0.0 PARK chip=오르골 연주
+ 104.02s v=  0.0 PARK chip=null (safety)

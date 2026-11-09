@@ -1,0 +1,32 @@
+{
+  "id": "aquarium_showcase",
+  "title": "아쿠아리움 쇼케이스 (1분 30초)",
+  "description": "차에 실린 작은 수조. 가속하면 물이 기울고, 깜빡이 쪽으로 물고기 떼가 돌아요",
+  "order": 7,
+  "theme": "AQUARIUM",
+  "durationS": 92,
+  "keyframes": [
+    { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 60, "evCharging": false, "caption": "주차 중: 물고기들이 천천히 머물러요" },
+    { "t": 3,  "gear": "D", "caption": "출발 → 차속에 맞춰 물고기 떼가 헤엄쳐요 (빨라져도 상한이 있어요)" },
+    { "t": 5,  "speed": 0 },
+    { "t": 10, "speed": 60, "caption": "가속하면 수면과 수초가 뒤로 기울어요" },
+    { "t": 18, "fan": 8, "caption": "바람 세게 → 에어스톤 기포가 많아지고 커져요" },
+    { "t": 24, "fan": 2, "ac": true, "temp": 18, "caption": "에어컨 + 낮은 온도 → 물빛이 조금 차가워져요" },
+    { "t": 30, "ac": false, "temp": 22, "turn": "LEFT", "caption": "왼쪽 깜빡이 → 물고기 떼가 왼쪽으로 천천히" },
+    { "t": 35, "turn": "NONE", "mode": "ECO", "caption": "에코 모드 → 초록빛 물. 별을 받으면 조개가 진주를 보여 줘요" },
+    { "t": 44, "wiper": true, "caption": "와이퍼 → 수면 아래에서 본 빗방울 동심원" },
+    { "t": 51, "wiper": false, "lights": true, "caption": "전조등 → 달빛 수조, 플랑크톤이 은은하게" },
+    { "t": 57, "mode": "SPORT", "caption": "스포츠 모드 → 노을빛 햇살 한 줄기" },
+    { "t": 60, "speed": 70, "caption": "1km마다 모래 위에 장식이 하나 내려앉아요" },
+    { "t": 63, "speed": 70, "brake": true, "caption": "급제동 → 물고기들이 한 번 휙 돌았다가 2초 안에 차분해져요" },
+    { "t": 64.5, "speed": 25 },
+    { "t": 65.5, "brake": false, "mode": "NORMAL", "lights": false },
+    { "t": 67, "speed": 30 },
+    { "t": 72, "speed": 0 },
+    { "t": 73, "gear": "R", "caption": "후진 → 물고기 떼가 수초 사이로 뒤로 흘러가요" },
+    { "t": 74, "speed": 6 },
+    { "t": 78, "speed": 0 },
+    { "t": 79, "gear": "P", "arrive": true, "caption": "도착 → 물고기들이 앞유리 쪽으로 모여 지느러미를 흔들어요" },
+    { "t": 86, "evCharging": true, "battery": 64, "caption": "충전 중 → 여과기 램프가 켜지고 기포 기둥이 일정하게" }
+  ]
+}

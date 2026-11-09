@@ -1,0 +1,30 @@
+{
+  "id": "edrive_showcase",
+  "title": "전기 모터 쇼케이스 (1분)",
+  "description": "가속하면 전력이 모터로, 브레이크를 밟으면 배터리로 거꾸로 흘러요 (값은 모두 추정)",
+  "order": 3,
+  "theme": "ENGINE",
+  "powertrain": "EV",
+  "durationS": 62,
+  "keyframes": [
+    { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 0, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 64, "evCharging": false, "caption": "주차 중: 전기 모터 VE-M1, 셀은 실제 배터리 %만큼 차 있어요" },
+    { "t": 3,  "gear": "D" },
+    { "t": 4,  "speed": 0 },
+    { "t": 10, "speed": 50, "caption": "출발 → 배터리 → 인버터 → 모터로 전력이 흘러요 (kW 추정)" },
+    { "t": 14, "speed": 70 },
+    { "t": 18, "caption": "정속 → 출력이 줄고 로터는 그대로 돌아요" },
+    { "t": 24, "speed": 70, "brake": true, "caption": "브레이크 → 회생 제동, 전력이 배터리로 거꾸로 흘러요" },
+    { "t": 30, "speed": 15, "brake": false },
+    { "t": 32, "speed": 0 },
+    { "t": 33, "gear": "R", "caption": "후진 → 로터가 실제로 반대로 돌아요" },
+    { "t": 34, "speed": 0 },
+    { "t": 36, "speed": 7 },
+    { "t": 40, "speed": 0 },
+    { "t": 41, "gear": "P" },
+    { "t": 42, "ac": true, "temp": 18, "caption": "에어컨 → 전동 컴프레서가 돌아요" },
+    { "t": 48, "evCharging": true, "caption": "충전 → 충전 케이블로 에너지가 들어와요" },
+    { "t": 52, "battery": 66 },
+    { "t": 56, "battery": 68 },
+    { "t": 60, "battery": 70 }
+  ]
+}

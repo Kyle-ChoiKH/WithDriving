@@ -1,0 +1,36 @@
+    0.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    5.4s  v=  1.6 a= 0.64  WALK NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    5.7s  v=  3.5 a= 1.40  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    8.5s  v= 23.3 a= 1.98  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   14.4s  v= 63.5 a= 1.74  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   22.6s  v= 75.0 a= 0.00  RUN NONE NEUTRAL AMBIENT chip=별 1개 모았어요 stars=1 CITY km=0
+   25.6s  v= 75.0 a= 0.00  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   28.0s  v= 75.0 a= 0.00  RUN POINT_LEFT NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   32.0s  v= 75.0 a= 0.00  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   34.6s  v= 77.6 a= 1.11  RUN NONE NEUTRAL AMBIENT chip=별 2개 모았어요 stars=2 CITY km=0
+   37.6s  v= 94.0 a= 0.39  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=2 CITY km=0
+   40.0s  v= 89.1 a=-0.60  RUN NONE NEUTRAL AMBIENT chip=비 조심해요 stars=2 CITY km=0
+   45.0s  v= 79.7 a=-0.15  RUN NONE NEUTRAL AMBIENT chip=비 조심해요 stars=3 CITY km=0
+   47.2s  v= 78.9 a=-0.10  RUN NONE NEUTRAL AMBIENT chip=비 조심해요 stars=3 PARK km=0
+   50.0s  v= 77.9 a=-0.10  RUN DEFROST_WIPE NEUTRAL AMBIENT chip=비 조심해요 stars=3 PARK km=0
+   53.5s  v= 76.7 a=-0.10  RUN NONE NEUTRAL AMBIENT chip=비 조심해요 stars=3 PARK km=0
+   54.0s  v= 76.5 a=-0.10  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=3 PARK km=0
+   56.6s  v= 75.6 a=-0.10  RUN NONE NEUTRAL AMBIENT chip=벌써 1km 왔어요 stars=4 PARK km=1
+   60.6s  v= 72.0 a=-0.35  RUN NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   64.0s  v= 70.0 a=-0.00  RUN SKID NEUTRAL AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   64.5s  v= 60.8 a=-3.88  RUN TUMBLE DIZZY AMBIENT chip=살살 가요~ stars=4 PARK km=1
+   64.7s  v= 55.4 a=-5.86  JOG TUMBLE DIZZY AMBIENT chip=살살 가요~ stars=4 PARK km=1
+   66.5s  v= 31.4 a= 1.07  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   67.4s  v= 38.3 a= 2.17  JOG BURST HAPPY AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   68.1s  v= 43.5 a= 2.09  JOG NONE HAPPY AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   71.4s  v= 21.2 a=-2.08  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   72.0s  v= 16.7 a=-2.08  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=4 PARK km=1
+   74.1s  v=  0.0 a=-2.02  IDLE NONE NEUTRAL AMBIENT chip=잠깐 쉬어 가요 stars=4 PARK km=1
+   81.0s  v=  0.0 a=-0.00  IDLE NONE NEUTRAL FULL chip=null stars=4 PARK km=1
+   84.0s  v=  0.0 a=-0.00  IDLE CELEBRATE HAPPY FULL chip=null stars=4 PARK km=1
+   87.0s  v=  0.0 a=-0.00  IDLE NONE HAPPY FULL chip=null stars=4 PARK km=1
+   89.0s  v=  0.0 a=-0.00  IDLE NONE NEUTRAL FULL chip=null stars=4 PARK km=1
+
+voice events: [START, RAIN, BIOME_PARK, MILESTONE, HARSH_BRAKE, SMOOTH_BURST, ARRIVAL]
+driving events: [HARSH_BRAKE, BURST]
+trips: [TripRecord(id=1006000, startMs=1006000, endMs=1081000, distanceKm=1.2356116, bursts=1, harshAccel=0, harshBrakes=1, overspeedMs=0, climateMoments=0, rainMoments=1, score=94, stars=0, bestCombo=0, biomes=1, demo=false, sketch=null)]

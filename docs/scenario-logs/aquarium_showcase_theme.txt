@@ -1,0 +1,17 @@
+   0.00s v=  0.0 PARK chip=null
+   5.68s v=  4.8 DRIVE chip=함께 헤엄
+  22.51s v= 62.5 DRIVE chip=진주 발견
+  26.37s v= 63.2 DRIVE chip=함께 헤엄
+  36.61s v= 65.3 DRIVE chip=진주 발견
+  40.46s v= 66.0 DRIVE chip=함께 헤엄
+  44.70s v= 66.9 DRIVE chip=수면에 비
+  50.11s v= 68.0 DRIVE chip=진주 발견
+  53.97s v= 68.7 DRIVE chip=밤의 수조
+  63.20s v= 67.5 DRIVE chip=진주 발견
+  67.04s v= 29.5 DRIVE chip=깜짝 회전
+  70.88s v=  8.6 DRIVE chip=함께 헤엄
+  76.51s v=  2.6 REVERSE chip=null
+  79.01s v=  0.0 PARK chip=도착
+  84.77s v=  0.0 PARK chip=null
+  86.48s v=  0.0 PARK chip=충전 중
+  96.02s v=  0.0 PARK chip=null (safety)

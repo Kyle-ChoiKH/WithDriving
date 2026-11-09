@@ -1,0 +1,21 @@
+   0.00s v=  0.0 PARK chip=null
+   6.83s v=  4.9 DRIVE chip=도트 월드
+  25.10s v= 61.9 DRIVE chip=보석 조각!
+  28.96s v= 63.0 DRIVE chip=도트 월드
+  38.70s v= 65.7 DRIVE chip=비 오는 길
+  42.56s v= 66.7 DRIVE chip=보석 조각!
+  46.42s v= 67.8 DRIVE chip=비 오는 길
+  50.27s v= 68.9 DRIVE chip=밤길 운전
+  54.13s v= 70.0 DRIVE chip=보석 조각!
+  57.98s v= 70.0 DRIVE chip=도트 월드
+  67.71s v= 47.0 DRIVE chip=체크포인트
+  71.55s v= 32.7 DRIVE chip=도트 월드
+  79.71s v=  2.0 DRIVE chip=null
+  82.00s v=  3.5 REVERSE chip=후진
+  87.01s v=  0.0 DRIVE chip=null
+  87.62s v=  6.0 DRIVE chip=도트 월드
+  94.91s v=  1.6 DRIVE chip=null
+  96.00s v=  0.0 PARK chip=도착
+ 101.76s v=  0.0 PARK chip=null
+ 102.48s v=  0.0 PARK chip=충전 중
+ 108.02s v=  0.0 PARK chip=null (safety)

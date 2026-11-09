@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Vroomi's lines, grouped by event (3–6 variants each, never repeated back-to-back by VoiceDirector).
+  While moving every line is capped at 12 syllables and at most one line per 120 s is spoken.
+  Tone: short, warm, playful, never commanding or scolding.
+-->
+<resources>
+    <string-array name="line_start">
+        <item>오늘도 같이 가요!</item>
+        <item>출발 준비 완료!</item>
+        <item>브루미 탑승했어요~</item>
+        <item>안전벨트 짝꿍 출발!</item>
+        <item>오늘은 어디 가요?</item>
+    </string-array>
+
+    <string-array name="line_smooth">
+        <item>부드럽다~</item>
+        <item>이 느낌 좋아요!</item>
+        <item>바람처럼 슝~</item>
+        <item>운전 솜씨 최고예요</item>
+        <item>사뿐사뿐 좋아요</item>
+    </string-array>
+
+    <string-array name="line_harsh_brake">
+        <item>어지러워요~</item>
+        <item>우와, 깜짝이야!</item>
+        <item>살짝 빙글 돌았어요</item>
+        <item>저 괜찮아요, 천천히~</item>
+    </string-array>
+
+    <string-array name="line_fan_up">
+        <item>후~ 시원하게!</item>
+        <item>바람 간다!</item>
+        <item>제가 불어 줄게요~</item>
+        <item>슝슝 바람 배달!</item>
+        <item>볼 빵빵, 후~</item>
+    </string-array>
+
+    <string-array name="line_temp_cold">
+        <item>시원~</item>
+        <item>입김이 나와요!</item>
+        <item>오싹오싹 상쾌해요</item>
+        <item>눈송이 친구 왔다!</item>
+    </string-array>
+
+    <string-array name="line_temp_warm">
+        <item>따끈따끈~</item>
+        <item>목도리 둘렀어요</item>
+        <item>포근포근 좋아요</item>
+        <item>몸이 사르르 녹아요</item>
+    </string-array>
+
+    <string-array name="line_rain">
+        <item>우비 입었어요!</item>
+        <item>비가 와요, 살살 가요</item>
+        <item>톡톡 빗소리 좋다</item>
+        <item>와이퍼 친구 출동!</item>
+    </string-array>
+
+    <string-array name="line_arrival">
+        <item>도착! 수고했어요!</item>
+        <item>짠! 다 왔어요</item>
+        <item>오늘도 무사 도착!</item>
+        <item>최고의 운전이었어요</item>
+        <item>도착 축하 점프!</item>
+    </string-array>
+
+    <string-array name="line_rest">
+        <item>잠깐 쉬어가요.</item>
+        <item>기지개 쭉~</item>
+        <item>숨 한 번 크게 쉬어요</item>
+        <item>천천히 가도 괜찮아요</item>
+    </string-array>
+
+    <string-array name="line_low_battery">
+        <item>배고파요… 충전소 가요?</item>
+        <item>에너지가 조금 남았어요</item>
+        <item>꼬르륵, 충전하고 싶다</item>
+    </string-array>
+
+    <string-array name="line_charging">
+        <item>냠냠 충전 중</item>
+        <item>에너지 맛있다!</item>
+        <item>배부르게 먹을게요</item>
+        <item>충전하는 동안 쉬어요</item>
+    </string-array>
+
+    <string-array name="line_hello">
+        <item>안녕하세요!</item>
+        <item>기다리고 있었어요!</item>
+        <item>반가워요, 같이 가요</item>
+    </string-array>
+
+    <string-array name="line_goodbye">
+        <item>또 만나요!</item>
+        <item>오늘도 고마웠어요</item>
+        <item>푹 쉬어요, 안녕~</item>
+    </string-array>
+
+    <!-- Journey: stars, km signs, scenery (the scenery is Vroomi's own road on screen) -->
+    <string-array name="line_combo">
+        <item>별 다섯 개 연속!</item>
+        <item>야호, 콤보예요!</item>
+        <item>반짝반짝 별 부자!</item>
+        <item>부드러움 연속 성공!</item>
+    </string-array>
+
+    <string-array name="line_milestone">
+        <item>벌써 이만큼 왔어요!</item>
+        <item>1킬로 또 지났어요</item>
+        <item>표지판 지나간다~</item>
+        <item>같이 오니까 금방이네요</item>
+    </string-array>
+
+    <string-array name="line_biome_city">
+        <item>도시 불빛이 예뻐요</item>
+        <item>빌딩 숲이다!</item>
+    </string-array>
+
+    <string-array name="line_biome_park">
+        <item>가로수길 좋아요</item>
+        <item>나무가 쭉쭉~</item>
+    </string-array>
+
+    <string-array name="line_biome_field">
+        <item>들판이다, 풍차 봐요!</item>
+        <item>바람개비 빙글빙글</item>
+    </string-array>
+
+    <string-array name="line_biome_seaside">
+        <item>와, 바닷가 길이다!</item>
+        <item>파도 소리 들려요?</item>
+    </string-array>
+
+    <string-array name="line_biome_mountain">
+        <item>산길이에요, 상쾌해!</item>
+        <item>저 산 꼭대기 봐요</item>
+    </string-array>
+
+    <!-- Replies to voice commands -->
+    <string-array name="line_reply_cooler">
+        <item>후~ 시원하게 해 줄게요</item>
+        <item>찬바람 준비!</item>
+        <item>온도 살짝 내릴게요</item>
+    </string-array>
+
+    <string-array name="line_reply_warmer">
+        <item>따뜻하게 해 줄게요</item>
+        <item>온도 살짝 올릴게요</item>
+        <item>포근하게 만들게요</item>
+    </string-array>
+
+    <string-array name="line_reply_fan_up">
+        <item>바람 세게!</item>
+        <item>더 힘껏 불게요</item>
+        <item>슝! 한 칸 올렸어요</item>
+    </string-array>
+
+    <string-array name="line_reply_fan_down">
+        <item>살살 불게요</item>
+        <item>바람 한 칸 줄였어요</item>
+        <item>솔솔 바람으로~</item>
+    </string-array>
+
+    <string-array name="line_reply_fan_off">
+        <item>바람 쉬어요</item>
+        <item>후, 잠깐 멈출게요</item>
+        <item>바람 껐어요</item>
+    </string-array>
+
+    <string-array name="line_reply_air">
+        <item>공기 반짝반짝!</item>
+        <item>깨끗한 공기 출동</item>
+        <item>공기청정 켰어요</item>
+    </string-array>
+
+    <string-array name="line_reply_manual">
+        <item>직접 조절해 주세요~</item>
+        <item>버튼으로 바꿔 줄래요?</item>
+        <item>그건 손으로 부탁해요</item>
+    </string-array>
+
+    <string-array name="line_reply_fail">
+        <item>지금은 못 바꿔요</item>
+        <item>앗, 잘 안 됐어요</item>
+        <item>조금 있다 다시 해요</item>
+    </string-array>
+
+    <string-array name="line_reply_unknown">
+        <item>다시 말해 줄래요?</item>
+        <item>음, 잘 못 들었어요</item>
+        <item>한 번 더 말해 줘요</item>
+    </string-array>
+
+    <string-array name="line_reply_hide">
+        <item>쏙 숨을게요</item>
+        <item>구석에 있을게요</item>
+        <item>조용히 지켜볼게요</item>
+    </string-array>
+
+    <string-array name="line_reply_show">
+        <item>짠, 나왔어요!</item>
+        <item>다시 같이 가요!</item>
+        <item>저 여기 있어요~</item>
+    </string-array>
+</resources>

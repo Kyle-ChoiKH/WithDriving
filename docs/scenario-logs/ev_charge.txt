@@ -1,0 +1,17 @@
+    0.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    0.5s  v=  1.5 a= 0.75  WALK NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    0.9s  v=  3.4 a= 1.18  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    4.9s  v= 23.3 a= 1.39  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    8.6s  v= 16.8 a=-0.67  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   12.0s  v=  8.6 a=-0.67  WALK NONE HUNGRY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   25.7s  v=  0.0 a=-0.69  IDLE NONE HUNGRY AMBIENT chip=잠깐 쉬어 가요 stars=0 CITY km=0
+   30.0s  v=  0.0 a=-0.00  IDLE NONE HUNGRY FULL chip=null stars=0 CITY km=0
+   35.0s  v=  0.0 a=-0.00  IDLE EAT_ENERGY NEUTRAL FULL chip=null stars=0 CITY km=0
+   86.0s  v=  0.0 a=-0.00  IDLE STRETCH NEUTRAL FULL chip=null stars=0 CITY km=0
+   88.2s  v=  0.0 a=-0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+   89.0s  v=  0.0 a=-0.00  IDLE WAVE_BYE NEUTRAL FULL chip=null stars=0 CITY km=0
+   91.5s  v=  0.0 a=-0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+
+voice events: [START, LOW_BATTERY, CHARGING, LONG_STOP, DOOR_GOODBYE]
+driving events: []
+trips: [TripRecord(id=1001300, startMs=1001300, endMs=1030000, distanceKm=0.09393823, bursts=0, harshAccel=0, harshBrakes=0, overspeedMs=0, climateMoments=0, rainMoments=0, score=100, stars=0, bestCombo=0, biomes=1, demo=false, sketch=null)]

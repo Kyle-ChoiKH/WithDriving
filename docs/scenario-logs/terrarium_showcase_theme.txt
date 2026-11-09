@@ -1,0 +1,17 @@
+   0.00s v=  0.0 PARK chip=null
+   5.71s v=  5.4 DRIVE chip=정원이 자라요
+  21.90s v= 70.0 DRIVE chip=새싹이 돋았어요
+  25.76s v= 70.0 DRIVE chip=정원이 자라요
+  34.70s v= 70.0 DRIVE chip=새싹이 돋았어요
+  38.56s v= 70.0 DRIVE chip=정원이 자라요
+  47.60s v= 70.0 DRIVE chip=새싹이 돋았어요
+  51.46s v= 70.0 DRIVE chip=병 속에 비
+  57.71s v= 70.0 DRIVE chip=반딧불이
+  61.57s v= 70.0 DRIVE chip=새싹이 돋았어요
+  65.41s v= 70.0 DRIVE chip=반딧불이
+  69.25s v= 40.8 DRIVE chip=물결이 출렁
+  73.09s v= 34.8 DRIVE chip=반딧불이
+  80.00s v=  0.0 PARK chip=null
+  81.01s v=  0.0 PARK chip=도착
+  86.77s v=  0.0 PARK chip=충전 중
+  96.02s v=  0.0 PARK chip=null (safety)

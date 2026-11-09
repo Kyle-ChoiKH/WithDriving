@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Required by the Pleos speech SDKs (found via the @RequiresPermission annotations in the
+      TextToSpeech 3.3.1 / SpeechToText 3.3.1 AARs; lint MissingPermission). Merged into the app manifest.
+    -->
+    <uses-permission android:name="pleos.car.permission.TTS_SERVICE" />
+    <uses-permission android:name="pleos.car.permission.STT_SERVICE" />
+</manifest>

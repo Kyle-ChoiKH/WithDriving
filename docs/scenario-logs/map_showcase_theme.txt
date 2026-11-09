@@ -1,0 +1,18 @@
+   0.00s v=  0.0 PARK chip=null
+   5.82s v=  5.0 DRIVE chip=그림 지도
+  23.41s v= 64.0 DRIVE chip=보물 표시
+  27.26s v= 65.3 DRIVE chip=그림 지도
+  36.91s v= 68.8 DRIVE chip=보물 표시
+  40.77s v= 70.0 DRIVE chip=그림 지도
+  49.81s v= 70.0 DRIVE chip=보물 표시
+  53.66s v= 46.0 DRIVE chip=그림 지도
+  57.52s v=  0.0 DRIVE chip=null
+  85.36s v=  0.0 DRIVE chip=쉼터 도장
+  89.20s v=  0.0 DRIVE chip=null
+  89.73s v=  5.3 DRIVE chip=그림 지도
+  95.71s v= 65.0 DRIVE chip=비에 번짐
+ 103.71s v= 68.3 DRIVE chip=그림 지도
+ 107.55s v= 69.7 DRIVE chip=보물 표시
+ 111.39s v= 48.9 DRIVE chip=목적지 근처
+ 130.00s v=  0.0 PARK chip=도착
+ 135.76s v=  0.0 PARK chip=null

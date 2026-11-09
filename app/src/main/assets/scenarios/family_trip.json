@@ -1,0 +1,29 @@
+{
+  "id": "family_trip",
+  "title": "주말 가족 여행 (2분 30초)",
+  "description": "에코 모드, 크루즈, 최대 냉방, 공기청정, 도착",
+  "order": 4,
+  "durationS": 152,
+  "keyframes": [
+    {"t": 0, "gear": "P", "speed": 0, "door": false, "fan": 2, "temp": 24, "navi": true, "naviRemainingM": 6000, "mode": "NORMAL"},
+    {"t": 0.5, "note": "family gets in: hello", "door": true, "caption": "문이 열리면 → 손 흔들며 인사"},
+    {"t": 2.5, "door": false},
+    {"t": 4, "gear": "D", "speed": 0},
+    {"t": 10, "note": "eco mode: leaf", "mode": "ECO", "speed": 30, "caption": "에코 모드 → 초록 꼬마차, 새싹"},
+    {"t": 25, "speed": 95},
+    {"t": 32, "note": "cruise control: sunglasses", "cruise": true, "speed": 105, "caption": "크루즈 → 선글라스"},
+    {"t": 40, "note": "max A/C: Vroomi blows", "maxAc": true, "fan": 6, "caption": "최대 냉방 → 바람 후~"},
+    {"t": 50, "note": "air cleaner: sparkles", "airCleaner": true, "caption": "공기청정 → 반짝반짝"},
+    {"t": 60, "recirc": true, "naviRemainingM": 3500, "caption": "내기순환 → 빙글 바람"},
+    {"t": 75, "maxAc": false, "fan": 3, "hvacAuto": true, "caption": "공조 AUTO → 엄지척"},
+    {"t": 105, "speed": 105, "naviRemainingM": 1500},
+    {"t": 110, "cruise": false},
+    {"t": 120, "speed": 50, "naviRemainingM": 800},
+    {"t": 135, "speed": 15, "naviRemainingM": 100},
+    {"t": 140, "speed": 0, "brake": true, "naviRemainingM": 0},
+    {"t": 141, "note": "arrival celebration", "arrive": true, "caption": "도착 → 결승선, 축하 점프!"},
+    {"t": 145, "gear": "P", "brake": false, "caption": "P단 → 오늘의 드라이브 카드"},
+    {"t": 148, "door": true},
+    {"t": 150, "door": false}
+  ]
+}

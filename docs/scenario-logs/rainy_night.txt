@@ -1,0 +1,20 @@
+    0.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    5.0s  v=  0.0 a= 0.00  IDLE DEFROST_WIPE NEUTRAL FULL chip=null stars=0 CITY km=0
+    8.5s  v=  0.0 a= 0.52  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    8.6s  v=  1.6 a= 0.66  WALK NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    9.0s  v=  3.1 a= 0.99  WALK NONE NEUTRAL AMBIENT chip=비 조심해요 stars=0 CITY km=0
+   14.0s  v= 23.1 a= 1.11  JOG NONE NEUTRAL AMBIENT chip=비 조심해요 stars=0 CITY km=0
+   37.6s  v= 39.0 a= 0.04  JOG NONE NEUTRAL AMBIENT chip=비 조심해요 stars=1 CITY km=0
+   61.3s  v= 34.7 a=-0.07  JOG NONE NEUTRAL AMBIENT chip=비 조심해요 stars=2 CITY km=0
+   77.8s  v= 30.6 a=-0.07  JOG LOOK_AHEAD NEUTRAL AMBIENT chip=곧 도착해요 stars=2 CITY km=0
+   90.7s  v= 24.8 a=-0.14  JOG LOOK_AHEAD NEUTRAL AMBIENT chip=곧 도착해요 stars=3 CITY km=0
+   98.6s  v= 20.8 a=-0.14  JOG LOOK_AHEAD NEUTRAL AMBIENT chip=곧 도착해요 stars=3 PARK km=0
+  101.9s  v= 16.9 a=-0.52  WALK LOOK_AHEAD NEUTRAL AMBIENT chip=곧 도착해요 stars=3 PARK km=0
+  109.7s  v=  0.0 a=-0.69  IDLE LOOK_AHEAD NEUTRAL AMBIENT chip=곧 도착해요 stars=3 PARK km=0
+  111.0s  v=  0.0 a=-0.08  IDLE CELEBRATE HAPPY AMBIENT chip=비 조심해요 stars=3 PARK km=0
+  114.0s  v=  0.0 a=-0.00  IDLE NONE HAPPY FULL chip=null stars=3 PARK km=0
+  116.0s  v=  0.0 a=-0.00  IDLE NONE NEUTRAL FULL chip=null stars=3 PARK km=0
+
+voice events: [START, RAIN, BIOME_PARK, ARRIVAL]
+driving events: []
+trips: [TripRecord(id=1009500, startMs=1009500, endMs=1114000, distanceKm=0.8378789, bursts=0, harshAccel=0, harshBrakes=0, overspeedMs=0, climateMoments=0, rainMoments=0, score=100, stars=0, bestCombo=0, biomes=1, demo=false, sketch=null)]

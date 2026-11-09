@@ -1,0 +1,60 @@
+    0.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    0.5s  v=  0.0 a= 0.00  IDLE WAVE_HELLO NEUTRAL FULL chip=null stars=0 CITY km=0
+    3.0s  v=  0.0 a= 0.00  IDLE NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    7.4s  v=  1.8 a= 0.71  WALK NONE NEUTRAL FULL chip=null stars=0 CITY km=0
+    7.6s  v=  3.2 a= 1.33  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    8.5s  v= 10.1 a= 2.18  WALK BURST HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+    9.2s  v= 15.7 a= 2.22  WALK NONE HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   10.2s  v= 23.7 a= 2.22  JOG NONE HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   12.5s  v= 29.3 a= 0.21  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   24.0s  v= 35.0 a= 0.00  JOG SKID NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   24.9s  v= 29.1 a=-2.06  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   26.3s  v= 16.9 a=-2.43  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   28.1s  v=  0.0 a=-2.36  IDLE NONE NEUTRAL AMBIENT chip=잠깐 쉬어 가요 stars=0 CITY km=0
+   40.4s  v=  1.9 a= 0.76  WALK NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   41.3s  v=  9.2 a= 2.29  WALK BURST HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   42.0s  v= 15.1 a= 2.37  WALK NONE HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   43.0s  v= 23.7 a= 2.38  JOG NONE HAPPY AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   45.3s  v= 28.9 a=-0.18  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   50.0s  v= 25.6 a=-0.19  JOG POINT_LEFT NEUTRAL AMBIENT chip=부드러운 주행 중 stars=0 CITY km=0
+   54.9s  v= 22.2 a=-0.19  JOG POINT_LEFT NEUTRAL AMBIENT chip=별 1개 모았어요 stars=1 CITY km=0
+   57.9s  v= 27.0 a= 0.52  JOG POINT_LEFT NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   58.0s  v= 27.2 a= 0.52  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   60.0s  v= 30.9 a= 0.52  JOG BLOW NEUTRAL AMBIENT chip=바람 솔솔~ stars=1 CITY km=0
+   62.5s  v= 35.6 a= 0.52  JOG NONE NEUTRAL AMBIENT chip=부드러운 주행 중 stars=1 CITY km=0
+   63.0s  v= 36.5 a= 0.52  JOG BLOW NEUTRAL AMBIENT chip=바람 솔솔~ stars=1 CITY km=0
+   65.5s  v= 41.2 a= 0.52  JOG NONE NEUTRAL AMBIENT chip=바람 솔솔~ stars=1 CITY km=0
+   66.0s  v= 42.1 a= 0.52  JOG NONE COLD AMBIENT chip=바람 솔솔~ stars=1 CITY km=0
+   77.3s  v= 50.0 a= 0.00  JOG NONE COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   79.0s  v= 48.5 a=-0.49  JOG SKID COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   79.5s  v= 40.3 a=-3.56  JOG TUMBLE DIZZY AMBIENT chip=살살 가요~ stars=2 CITY km=0
+   80.5s  v= 15.9 a=-6.91  WALK TUMBLE DIZZY AMBIENT chip=살살 가요~ stars=2 CITY km=0
+   81.5s  v= 14.4 a= 0.58  WALK NONE COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   83.2s  v= 23.5 a= 1.51  JOG NONE COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   92.7s  v= 63.1 a= 0.99  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=2 CITY km=0
+   98.1s  v= 82.4 a= 0.99  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=3 CITY km=0
+   99.0s  v= 85.6 a= 0.99  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=3 PARK km=0
+  107.0s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=벌써 1km 왔어요 stars=3 PARK km=1
+  108.2s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=벌써 1km 왔어요 stars=4 PARK km=1
+  111.0s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=4 PARK km=1
+  118.2s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=5 PARK km=1
+  128.2s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=6 PARK km=1
+  131.0s  v= 90.0 a= 0.00  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=6 FIELD km=1
+  135.0s  v= 90.0 a= 0.00  RUN POINT_RIGHT COLD AMBIENT chip=바람 솔솔~ stars=6 FIELD km=1
+  138.2s  v= 88.8 a=-0.11  RUN POINT_RIGHT HAPPY AMBIENT chip=별 5개 연속! stars=7 FIELD km=1
+  140.0s  v= 88.1 a=-0.11  RUN NONE HAPPY AMBIENT chip=별 5개 연속! stars=7 FIELD km=1
+  141.2s  v= 83.3 a=-1.27  RUN NONE COLD AMBIENT chip=별 5개 연속! stars=7 FIELD km=1
+  142.2s  v= 78.6 a=-1.33  RUN NONE COLD AMBIENT chip=바람 솔솔~ stars=7 FIELD km=1
+  146.7s  v= 57.0 a=-1.33  JOG NONE COLD AMBIENT chip=바람 솔솔~ stars=7 FIELD km=1
+  149.7s  v= 42.6 a=-1.33  JOG NONE COLD AMBIENT chip=벌써 2km 왔어요 stars=7 FIELD km=2
+  152.5s  v= 34.3 a=-0.69  JOG NONE COLD AMBIENT chip=벌써 2km 왔어요 stars=8 FIELD km=2
+  153.7s  v= 31.3 a=-0.69  JOG NONE COLD AMBIENT chip=바람 솔솔~ stars=8 FIELD km=2
+  159.5s  v= 16.8 a=-0.69  WALK NONE COLD AMBIENT chip=바람 솔솔~ stars=8 FIELD km=2
+  166.6s  v=  0.0 a=-0.60  IDLE NONE COLD AMBIENT chip=바람 솔솔~ stars=8 FIELD km=2
+  172.0s  v=  0.0 a=-0.00  IDLE NONE COLD FULL chip=null stars=8 FIELD km=2
+  176.0s  v=  0.0 a=-0.00  IDLE WAVE_BYE COLD FULL chip=null stars=8 FIELD km=2
+  178.5s  v=  0.0 a=-0.00  IDLE NONE COLD FULL chip=null stars=8 FIELD km=2
+
+voice events: [START, DOOR_HELLO, SMOOTH_BURST, SMOOTH_BURST, FAN_UP, FAN_UP, TEMP_COLD, HARSH_BRAKE, BIOME_PARK, MILESTONE, BIOME_FIELD, STAR_COMBO, MILESTONE, DOOR_GOODBYE]
+driving events: [BURST, BURST, HARSH_BRAKE]
+trips: [TripRecord(id=1007900, startMs=1007900, endMs=1172000, distanceKm=2.0968425, bursts=2, harshAccel=0, harshBrakes=1, overspeedMs=0, climateMoments=3, rainMoments=0, score=94, stars=0, bestCombo=0, biomes=1, demo=false, sketch=null)]

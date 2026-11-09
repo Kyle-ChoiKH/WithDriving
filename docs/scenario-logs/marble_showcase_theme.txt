@@ -1,0 +1,17 @@
+   0.00s v=  0.0 PARK chip=null
+   5.79s v=  4.6 DRIVE chip=구슬이 돌아요
+  23.01s v= 60.8 DRIVE chip=줄무늬 구슬 출발
+  26.86s v= 64.6 DRIVE chip=구슬 대기 중
+  30.72s v= 65.4 DRIVE chip=구슬이 돌아요
+  36.91s v= 66.1 DRIVE chip=줄무늬 구슬 출발
+  40.77s v= 66.5 DRIVE chip=진자 운반
+  50.40s v= 67.6 DRIVE chip=줄무늬 구슬 출발
+  54.26s v= 68.0 DRIVE chip=구슬이 돌아요
+  63.60s v= 69.0 DRIVE chip=줄무늬 구슬 출발
+  67.44s v= 69.5 DRIVE chip=구슬이 돌아요
+  72.51s v= 60.6 DRIVE chip=멈춤 핀
+  76.35s v= 29.1 DRIVE chip=구슬이 돌아요
+  81.92s v=  1.6 DRIVE chip=null
+  83.01s v=  2.8 REVERSE chip=되돌이 고리
+  90.00s v=  0.0 PARK chip=도착
+  95.76s v=  0.0 PARK chip=null

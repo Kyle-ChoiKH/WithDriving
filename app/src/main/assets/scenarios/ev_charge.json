@@ -1,0 +1,22 @@
+{
+  "id": "ev_charge",
+  "title": "EV 충전 시간 (1분 30초)",
+  "description": "배터리 부족, 충전기 연결, 냠냠 충전",
+  "order": 3,
+  "durationS": 92,
+  "keyframes": [
+    {"t": 0, "gear": "D", "speed": 0, "battery": 18, "fan": 1, "temp": 22, "caption": "배터리 18%로 출발"},
+    {"t": 5, "speed": 25},
+    {"t": 12, "note": "battery crosses 15%: hungry", "battery": 15, "speed": 8, "caption": "15% 아래 → 배고픈 표정, 배터리 아이콘"},
+    {"t": 18, "battery": 14, "speed": 20},
+    {"t": 26, "speed": 0, "brake": true},
+    {"t": 30, "note": "park at charger", "gear": "P", "brake": false, "caption": "충전소에 주차"},
+    {"t": 35, "note": "charging: eat energy", "evCharging": true, "caption": "충전 시작 → 케이블 연결, 에너지 냠냠"},
+    {"t": 50, "battery": 22},
+    {"t": 65, "battery": 31},
+    {"t": 80, "battery": 40},
+    {"t": 86, "evCharging": false},
+    {"t": 89, "note": "door opens after the trip: goodbye", "door": true, "caption": "문 열림 → \"또 만나요!\""},
+    {"t": 91, "door": false}
+  ]
+}

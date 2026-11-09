@@ -1,0 +1,33 @@
+{
+  "id": "terrarium_showcase",
+  "title": "유리병 정원 쇼케이스 (1분 30초)",
+  "description": "달린 거리만큼 자라는 병 속 정원. 비, 밤, 깜빡이가 병 안에서 일어나요",
+  "order": 5,
+  "theme": "TERRARIUM",
+  "durationS": 92,
+  "keyframes": [
+    { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 64, "evCharging": false, "caption": "주차 중: 유리병 정원이 조용히 쉬어요" },
+    { "t": 3,  "gear": "D", "caption": "출발 → 1km마다 식물이 조금씩 자라요" },
+    { "t": 5,  "speed": 0 },
+    { "t": 10, "speed": 55, "caption": "가속하면 연못 물과 늘어진 잎이 뒤로 살짝 기울어요" },
+    { "t": 16, "speed": 70 },
+    { "t": 20, "fan": 7, "caption": "바람 세게 → 잎이 더 크게 흔들려요" },
+    { "t": 26, "fan": 2, "ac": true, "temp": 18, "caption": "에어컨 + 낮은 온도 → 유리 안쪽에 김, 조명이 차가운 빛으로" },
+    { "t": 33, "defrost": true, "caption": "서리 제거 → 김이 아래부터 걷혀요" },
+    { "t": 37, "defrost": false, "ac": false, "temp": 26, "turn": "RIGHT", "caption": "오른쪽 깜빡이 → 무당벌레가 잎을 따라 오른쪽으로" },
+    { "t": 42, "turn": "NONE", "mode": "ECO", "caption": "에코 모드 → 부드러운 초록빛. 별을 모으면 새싹, 콤보면 꽃" },
+    { "t": 50, "wiper": true, "caption": "와이퍼 → 병 뚜껑 아래 작은 구름이 비를 내려요" },
+    { "t": 57, "wiper": false, "lights": true, "caption": "전조등 → 작은 랜턴이 켜지고 반딧불이가 천천히 반짝" },
+    { "t": 63, "mode": "SPORT", "caption": "스포츠 모드 → 황금빛 오후 햇살" },
+    { "t": 66, "speed": 70, "caption": "1km마다 어린 나무에 잎이 한 바퀴 더 돋아요" },
+    { "t": 68, "speed": 70, "brake": true, "caption": "급제동 → 연못이 한 번 출렁, 이슬이 떨어져요" },
+    { "t": 69.5, "speed": 25 },
+    { "t": 70.5, "brake": false },
+    { "t": 72, "speed": 40, "mode": "NORMAL" },
+    { "t": 78, "speed": 0 },
+    { "t": 80, "gear": "P", "lights": false, "caption": "P단 → 도착하면 조명이 저녁빛으로, 나방이 랜턴에 앉아요" },
+    { "t": 81, "arrive": true },
+    { "t": 86, "evCharging": true, "battery": 70, "caption": "충전 중 → 배터리가 찰수록 조명이 천천히 밝아져요" },
+    { "t": 92, "battery": 72 }
+  ]
+}
