@@ -2,7 +2,6 @@ package io.vroomi.character.render.calibre
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -36,6 +35,8 @@ internal object DG {
     val DATE = Offset(0.50f, 0.50f)
     val AUTO = Offset(-0.58f, 0.58f)
     val HOURS = intArrayOf(1, 2, 4, 5, 7, 8, 10, 11)
+    /** The skeleton dial's chapter ring starts here (the open centre shows the movement). */
+    const val CHAPTER_IN = 0.72f
 }
 
 /** Original hand shapes: a faceted lance with a lume channel (pointing up, pivot at 0,0). */
@@ -69,32 +70,22 @@ internal fun DrawScope.drawDialBase(L: CalibreLayers): Unit = with(L) {
     val light = L.light
     val c = L.c
     val u = L.u
-    drawLugs(pal.case)
-    // Case and polished bezel
-    softShadow(circlePath(c, CW.CASE_OUT * u), -light.x * u * 0.05f, -light.y * u * 0.05f, 0.45f)
-    drawCircle(metalBrush(pal.case, c, CW.CASE_OUT * u, light), CW.CASE_OUT * u, c)
-    rotate(light.deg + 45f, c) { drawCircle(turnedBrush(pal.case, c), CW.CASE_OUT * u, c, alpha = 0.55f) }
+    val st = L.step
+    // Case (this step's shape) and the polished round bezel
+    drawCaseBody(pal.case, 0.55f)
     drawCircle(Color.Black.a(0.45f), CW.BEZEL_IN * u, c, style = Stroke(width = u * 0.01f))
     // Rehaut (inner flange) with the minute track
     drawCircle(lerp(pal.dial.base, Color.Black, 0.25f), CW.GASKET * u, c)
     val d = pal.dial
-    drawCircle(Brush.radialGradient(0f to d.light, 0.55f to d.base, 1f to d.dark, center = Offset(c.x + light.x * u * 0.35f, c.y + light.y * u * 0.35f), radius = u * 1.25f), u, c)
-    clipPath(circlePath(c, u)) {
-        if (pal.guilloche == 0) sunray(c, u, 540, 0.035f)
-        else {
-            // Original wave guilloché: concentric rings with a slow 12-fold ripple
-            var k = 0
-            var r = u * 0.08f
-            while (r < u) {
-                val p = Path()
-                for (i in 0..180) {
-                    val a = i / 180f * 2f * PI.toFloat()
-                    val rr = r + u * 0.006f * sin(12f * a + k * 0.55f)
-                    val x = c.x + cos(a) * rr; val y = c.y + sin(a) * rr
-                    if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
-                }
-                drawPath(p, if (k % 2 == 0) Color.White.a(0.10f) else Color.Black.a(0.06f), style = Stroke(width = (u * 0.006f).coerceAtLeast(1f)))
-                r += u * 0.018f; k++
+    if (st.tourbillon) skeletonDial(L)
+    else {
+        drawCircle(Brush.radialGradient(0f to d.light, 0.55f to d.base, 1f to d.dark, center = Offset(c.x + light.x * u * 0.35f, c.y + light.y * u * 0.35f), radius = u * 1.25f), u, c)
+        clipPath(circlePath(c, u)) {
+            when {
+                st.guilloche -> guilloche(c, u, u * 0.08f)
+                pal.guilloche == 0 -> sunray(c, u, 540, 0.035f)
+                // Opaline: a fine, even matte (no pattern).
+                else -> drawCircle(L.grain, u, c, alpha = 0.6f)
             }
         }
     }
@@ -113,7 +104,7 @@ internal fun DrawScope.drawDialBase(L: CalibreLayers): Unit = with(L) {
         drawLine(pal.hand.light, p0 + Offset(light.x, light.y) * (u * 0.008f), p1 + Offset(light.x, light.y) * (u * 0.008f), strokeWidth = u * 0.01f, cap = StrokeCap.Round)
         drawLine(CalPal.lumeDay, pol(c, u * 0.76f, a), pol(c, u * 0.875f, a), strokeWidth = u * 0.016f, cap = StrokeCap.Round)
     }
-    // Double index at 12 is replaced by the power-reserve fan; 3, 6 and 9 by sub-dials.
+    // Double index at 12 is replaced by the power-reserve fan; 3, 6 and 9 by sub-dials (6: the tourbillon on Lv.5).
     subDial(L, DG.SMALL_SECONDS, 12, listOf("60", "15", "30", "45"))
     subDial(L, DG.COUNTER, 30, listOf("30", "10", "20"))
     // Power reserve fan (0 .. 72H)
@@ -127,24 +118,87 @@ internal fun DrawScope.drawDialBase(L: CalibreLayers): Unit = with(L) {
     engrave("72H", pol(pc, (DG.PR_R + 0.07f) * u, (DG.PR_FROM + DG.PR_SWEEP) * PI.toFloat() / 180f), 0f, 0.04f, pal.dialPrint, serif = false)
     engrave("RESERVE", Offset(pc.x, pc.y - 0.10f * u), 0f, 0.028f, pal.dialPrint.a(0.8f), serif = false)
     // Name, calibre
-    engrave("Calibre", Offset(c.x, c.y + 0.205f * u), 0f, 0.07f, pal.dialPrint, smallCaps = true, spacing = 0.22f)
-    engrave("VR-01 · AUTOMATIC", Offset(c.x, c.y + 0.295f * u), 0f, 0.03f, pal.dialPrint.a(0.85f), smallCaps = true, spacing = 0.28f)
-    // Moon-phase aperture: night sky with painted stars (the moon is drawn per frame)
-    val ap = moonAperture(c, u)
-    drawPath(ap, Brush.verticalGradient(listOf(Color(0xFF0B1638), Color(0xFF1C2E66)), ap.getBounds().top, ap.getBounds().bottom))
-    clipPath(ap) {
-        for (i in 0 until 14) {
-            val sx = c.x + (DG.MOON.x - DG.MOON_W / 2 + DG.MOON_W * ((i * 0.37f) % 1f)) * u
-            val sy = c.y + (DG.MOON.y - DG.MOON_H / 2 + DG.MOON_H * ((i * 0.61f) % 1f)) * u
-            drawCircle(Color(0xFFE9D9A8).a(0.85f), u * (0.004f + 0.003f * ((i * 0.53f) % 1f)), Offset(sx, sy))
+    engrave("Calibre", Offset(c.x, c.y + 0.205f * u), 0f, 0.07f, if (st.tourbillon) pal.engrave else pal.dialPrint, smallCaps = true, spacing = 0.22f)
+    if (!st.tourbillon) {
+        engrave("VR-01 · AUTOMATIC", Offset(c.x, c.y + 0.295f * u), 0f, 0.03f, pal.dialPrint.a(0.85f), smallCaps = true, spacing = 0.28f)
+        // Moon-phase aperture: night sky with painted stars (the moon is drawn per frame)
+        val ap = moonAperture(c, u)
+        drawPath(ap, Brush.verticalGradient(listOf(Color(0xFF0B1638), Color(0xFF1C2E66)), ap.getBounds().top, ap.getBounds().bottom))
+        clipPath(ap) {
+            for (i in 0 until 14) {
+                val sx = c.x + (DG.MOON.x - DG.MOON_W / 2 + DG.MOON_W * ((i * 0.37f) % 1f)) * u
+                val sy = c.y + (DG.MOON.y - DG.MOON_H / 2 + DG.MOON_H * ((i * 0.61f) % 1f)) * u
+                drawCircle(Color(0xFFE9D9A8).a(0.85f), u * (0.004f + 0.003f * ((i * 0.53f) % 1f)), Offset(sx, sy))
+            }
         }
+        drawPath(ap, pal.hand.base, style = Stroke(width = u * 0.01f))
+        // Date window frame
+        val dw = Rect(Offset(c.x + DG.DATE.x * u - 0.06f * u, c.y + DG.DATE.y * u - 0.045f * u), Size(0.12f * u, 0.09f * u))
+        drawRoundRect(Color(0xFFF4EFE4), dw.topLeft, dw.size, CornerRadius(u * 0.01f))
+        drawRoundRect(pal.hand.base, dw.topLeft, dw.size, CornerRadius(u * 0.01f), style = Stroke(width = u * 0.008f))
     }
-    drawPath(ap, pal.hand.base, style = Stroke(width = u * 0.01f))
-    // Date window frame
-    val dw = Rect(Offset(c.x + DG.DATE.x * u - 0.06f * u, c.y + DG.DATE.y * u - 0.045f * u), Size(0.12f * u, 0.09f * u))
-    drawRoundRect(Color(0xFFF4EFE4), dw.topLeft, dw.size, CornerRadius(u * 0.01f))
-    drawRoundRect(pal.hand.base, dw.topLeft, dw.size, CornerRadius(u * 0.01f), style = Stroke(width = u * 0.008f))
     engrave("AUTO", Offset(c.x + DG.AUTO.x * u, c.y + DG.AUTO.y * u), 45f, 0.034f, pal.dialPrint.a(0.45f), serif = false)
+}
+
+/**
+ * Engine-turned guilloché (Lv.3 on): concentric rings with a slow 12-fold ripple whose phase turns ring by ring,
+ * so the light runs across it in a soft rosette. Kept low in contrast.
+ */
+private fun DrawScope.guilloche(c: Offset, u: Float, from: Float) {
+    var k = 0
+    var r = from
+    val p = Path()
+    while (r < u) {
+        p.reset()
+        for (i in 0..180) {
+            val a = i / 180f * 2f * PI.toFloat()
+            val rr = r + u * 0.006f * sin(12f * a + k * 0.55f)
+            val x = c.x + cos(a) * rr; val y = c.y + sin(a) * rr
+            if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+        }
+        drawPath(p, if (k % 2 == 0) Color.White.a(0.10f) else Color.Black.a(0.06f), style = Stroke(width = (u * 0.006f).coerceAtLeast(1f)))
+        r += u * 0.018f; k++
+    }
+}
+
+/**
+ * The skeleton dial (Lv.5): the movement's dial side shows through an open centre; two dial-side bars carry the
+ * sub-dials and the reserve fan; the chapter ring keeps the minute track and indices and opens at six for the
+ * tourbillon.
+ */
+private fun DrawScope.skeletonDial(L: CalibreLayers): Unit = with(L) {
+    val d = pal.dial
+    // The plate under the dial: perlage, in shade under the chapter ring.
+    clipPath(circlePath(c, u)) {
+        drawCircle(plate.base, u, c)
+        perlage()
+        drawCircle(Brush.radialGradient(0.55f to Color.Transparent, 1f to Color.Black.a(0.5f), center = c, radius = u), u, c)
+    }
+    drawTourbillonSeat(L)
+    val opening = circlePath(p(TB.C.x, TB.C.y), (TB.OPEN_R + 0.025f) * u)
+    // Dial-side bars: 9 to 3 through the centre (the sub-dials), and the centre up to the reserve fan.
+    val bars = subtract(intersect(union(
+        capsule(p(-0.70f, 0f), p(0.70f, 0f), 0.052f * u), capsule(p(0f, -0.10f), p(0f, -0.40f), 0.045f * u), circlePath(c, 0.085f * u),
+    ), circlePath(c, 0.99f * u)), opening)
+    softShadow(bars, -light.x * u * 0.02f, -light.y * u * 0.02f, 0.4f)
+    cotesDeGeneve(bars, c, u, pal.bridge, 90f, u * 0.07f)
+    bevel(bars, c, u, light, (u * 0.008f).coerceAtLeast(1.2f))
+    // The reserve fan's own small plate.
+    val pc = Offset(c.x + DG.PR_PIVOT.x * u, c.y + DG.PR_PIVOT.y * u)
+    val fan = Path().apply {
+        arcTo(Rect(pc, (DG.PR_R + 0.10f) * u), -162f, 144f, true)
+        arcTo(Rect(pc, 0.11f * u), -18f, -144f, false)
+        close()
+    }
+    softShadow(fan, -light.x * u * 0.02f, -light.y * u * 0.02f, 0.4f)
+    drawPath(fan, Brush.radialGradient(0f to d.light, 0.6f to d.base, 1f to d.dark, center = pc, radius = (DG.PR_R + 0.1f) * u))
+    bevel(fan, pc, DG.PR_R * u, light, (u * 0.006f).coerceAtLeast(1f))
+    // Chapter ring.
+    val ring = subtract(subtract(circlePath(c, u), circlePath(c, DG.CHAPTER_IN * u)), opening)
+    softShadow(ring, -light.x * u * 0.025f, -light.y * u * 0.025f, 0.45f)
+    drawPath(ring, Brush.radialGradient(0f to d.light, 0.55f to d.base, 1f to d.dark, center = Offset(c.x + light.x * u * 0.35f, c.y + light.y * u * 0.35f), radius = u * 1.25f))
+    clipPath(ring) { guilloche(c, u, DG.CHAPTER_IN * u) }
+    bevel(ring, c, u, light, (u * 0.008f).coerceAtLeast(1.2f))
 }
 
 private fun DrawScope.subDial(L: CalibreLayers, at: Offset, ticks: Int, labels: List<String>): Unit = with(L) {
@@ -177,22 +231,26 @@ internal fun moonAperture(c: Offset, u: Float): Path {
 
 // ------------------------------------------------------------------ per frame
 
-/** Dial-side motion: moon, date, AUTO, hands from the real clock, chronograph, reserve, lume. */
-internal fun DrawScope.drawDialFrame(L: CalibreLayers, rt: CalibreRuntime, hands: CalibreTime.Hands, cache: CalibreText) {
+/** Dial-side motion: moon, date, AUTO, hands from the real clock, chronograph, reserve, lume; the tourbillon on Lv.5. */
+internal fun DrawScope.drawDialFrame(L: CalibreLayers, rt: CalibreRuntime, hands: CalibreTime.Hands, cache: CalibreText, nowMs: Long) {
     val c = L.c; val u = L.u; val pal = L.pal; val light = L.light
     val m = rt.mech
-    // Moon: a gold disc travelling across the aperture, masked by the two humps.
-    val ap = L.moonClip
-    clipPath(ap) {
-        val phase = (hands.moonAgeDays / CalibreTime.SYNODIC_MONTH_DAYS).toFloat()
-        val mx = c.x + (DG.MOON.x + (phase - 0.5f) * DG.MOON_W * 1.6f) * u
-        val my = c.y + (DG.MOON.y + 0.012f) * u
-        val mr = DG.MOON_H * 0.42f * u
-        drawCircle(Brush.radialGradient(listOf(CalPal.yellowGold.light, CalPal.yellowGold.base, CalPal.yellowGold.dark), Offset(mx - mr * 0.3f, my - mr * 0.3f), mr * 1.3f), mr, Offset(mx, my))
+    if (L.step.tourbillon) {
+        drawTourbillon(L, nowMs, TB.cageDeg(hands, 1f), CalibreTime.amplitudeDeg(m.reserveH), 1f, rt.hairspring)
+    } else {
+        // Moon: a gold disc travelling across the aperture, masked by the two humps.
+        val ap = L.moonClip
+        clipPath(ap) {
+            val phase = (hands.moonAgeDays / CalibreTime.SYNODIC_MONTH_DAYS).toFloat()
+            val mx = c.x + (DG.MOON.x + (phase - 0.5f) * DG.MOON_W * 1.6f) * u
+            val my = c.y + (DG.MOON.y + 0.012f) * u
+            val mr = DG.MOON_H * 0.42f * u
+            drawCircle(Brush.radialGradient(listOf(CalPal.yellowGold.light, CalPal.yellowGold.base, CalPal.yellowGold.dark), Offset(mx - mr * 0.3f, my - mr * 0.3f), mr * 1.3f), mr, Offset(mx, my))
+        }
+        // Date
+        val dl = cache.get("${hands.dayOfMonth}", 0.055f * u, Color(0xFF1E1E22))
+        drawText(dl, topLeft = Offset(c.x + DG.DATE.x * u - dl.size.width / 2f, c.y + DG.DATE.y * u - dl.size.height / 2f))
     }
-    // Date
-    val dl = cache.get("${hands.dayOfMonth}", 0.055f * u, Color(0xFF1E1E22))
-    drawText(dl, topLeft = Offset(c.x + DG.DATE.x * u - dl.size.width / 2f, c.y + DG.DATE.y * u - dl.size.height / 2f))
     // AUTO lights up with the climate's auto mode
     if (m.autoMark > 0.01f) {
         val al = cache.get("AUTO", 0.034f * u, CalPal.lume)
@@ -228,7 +286,7 @@ internal fun DrawScope.drawDialFrame(L: CalibreLayers, rt: CalibreRuntime, hands
         for (h in DG.HOURS) {
             val a = (h * 30f - 90f) * PI.toFloat() / 180f
             val p = pol(c, u * 0.82f, a)
-            drawCircle(Brush.radialGradient(listOf(CalPal.lumeGlow.a(0.35f * g), Color.Transparent), p, u * 0.09f), u * 0.09f, p)
+            drawCircle(Brush.radialGradient(listOf(CalPal.lumeGlow.a(0.30f * g), Color.Transparent), p, u * 0.09f), u * 0.09f, p)
         }
     }
 }
