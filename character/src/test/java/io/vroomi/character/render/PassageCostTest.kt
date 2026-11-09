@@ -91,7 +91,7 @@ class PassageCostTest {
         val out = StringBuilder("passage cost at 1920 x 720 (JVM layoutlib on the build PC, not the car)\n")
         val snapshot = w.toLong() * h * 4
         val stills = 3L * 960 * 360 * 4
-        for ((a, b) in listOf(SceneTheme.CALIBRE to SceneTheme.ENGINE, SceneTheme.AQUARIUM to SceneTheme.MARBLE, SceneTheme.ORBIT to SceneTheme.PIXEL)) {
+        for ((a, b) in listOf(SceneTheme.CALIBRE to SceneTheme.ENGINE, SceneTheme.AQUARIUM to SceneTheme.HANGAR, SceneTheme.ORBIT to SceneTheme.PIXEL)) {
             releaseThemeLayers(null)
             val img = ImageBitmap(w, h)
             val s = CanvasDrawScope()

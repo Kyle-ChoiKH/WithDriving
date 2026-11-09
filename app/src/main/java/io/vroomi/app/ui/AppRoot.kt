@@ -112,6 +112,7 @@ import io.vroomi.character.render.theme.ThemeSceneState
 import io.vroomi.character.render.theme.isKitTheme
 import io.vroomi.character.render.theme.releaseThemeLayers
 import io.vroomi.character.render.theme.rememberThemeSceneState
+import io.vroomi.character.theme.ThemeModels
 import io.vroomi.core.voice.ListenState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -145,6 +146,7 @@ fun AppRoot(rt: VroomiRuntime) {
     val progress by rt.demoProgress.collectAsStateWithLifecycle()
     val demoTheme by rt.demoTheme.collectAsStateWithLifecycle()
     val demoPowertrain by rt.demoPowertrain.collectAsStateWithLifecycle()
+    val demoModel by rt.demoModel.collectAsStateWithLifecycle()
     val lastTrip by rt.lastTrip.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val kart = rememberVroomiSceneState()
@@ -237,9 +239,13 @@ fun AppRoot(rt: VroomiRuntime) {
     ThemeKeeper(rt, kit, liveTheme)
     ThemeSoundKeeper(rt, kit, liveTheme) { stage.phase == PassagePhase.IDLE || stage.phase == PassagePhase.SETTLING }
 
+    // The upgrade step of the shown theme: a demo shows its own step, otherwise the user's choice for that theme.
+    val shownTheme = liveTheme ?: applied
+    // Task 1: replace the clamp with ThemeAccess.effectiveModel(if (settings.devAllGrades) Grade.DIAMOND else grade, settings.models[shownTheme]).
+    val sceneModel = demoModel ?: (settings.models[shownTheme] ?: 0).coerceIn(0, ThemeModels.COUNT - 1)
     val options = SceneOptions(
         calm = settings.calm, reducedMotion = systemReduced, bubbleColor = MaterialTheme.colorScheme.surface,
-        sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin,
+        sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin, model = sceneModel,
     )
     var firstFrameSeen by remember { mutableStateOf(false) }
 

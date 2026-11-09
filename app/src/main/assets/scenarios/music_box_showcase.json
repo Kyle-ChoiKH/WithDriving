@@ -4,6 +4,7 @@
   "description": "차속이 템포를, 달린 거리가 태엽을 감아요. 곡은 앱이 그 자리에서 만들어요",
   "order": 4,
   "theme": "MUSIC_BOX",
+  "model": 4,
   "durationS": 100,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 2, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "caption": "주차 중: 태엽이 비어 있으면 오르골은 쉬어요" },

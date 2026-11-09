@@ -70,15 +70,10 @@ internal class EntranceRenderer {
                 val sy = Entrances.hingeScale(p, intensity)
                 scale(1f, sy, Offset(w / 2f, 0f)) { content() }
             }
-            SceneTheme.MARBLE -> {
-                val sw = Entrances.sweep(p, w, h)
+            SceneTheme.HANGAR -> clipRect(0f, 0f, w, Entrances.shutter(p, h)) { content() }
+            SceneTheme.PLASMA -> {
                 path.reset()
-                path.moveTo(0f, 0f)
-                path.lineTo(sw.coerceAtMost(w), 0f)
-                if (sw > w) path.lineTo(w, (sw - w).coerceAtMost(h))
-                if (sw > h) path.lineTo((sw - h).coerceAtMost(w), h) else path.lineTo(0f, sw.coerceAtMost(h))
-                if (sw > h) path.lineTo(0f, h)
-                path.close()
+                path.addOval(Rect(Offset(w / 2f, h / 2f), Entrances.plasmaRadius(p, w, h)))
                 clipPath(path) { content() }
             }
             SceneTheme.AQUARIUM -> {
@@ -175,9 +170,11 @@ internal class EntranceRenderer {
                 while (x <= w + 0.5f) { path.lineTo(x, y + amp * sin(x / w * 2f * PI.toFloat() * 2f + p * 6f)); x += step }
                 drawPath(path, Color.White.copy(alpha = 0.28f), style = androidx.compose.ui.graphics.drawscope.Stroke(hairPx * 2f))
             }
-            SceneTheme.MARBLE -> if (p in 0.001f..0.999f) {
-                val sw = Entrances.sweep(p, w, h)
-                drawLine(tint.copy(alpha = 0.5f), Offset(sw, 0f), Offset(sw - h, h), hairPx)
+            // The shutter's lower edge, a hairline in the theme's tint (as the engine's section line).
+            SceneTheme.HANGAR -> if (p in 0.001f..0.999f) drawRect(tint, Offset(0f, Entrances.shutter(p, h) - hairPx / 2f), Size(w, hairPx))
+            // The iris rim, a faint ring in the theme's tint.
+            SceneTheme.PLASMA -> if (p in 0.001f..0.999f) {
+                drawCircle(tint.copy(alpha = 0.5f), Entrances.plasmaRadius(p, w, h), Offset(w / 2f, h / 2f), style = androidx.compose.ui.graphics.drawscope.Stroke(hairPx))
             }
             SceneTheme.TERRARIUM -> {
                 val up = Entrances.mistUp(f, intensity)

@@ -229,26 +229,6 @@ class ScreensSnapshotTest {
         }
     }
 
-    @Test fun themePickerMarble() = screen {
-        androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
-            FriendsPicker(selected = io.vroomi.character.CharacterSkin.CHOCHIM, theme = io.vroomi.character.calibre.SceneTheme.MARBLE, live = false) {}
-        }
-    }
-
-    @Test fun drivingMarble() = drivingMarble(true)
-    @Test fun drivingMarbleReal() = drivingMarble(false)
-    private fun drivingMarble(demo: Boolean, night: Boolean = false) = screen(night) {
-        val car = io.vroomi.character.CarSignals(speedKmh = 65f, accelMps2 = 0.2f, gear = io.vroomi.core.vehicle.model.GearState.DRIVE, moving = true,
-            fanLevel = 4, fanMax = 8, setTempC = 22f, drivingMode = io.vroomi.core.vehicle.model.DriveModeState.NORMAL,
-            safetyWarningActive = false, brakePressed = false, wiperActive = true)
-        val t = driving("진자 운반").copy(car = car, journey = Journey(active = true, tripSeq = 2, tripKm = 0.4f, stars = 0, starSeq = 0))
-        Box(Modifier.fillMaxSize()) {
-            io.vroomi.character.render.theme.ThemeSceneStill(io.vroomi.character.calibre.SceneTheme.MARBLE, t, day, Modifier.fillMaxSize(), seconds = 30f)
-            MovingOverlay("진자 운반", muted = false, calm = false, onMute = {}, onCalm = {},
-                demoCaption = if (demo) "와이퍼 → 진자 컵이 1.6초 주기로 흔들리며 구슬을 건네줘요" else null, demoProgress = if (demo) 0.4f else null, onEndDemo = {})
-        }
-    }
-
     @Test fun themePickerPaper() = screen {
         androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
             FriendsPicker(selected = io.vroomi.character.CharacterSkin.CHOCHIM, theme = io.vroomi.character.calibre.SceneTheme.PAPER, live = false) {}

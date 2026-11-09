@@ -21,6 +21,7 @@ import io.vroomi.character.calibre.CalibreTone
 import io.vroomi.character.calibre.CalibreView
 import io.vroomi.character.render.SceneOptions
 import io.vroomi.character.render.Spring
+import io.vroomi.character.theme.ThemeModels
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -76,6 +77,8 @@ internal class CalibreRuntime(initialReserveH: Float = 41f) {
     var moving = false; private set
     var finish = CalibreFinish.AUTO; private set
     var lastOptions = SceneOptions(); private set
+    /** The upgrade step the painter draws, 0..4 = Lv.1..5 ([SceneOptions.model] of the last step, clamped). */
+    val model: Int get() = lastOptions.model.coerceIn(0, ThemeModels.COUNT - 1)
 
     // Reused paths (no per-frame allocation)
     val hairspring = Path()

@@ -66,7 +66,7 @@ import kotlin.math.max
 
 /**
  * The passage reel (docs/media/theme_passage.gif), rendered only with VROOMI_REEL=1: launch, home, the gallery,
- * three themes entered, an arrow through all eleven, apply, a demo start, moving, parked, the trip card and the
+ * three themes entered, an arrow through all twelve, apply, a demo start, moving, parked, the trip card and the
  * user's own theme returning. Every theme change runs through the real [StageController]; the live worlds are
  * simulated stills that advance with the reel's clock.
  */
@@ -298,7 +298,7 @@ class PassageReelTest {
         for (t in listOf(SceneTheme.CALIBRE, SceneTheme.ENGINE)) enterAndClose(t)
         enter(SceneTheme.KART)
 
-        // 4. The arrows through all eleven, each with its own entrance.
+        // 4. The arrows through all twelve, each with its own entrance.
         for (i in 1 until ThemeRegistry.all.size) {
             val next = ThemeRegistry.all[i].theme
             stage.hint = PassageHint(PassageStyle.ENTRANCE, interrupt = true)

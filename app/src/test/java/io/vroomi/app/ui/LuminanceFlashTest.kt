@@ -12,7 +12,7 @@ import org.junit.Test
 import kotlin.math.abs
 
 /**
- * The luminance and flash rule over every ordered pair of the eleven themes (110 pairs) at 60 fps, with the real
+ * The luminance and flash rule over every ordered pair of the twelve themes (132 pairs) at 60 fps, with the real
  * passage curves and each theme's measured luminance:
  * - the screen's mean luminance never changes by more than 10 % of full scale between two frames;
  * - never more than three luminance reversals of 10 % or more inside any one second;
@@ -85,7 +85,7 @@ class LuminanceFlashTest {
             check(v.name, from, to, s.trace)
             pairs++
         }
-        assertEquals(110 * variants.size, pairs)
+        assertEquals(12 * 11 * variants.size, pairs)
     }
 
     @Test fun swipeCommitPassesTheFlashRule() {

@@ -63,6 +63,12 @@ data class SceneOptions(
      * Painters may read it for an optional entrance accent; the default 1 never changes a frame.
      */
     val intro: Float = 1f,
+    /**
+     * The theme's upgrade step: 0..4 = Lv.1..5 ([io.vroomi.character.theme.ThemeModels]). Every painter reads it
+     * (kit themes as `f.options.model` or `f.model`, CALIBRE and ENGINE as their runtime's `model`, read from the
+     * options of its last step; KART's runtime gets the same options). The default 0 is Lv.1.
+     */
+    val model: Int = 0,
 )
 
 /**

@@ -3,6 +3,7 @@ package io.vroomi.character.theme
 import io.vroomi.character.CarSignals
 import io.vroomi.character.CharacterTarget
 import io.vroomi.character.Journey
+import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.core.vehicle.model.GearState
 import io.vroomi.core.vehicle.model.TurnSignal
 import org.junit.Assert.assertEquals
@@ -11,6 +12,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ThemeKitTest {
+
+    @Test fun everyThemeHasFiveStepNames() {
+        SceneTheme.entries.forEach { t ->
+            val names = (0 until ThemeModels.COUNT).map { ThemeModels.title(t, it) }
+            assertTrue("$t: $names", names.all { it.isNotBlank() }); assertEquals("$t: $names", 5, names.toSet().size)
+        }
+        assertEquals("VR-01 스틸", ThemeModels.title(SceneTheme.CALIBRE, 0))
+        assertEquals("HX-5 탐사형", ThemeModels.title(SceneTheme.HANGAR, 4))
+        assertEquals("Lv.1", ThemeModels.tag(0)); assertEquals("Lv.5", ThemeModels.tag(4))
+    }
 
     @Test fun flashGuardNeverAllowsFourPulsesInOneSecond() {
         val g = FlashGuard()

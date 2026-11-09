@@ -196,16 +196,6 @@ class ScenarioGoldenTest {
         assertTrue(r.maxChip <= 12)
     }
 
-    @Test fun marbleShowcase() {
-        val r = play("marble_showcase")
-        assertTrue("captions=${r.captions}", r.captions >= 15)
-        assertTrue(DrivingEvent.HARSH_BRAKE in r.driving)
-        assertTrue(r.kartBrake && r.kartBlink)
-        assertTrue("km=${r.maxKm}", r.maxKm >= 1)
-        assertEquals(1, r.trips.size)
-        assertTrue(r.maxChip <= 12)
-    }
-
     @Test fun paperShowcase() {
         val r = play("paper_showcase")
         assertTrue("captions=${r.captions}", r.captions >= 13)

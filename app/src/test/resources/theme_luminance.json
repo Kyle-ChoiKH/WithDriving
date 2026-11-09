@@ -1,10 +1,11 @@
 {
   "AQUARIUM": 0.318,
-  "MARBLE": 0.741,
+  "PLASMA": 0.013,
   "TERRARIUM": 0.284,
   "ORBIT": 0.003,
+  "HANGAR": 0.021,
   "CALIBRE": 0.059,
-  "ENGINE": 0.687,
+  "ENGINE": 0.686,
   "PAPER": 0.439,
   "KART": 0.52,
   "TREASURE_MAP": 0.707,

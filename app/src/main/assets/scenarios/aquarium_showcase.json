@@ -4,6 +4,7 @@
   "description": "차에 실린 작은 수조. 가속하면 물이 기울고, 깜빡이 쪽으로 물고기 떼가 돌아요",
   "order": 7,
   "theme": "AQUARIUM",
+  "model": 4,
   "durationS": 92,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 60, "evCharging": false, "caption": "주차 중: 물고기들이 천천히 머물러요" },

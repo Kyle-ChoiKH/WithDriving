@@ -239,7 +239,7 @@ internal fun WardrobeContent(level: Int, wardrobe: Set<Accessory>, onToggle: (Ac
 @Composable
 fun SettingsPanel(rt: VroomiRuntime) {
     val s by rt.settingsStore.settings.collectAsStateWithLifecycle()
-    SettingsContent(s, onUpdate = { f -> rt.settingsStore.update(f) }, onReset = { rt.diary.clear() }) { DebugPanel(rt) }
+    SettingsContent(s, onUpdate = { f -> rt.settingsStore.update(f) }, onReset = { rt.resetDiary() }) { DebugPanel(rt) }
 }
 
 /**

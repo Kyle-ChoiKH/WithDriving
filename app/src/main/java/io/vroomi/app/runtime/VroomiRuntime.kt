@@ -12,6 +12,7 @@ import io.vroomi.character.CharacterDirector
 import io.vroomi.character.CharacterTarget
 import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.character.engine.Powertrain
+import io.vroomi.character.theme.ThemeModels
 import io.vroomi.core.navi.NaviBridge
 import io.vroomi.core.vehicle.SourceMode
 import io.vroomi.core.vehicle.VehicleHub
@@ -108,6 +109,12 @@ class VroomiRuntime(private val app: Application) {
     /** The powertrain a demo forces in the Cutaway theme; null = the user's own setting. */
     private val _demoPowertrain = MutableStateFlow<Powertrain?>(null)
     val demoPowertrain: StateFlow<Powertrain?> = _demoPowertrain.asStateFlow()
+    /**
+     * The upgrade step a demo shows, whatever the grade (the scenario's "model", else the top step); null when no demo
+     * runs, so the scene uses the user's own step.
+     */
+    private val _demoModel = MutableStateFlow<Int?>(null)
+    val demoModel: StateFlow<Int?> = _demoModel.asStateFlow()
 
     private var started = false
 
@@ -115,6 +122,7 @@ class VroomiRuntime(private val app: Application) {
         if (started) return
         started = true
         diary.load()
+        // Task 1: when !settingsStore.hasStoredGrade(), set gradeReached from SafetyGrade.earned(diary.trips.value) (first launch after v1.6).
         hub.setMode(settingsStore.settings.value.sourceMode)
         hub.start()
         navi.start()
@@ -141,6 +149,7 @@ class VroomiRuntime(private val app: Application) {
         hub.setMode(SourceMode.SIMULATOR)
         _demoTheme.value = demoThemeOf(scenario)
         _demoPowertrain.value = scenario.powertrain?.let { p -> Powertrain.entries.find { it.name == p } }
+        _demoModel.value = demoModelOf(scenario)
         io.vroomi.core.vehicle.route.LiveRoute.demoRoute = scenario.route
         _demo.value = true
         simulator.play(scenario)
@@ -155,11 +164,18 @@ class VroomiRuntime(private val app: Application) {
         _demo.value = false
         _demoTheme.value = null
         _demoPowertrain.value = null
+        _demoModel.value = null
         io.vroomi.core.vehicle.route.LiveRoute.demoRoute = null
         hub.setMode(settingsStore.settings.value.sourceMode)
     }
 
     fun dismissLastTrip() { _lastTrip.value = null }
+
+    /** "다이어리 초기화": the trips go, and the grade starts again from bronze (the chosen steps are kept, clamped when shown). */
+    fun resetDiary() {
+        diary.clear()
+        settingsStore.update { it.copy(gradeReached = 1) }
+    }
 
     /** Typed command from the debug panel (same path as speech). */
     fun command(text: String) {
@@ -192,6 +208,7 @@ class VroomiRuntime(private val app: Application) {
             val sketch = io.vroomi.core.vehicle.route.TripSketch.take()?.toList()
             val full = trip.copy(stars = j.stars, bestCombo = j.bestCombo, biomes = j.biomesSeen, demo = _demo.value, sketch = sketch)
             diary.add(full)
+            // Task 1: settingsStore.update { it.copy(gradeReached = max(it.gradeReached, SafetyGrade.earned(diary.trips.value).level)) }
             _lastTrip.value = full
         }
     }
@@ -283,6 +300,9 @@ class VroomiRuntime(private val app: Application) {
         /** A scenario's own "theme" field wins; older Calibre demos are recognised by their id. */
         fun demoThemeOf(s: Scenario): SceneTheme? =
             s.theme?.let { t -> SceneTheme.entries.find { it.name == t } } ?: if (s.id.startsWith("calibre")) SceneTheme.CALIBRE else null
+
+        /** A demo shows its scenario's "model" (clamped to 0..4), else the top step: demos and showcases play whatever the grade. */
+        fun demoModelOf(s: Scenario): Int = (s.model ?: (ThemeModels.COUNT - 1)).coerceIn(0, ThemeModels.COUNT - 1)
 
         private val RARE_KEYS = setOf("start", "arrival", "low_battery", "hello", "goodbye")
         /** Lines that keep playing in every theme (they carry information, not character). */

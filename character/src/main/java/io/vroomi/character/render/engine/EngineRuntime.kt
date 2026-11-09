@@ -25,6 +25,7 @@ import io.vroomi.character.engine.Powertrain
 import io.vroomi.character.render.SceneOptions
 import io.vroomi.character.render.Spring
 import io.vroomi.character.render.calibre.CalibreText
+import io.vroomi.character.theme.ThemeModels
 import kotlin.math.roundToInt
 
 /**
@@ -52,6 +53,8 @@ internal class EngineRuntime {
      */
     var drive = 0f; private set
     var lastOptions = SceneOptions(); private set
+    /** The upgrade step the painter draws, 0..4 = Lv.1..5 ([SceneOptions.model] of the last step, clamped). */
+    val model: Int get() = lastOptions.model.coerceIn(0, ThemeModels.COUNT - 1)
     var choice = EnginePowertrain.AUTO; private set
     var forced: Powertrain? = null; private set
     /** Snapshot tests only: the title block shows the widest value of each cell, to pin its layout. */

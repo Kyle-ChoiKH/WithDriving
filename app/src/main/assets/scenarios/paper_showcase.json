@@ -4,6 +4,7 @@
   "description": "꼬마차 세계를 종이 팝업북으로. 같은 친구, 같은 별, 같은 풍경을 종이로 오려 붙였어요",
   "order": 10,
   "theme": "PAPER",
+  "model": 4,
   "durationS": 92,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "caption": "주차 중: 팝업북이 펼쳐져 있어요. 주차 중에는 책장 모서리를 눌러 넘길 수 있어요" },

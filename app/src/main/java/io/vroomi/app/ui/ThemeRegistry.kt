@@ -104,8 +104,10 @@ internal object ThemeRegistry {
     private val TREASURE_MAP = kit(SceneTheme.TREASURE_MAP, R.string.theme_map, R.string.theme_map_hint, ThemeCategory.RECORD, "map_showcase", note = R.string.map_note)
     private val AQUARIUM = kit(SceneTheme.AQUARIUM, R.string.theme_aquarium, R.string.theme_aquarium_hint, ThemeCategory.NATURE, "aquarium_showcase", note = R.string.aquarium_note)
     private val ORBIT = kit(SceneTheme.ORBIT, R.string.theme_orbit, R.string.theme_orbit_hint, ThemeCategory.NATURE, "orbit_showcase", note = R.string.orbit_note)
-    private val MARBLE = kit(SceneTheme.MARBLE, R.string.theme_marble, R.string.theme_marble_hint, ThemeCategory.MACHINE, "marble_showcase",
-        options = listOf(ThemeOption.SOUND), note = R.string.marble_note)
+    private val PLASMA = kit(SceneTheme.PLASMA, R.string.theme_plasma, R.string.theme_plasma_hint, ThemeCategory.MACHINE, "plasma_showcase",
+        note = R.string.plasma_note)
+    private val HANGAR = kit(SceneTheme.HANGAR, R.string.theme_hangar, R.string.theme_hangar_hint, ThemeCategory.MACHINE, "hangar_showcase",
+        note = R.string.hangar_note)
     // Every theme but KART is its own world with its own cast, so the friend picker belongs to KART only.
     private val PAPER = kit(SceneTheme.PAPER, R.string.theme_paper, R.string.theme_paper_hint, ThemeCategory.PLAY, "paper_showcase",
         note = R.string.paper_note)
@@ -113,7 +115,7 @@ internal object ThemeRegistry {
         options = listOf(ThemeOption.SOUND), note = R.string.pixel_note)
 
     /** Every theme in gallery (and swipe) order. */
-    val all: List<ThemeSpec> = listOf(KART, PAPER, CALIBRE, ENGINE, MUSIC_BOX, MARBLE, TERRARIUM, AQUARIUM, ORBIT, TREASURE_MAP, PIXEL)
+    val all: List<ThemeSpec> = listOf(KART, PAPER, CALIBRE, ENGINE, MUSIC_BOX, PLASMA, HANGAR, TERRARIUM, AQUARIUM, ORBIT, TREASURE_MAP, PIXEL)
 
     fun of(theme: SceneTheme): ThemeSpec = all.firstOrNull { it.theme == theme } ?: KART
 

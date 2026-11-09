@@ -64,8 +64,6 @@ internal object KitReels {
             listOf(2f, 8f, 13f, 20f, 26f, 31.5f, 38f, 46f, 53f, 58f, 63.3f, 70f, 75f, 81f, 88f), "aqreel"),
         SceneTheme.ORBIT to Reel("orbit_showcase",
             listOf(2f, 8f, 13f, 20f, 25f, 34f, 42f, 49f, 55f, 60f, 64.3f, 70f, 75f, 83f, 91f), "orreel"),
-        SceneTheme.MARBLE to Reel("marble_showcase",
-            listOf(2f, 10f, 16f, 25f, 30f, 35f, 43f, 52f, 60f, 68f, 72.3f, 78f, 85f, 92f, 99f), "mareel"),
         SceneTheme.PAPER to Reel("paper_showcase",
             listOf(1.5f, 8f, 13f, 16.3f, 21f, 26f, 32f, 39f, 46f, 54f, 62f, 66.4f, 72f, 81f, 85f), "ppreel"),
     )

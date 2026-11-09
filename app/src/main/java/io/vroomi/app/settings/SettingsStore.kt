@@ -6,6 +6,7 @@ import io.vroomi.character.CharacterSkin
 import io.vroomi.character.calibre.CalibreFinish
 import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.character.engine.EnginePowertrain
+import io.vroomi.character.theme.ThemeModels
 import io.vroomi.core.vehicle.SourceMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,7 +34,7 @@ data class Settings(
     val quietThemeVoice: Boolean = false,
     /** Cutaway theme: AUTO detects an EV from the battery signals. */
     val enginePowertrain: EnginePowertrain = EnginePowertrain.AUTO,
-    /** Theme sound of the kit themes (music box, marble machine): media audio, off by default. */
+    /** Theme sound of the kit themes (music box, pixel world): media audio, off by default. */
     val themeSound: Boolean = false,
     /** Optional mechanical sound (hidden, developer panel only). */
     val mechSound: Boolean = false,
@@ -43,7 +44,16 @@ data class Settings(
     val devSlowMotion: Boolean = false,
     /** The backdrop colour of the theme shown last (ARGB; 0 = none yet): the first frame fades to it. */
     val launchBackdrop: Int = 0,
+    /** The highest safe-driving grade ever reached (1 bronze .. 5 diamond); it never drops, except by a diary reset. */
+    val gradeReached: Int = 1,
+    /** The upgrade step chosen per theme (0..4 = Lv.1..5, stored as "model.<THEME>"); a theme without one uses its best unlocked step. */
+    val models: Map<SceneTheme, Int> = emptyMap(),
+    /** Developer: preview every grade (debug builds only, not stored). */
+    val devAllGrades: Boolean = false,
 )
+
+/** A stored theme name: an unknown or removed theme (or none) falls back to KART. */
+internal fun parseTheme(name: String?): SceneTheme = SceneTheme.entries.firstOrNull { it.name == name } ?: SceneTheme.KART
 
 /** SharedPreferences-backed settings (small, synchronous, per device). */
 class SettingsStore(context: Context) {
@@ -61,7 +71,7 @@ class SettingsStore(context: Context) {
         userCorner = false,
         onboarded = prefs.getBoolean("onboarded", false),
         skin = runCatching { CharacterSkin.valueOf(prefs.getString("skin", "VROOMI")!!) }.getOrDefault(CharacterSkin.VROOMI),
-        sceneTheme = runCatching { SceneTheme.valueOf(prefs.getString("sceneTheme", "KART")!!) }.getOrDefault(SceneTheme.KART),
+        sceneTheme = parseTheme(prefs.getString("sceneTheme", null)),
         calibreFinish = runCatching { CalibreFinish.valueOf(prefs.getString("calibreFinish", "AUTO")!!) }.getOrDefault(CalibreFinish.AUTO),
         // Migrated from the Calibre-only key, so a user's earlier choice is kept.
         quietThemeVoice = if (prefs.contains("quietThemeVoice")) prefs.getBoolean("quietThemeVoice", false) else prefs.getBoolean("calibreVoice", false),
@@ -71,7 +81,13 @@ class SettingsStore(context: Context) {
         devFrameTime = false,
         devSlowMotion = false,
         launchBackdrop = prefs.getInt("launchBackdrop", 0),
+        gradeReached = prefs.getInt(KEY_GRADE, 1).coerceIn(1, 5),
+        models = SceneTheme.entries.filter { prefs.contains(modelKey(it)) }.associateWith { prefs.getInt(modelKey(it), 0).coerceIn(0, ThemeModels.COUNT - 1) },
+        devAllGrades = false,
     )
+
+    /** True once a grade was stored (the first launch after an update computes it from the existing trips). */
+    fun hasStoredGrade(): Boolean = prefs.contains(KEY_GRADE)
 
     /** The Calibre power reserve and when it was saved (real time keeps draining it). */
     fun readReserve(): Pair<Float, Long>? {
@@ -93,7 +109,7 @@ class SettingsStore(context: Context) {
     fun update(change: (Settings) -> Settings) {
         _settings.update(change)
         val s = _settings.value
-        prefs.edit()
+        val e = prefs.edit()
             .putBoolean("muted", s.muted)
             .putBoolean("voiceRare", s.voiceRare)
             .putBoolean("calm", s.calm)
@@ -109,6 +125,15 @@ class SettingsStore(context: Context) {
             .putBoolean("themeSound", s.themeSound)
             .putBoolean("mechSound", s.mechSound)
             .putInt("launchBackdrop", s.launchBackdrop)
-            .apply()
+        // The grade is written once it is above bronze (or was stored before), so the first launch after an update can
+        // still tell that no grade was ever stored ([hasStoredGrade]).
+        if (s.gradeReached > 1 || prefs.contains(KEY_GRADE)) e.putInt(KEY_GRADE, s.gradeReached)
+        SceneTheme.entries.forEach { t -> s.models[t]?.let { e.putInt(modelKey(t), it) } ?: e.remove(modelKey(t)) }
+        e.apply()
+    }
+
+    private companion object {
+        const val KEY_GRADE = "gradeReached"
+        fun modelKey(t: SceneTheme) = "model.${t.name}"
     }
 }

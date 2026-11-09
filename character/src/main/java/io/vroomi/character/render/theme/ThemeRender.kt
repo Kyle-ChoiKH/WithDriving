@@ -39,6 +39,7 @@ import io.vroomi.character.render.Season
 import io.vroomi.character.render.Spring
 import io.vroomi.character.render.calibre.CalibreText
 import io.vroomi.character.render.calibre.DEFAULT_NOW_MS
+import io.vroomi.character.theme.ThemeModels
 import io.vroomi.character.theme.ThemeSim
 import kotlin.math.max
 import kotlin.math.min
@@ -57,8 +58,10 @@ class ThemeFrame {
     /** Design units visible across and down. */
     var dw = 0f; var dh = 0f
     var density: Density = Density(1f)
-    /** The scene options of this frame (skin, season, calm...). */
+    /** The scene options of this frame (skin, season, calm, upgrade step...). */
     var options: SceneOptions = SceneOptions()
+    /** The upgrade step of this frame, 0..4 = Lv.1..5 ([SceneOptions.model], clamped). */
+    val model: Int get() = options.model.coerceIn(0, ThemeModels.COUNT - 1)
     val cx: Float get() = dw / 2f
     val cy: Float get() = dh / 2f
 }

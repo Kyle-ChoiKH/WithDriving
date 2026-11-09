@@ -37,9 +37,12 @@
     <string name="theme_orbit">궤도 · 작은 태양계</string>
     <string name="theme_orbit_hint">1km를 달리면 우주선이 행성을 한 바퀴 돌아요</string>
     <string name="orbit_note">한 바퀴는 거리 1km예요. 빨리 달려도 바퀴 수는 늘지 않아요. 별은 작은 위성이 되어 이번 여행 내내 함께 돌고, 주차하면 정거장에 도킹해요.</string>
-    <string name="theme_marble">구슬 장치</string>
-    <string name="theme_marble_hint">브레이크, 깜빡이, 와이퍼가 구슬 정거장을 움직여요</string>
-    <string name="marble_note">차속이 나선 승강기를 돌리고, 구슬은 레일 위에서만 굴러요. 브레이크는 레버, 깜빡이는 갈림길, 와이퍼는 진자, 후진은 되돌이 고리예요. 별을 받으면 빨간 줄무늬 구슬이 나와요.</string>
+    <string name="theme_plasma">플라즈마 · 고전압 실험실</string>
+    <string name="theme_plasma_hint">차속만큼 보랏빛 전류가 일렁이고, 깜빡이 쪽으로 모여요</string>
+    <string name="plasma_note">차속이 빠를수록 전류 가닥이 늘어나지만 110km/h부터는 더 늘지 않아요. 브레이크를 밟으면 가닥이 중심으로 움츠러들어요. 밝기는 천천히만 흔들리고 번쩍이지 않아요.</string>
+    <string name="theme_hangar">로봇 격납고</string>
+    <string name="theme_hangar_hint">달린 거리만큼 나만의 거대 로봇이 조립돼요</string>
+    <string name="hangar_note">실제로 달린 거리 30km마다 로봇 한 대가 완성되고, 다음 거리부터 새 기체를 조립해요. 빨리 달린다고 더 빨리 조립되지 않아요. 데모 드라이브는 조립을 늘리지 않아요.</string>
     <string name="theme_paper">종이 팝업북</string>
     <string name="theme_paper_hint">종이접기 자동차와 종이학이 팝업북 길을 달려요</string>
     <string name="paper_note">세 가지 잉크로 찍은 종이 팝업북이에요. 종이접기 자동차 지붕에 종이학이 타고, 부드럽게 달리면 색종이 동그라미가 날아와요. 책장은 주차 중에만 넘어가요.</string>

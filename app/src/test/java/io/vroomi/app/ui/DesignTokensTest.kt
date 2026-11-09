@@ -86,7 +86,7 @@ class DesignTokensTest {
     }
 
     @Test fun everyThemeTintPassesContrastInLightAndDark() {
-        assertEquals(11, Ambience.all.size)
+        assertEquals(12, Ambience.all.size)
         for (a in Ambience.all) {
             assertTrue("${a.theme} tint on light ${ColorMath.contrast(a.tintLight, Neutral.SURFACE_LIGHT)}", ColorMath.contrast(a.tintLight, Neutral.SURFACE_LIGHT) >= 4.5f)
             assertTrue("${a.theme} tint on dark", ColorMath.contrast(a.tintDark, Neutral.SURFACE_DARK) >= 4.5f)

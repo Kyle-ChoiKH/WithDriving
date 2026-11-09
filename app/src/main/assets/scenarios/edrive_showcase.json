@@ -5,6 +5,7 @@
   "order": 3,
   "theme": "ENGINE",
   "powertrain": "EV",
+  "model": 4,
   "durationS": 62,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 0, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 64, "evCharging": false, "caption": "주차 중: 전기 모터 VE-M1, 셀은 실제 배터리 %만큼 차 있어요" },
