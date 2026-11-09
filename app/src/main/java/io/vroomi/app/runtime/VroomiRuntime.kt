@@ -2,10 +2,12 @@ package io.vroomi.app.runtime
 
 import android.app.Application
 import io.vroomi.app.R
-import io.vroomi.app.diary.Bond
 import io.vroomi.app.diary.DiaryStore
 import io.vroomi.app.diary.TripRecord
 import io.vroomi.app.diary.TripRecorder
+import io.vroomi.app.progress.Grade
+import io.vroomi.app.progress.SafetyGrade
+import io.vroomi.app.settings.Settings
 import io.vroomi.app.settings.SettingsStore
 import io.vroomi.character.Action
 import io.vroomi.character.CharacterDirector
@@ -46,6 +48,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
 import java.util.concurrent.Executors
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
@@ -122,7 +125,9 @@ class VroomiRuntime(private val app: Application) {
         if (started) return
         started = true
         diary.load()
-        // Task 1: when !settingsStore.hasStoredGrade(), set gradeReached from SafetyGrade.earned(diary.trips.value) (first launch after v1.6).
+        // The first launch after an update (no grade stored yet): the grade the existing trips already earn, so a driver
+        // with many safe kilometres does not start again from bronze.
+        if (!settingsStore.hasStoredGrade()) raiseGrade()
         hub.setMode(settingsStore.settings.value.sourceMode)
         hub.start()
         navi.start()
@@ -171,6 +176,12 @@ class VroomiRuntime(private val app: Application) {
 
     fun dismissLastTrip() { _lastTrip.value = null }
 
+    /** Stores the grade the trips earn when it is above the one reached so far (a grade never drops). */
+    private fun raiseGrade() {
+        val earned = SafetyGrade.earned(diary.trips.value).level
+        if (earned > settingsStore.settings.value.gradeReached) settingsStore.update { it.copy(gradeReached = max(it.gradeReached, earned)) }
+    }
+
     /** "다이어리 초기화": the trips go, and the grade starts again from bronze (the chosen steps are kept, clamped when shown). */
     fun resetDiary() {
         diary.clear()
@@ -188,8 +199,7 @@ class VroomiRuntime(private val app: Application) {
         val isMoving = moving.update(s.speedKmh, s.gear, ux.restricted.value, now)
         _isMoving.value = isMoving
 
-        val level = Bond.level(Bond.careKm(diary.trips.value))
-        val wardrobe = settings.wardrobe.filter { it.unlockLevel <= level }.toSet()
+        val wardrobe = settings.wardrobe.intersect(SafetyGrade.outfits(shownGrade(diary.trips.value, settings)))
         _target.value = director.update(s, isMoving, settings.userCorner, wardrobe, now)
 
         val gate = gate(s, isMoving)
@@ -208,7 +218,7 @@ class VroomiRuntime(private val app: Application) {
             val sketch = io.vroomi.core.vehicle.route.TripSketch.take()?.toList()
             val full = trip.copy(stars = j.stars, bestCombo = j.bestCombo, biomes = j.biomesSeen, demo = _demo.value, sketch = sketch)
             diary.add(full)
-            // Task 1: settingsStore.update { it.copy(gradeReached = max(it.gradeReached, SafetyGrade.earned(diary.trips.value).level)) }
+            raiseGrade()
             _lastTrip.value = full
         }
     }
@@ -292,7 +302,7 @@ class VroomiRuntime(private val app: Application) {
 
     fun summaryForUi(): String {
         val trips = diary.trips.value
-        val km = Bond.careKm(trips)
+        val km = SafetyGrade.safeKm(trips)
         return "${trips.size}번의 주행 · 부드러운 거리 ${(km * 10).roundToInt() / 10f}km"
     }
 
@@ -300,6 +310,13 @@ class VroomiRuntime(private val app: Application) {
         /** A scenario's own "theme" field wins; older Calibre demos are recognised by their id. */
         fun demoThemeOf(s: Scenario): SceneTheme? =
             s.theme?.let { t -> SceneTheme.entries.find { it.name == t } } ?: if (s.id.startsWith("calibre")) SceneTheme.CALIBRE else null
+
+        /**
+         * The grade the app shows: the reached grade, or every grade while the developer preview is on (debug builds
+         * only; never stored).
+         */
+        fun shownGrade(trips: List<TripRecord>, s: Settings): Grade =
+            if (io.vroomi.app.BuildConfig.DEBUG && s.devAllGrades) Grade.DIAMOND else SafetyGrade.current(trips, s.gradeReached)
 
         /** A demo shows its scenario's "model" (clamped to 0..4), else the top step: demos and showcases play whatever the grade. */
         fun demoModelOf(s: Scenario): Int = (s.model ?: (ThemeModels.COUNT - 1)).coerceIn(0, ThemeModels.COUNT - 1)

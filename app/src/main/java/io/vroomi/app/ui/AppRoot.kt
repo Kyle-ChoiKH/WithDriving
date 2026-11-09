@@ -60,7 +60,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.vroomi.app.BuildConfig
 import io.vroomi.app.R
-import io.vroomi.app.diary.Bond
+import io.vroomi.app.progress.SafetyGrade
+import io.vroomi.app.progress.ThemeAccess
 import io.vroomi.app.runtime.EngineSound
 import io.vroomi.app.runtime.MechanicalSound
 import io.vroomi.app.runtime.VroomiRuntime
@@ -241,8 +242,8 @@ fun AppRoot(rt: VroomiRuntime) {
 
     // The upgrade step of the shown theme: a demo shows its own step, otherwise the user's choice for that theme.
     val shownTheme = liveTheme ?: applied
-    // Task 1: replace the clamp with ThemeAccess.effectiveModel(if (settings.devAllGrades) Grade.DIAMOND else grade, settings.models[shownTheme]).
-    val sceneModel = demoModel ?: (settings.models[shownTheme] ?: 0).coerceIn(0, ThemeModels.COUNT - 1)
+    val grade = remember(trips, settings.gradeReached, settings.devAllGrades) { VroomiRuntime.shownGrade(trips, settings) }
+    val sceneModel = demoModel ?: ThemeAccess.effectiveModel(grade, settings.models[shownTheme])
     val options = SceneOptions(
         calm = settings.calm, reducedMotion = systemReduced, bubbleColor = MaterialTheme.colorScheme.surface,
         sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin, model = sceneModel,
@@ -723,7 +724,7 @@ private fun RailSlot(shown: Boolean, appear: Float, content: @Composable () -> U
 private fun PanelFor(tab: Tab, rt: VroomiRuntime, trips: List<io.vroomi.app.diary.TripRecord>) {
     when (tab) {
         Tab.DIARY -> DiaryPanel(trips)
-        Tab.WARDROBE -> WardrobePanel(rt, Bond.careKm(trips))
+        Tab.WARDROBE -> WardrobePanel(rt, trips)
         Tab.SETTINGS -> SettingsPanel(rt)
         else -> Unit
     }
@@ -751,9 +752,10 @@ private fun HomeChrome(
 ) {
     val listen by rt.recognizer.state.collectAsStateWithLifecycle()
     val partial by rt.recognizer.partial.collectAsStateWithLifecycle()
-    val careKm = Bond.careKm(trips)
-    val level = Bond.level(careKm)
-    val toNext = Bond.kmToNext(careKm)
+    val settings by rt.settingsStore.settings.collectAsStateWithLifecycle()
+    val careKm = SafetyGrade.safeKm(trips)
+    val level = VroomiRuntime.shownGrade(trips, settings).level
+    val toNext = SafetyGrade.kmToNext(trips, level)
     val progress = if (toNext == null) 1f else {
         val span = careKm + toNext - prevLevelKm(level)
         ((careKm - prevLevelKm(level)) / span).coerceIn(0f, 1f)
@@ -761,7 +763,7 @@ private fun HomeChrome(
     // The chrome-zone contract: status top left, actions bottom right (io.vroomi.character.render.theme.ChromeZones).
     Box(Modifier.fillMaxSize().padding(Space.parked)) {
         BondBadge(
-            level, Bond.totalStars(trips), progress,
+            level, SafetyGrade.totalStars(trips), progress,
             if (toNext == null) stringResource(R.string.care_km, careKm) else stringResource(R.string.next_level, toNext),
             Modifier.align(Alignment.TopStart),
         )

@@ -50,7 +50,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.vroomi.app.BuildConfig
 import io.vroomi.app.R
-import io.vroomi.app.diary.Bond
 import io.vroomi.app.diary.TripRecord
 import io.vroomi.app.runtime.VroomiRuntime
 import io.vroomi.app.settings.CharacterSize
@@ -194,9 +193,9 @@ private val Accessory.label: String get() = when (this) {
 }
 
 @Composable
-fun WardrobePanel(rt: VroomiRuntime, careKm: Float) {
+fun WardrobePanel(rt: VroomiRuntime, trips: List<TripRecord>) {
     val settings by rt.settingsStore.settings.collectAsStateWithLifecycle()
-    WardrobeContent(Bond.level(careKm), settings.wardrobe) { a, worn ->
+    WardrobeContent(VroomiRuntime.shownGrade(trips, settings).level, settings.wardrobe) { a, worn ->
         rt.settingsStore.update { s -> s.copy(wardrobe = if (worn) s.wardrobe - a else s.wardrobe + a) }
     }
 }
