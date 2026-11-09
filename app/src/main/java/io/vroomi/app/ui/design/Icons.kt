@@ -89,18 +89,11 @@ object VIcons {
         moveTo(11.8f, 12.5f); lineTo(15.4f, 12.5f)
     }
 
-    /** A coat hanger. */
-    val Wardrobe: ImageVector = icon("wardrobe") {
-        moveTo(10.1f, 5.9f)
-        curveTo(10.1f, 4.8f, 11f, 4f, 12f, 4f)
-        curveTo(13.1f, 4f, 13.9f, 4.8f, 13.9f, 5.8f)
-        curveTo(13.9f, 7.1f, 12f, 7.4f, 12f, 8.8f)
-        lineTo(12f, 9.4f)
-        lineTo(4.2f, 15.6f)
-        curveTo(3.3f, 16.3f, 3.8f, 17.8f, 5f, 17.8f)
-        lineTo(19f, 17.8f)
-        curveTo(20.2f, 17.8f, 20.7f, 16.3f, 19.8f, 15.6f)
-        lineTo(12f, 9.4f)
+    /** A medal: two ribbon strokes meeting a round medal (the grade tab). */
+    val Medal: ImageVector = icon("medal") {
+        moveTo(7.6f, 3.5f); lineTo(10.6f, 9.8f)
+        moveTo(16.4f, 3.5f); lineTo(13.4f, 9.8f)
+        circle(12f, 14.8f, 5.2f)
     }
 
     /** Three sliders: the settings. */
@@ -155,7 +148,7 @@ object VIcons {
         moveTo(5.5f, 12.6f); lineTo(10f, 17f); lineTo(18.5f, 7.6f)
     }
 
-    /** A five-point star, filled (the bond badge's star count). */
+    /** A five-point star, filled (the grade badge's star count). */
     val Star: ImageVector = filled("star") {
         val cx = 12f; val cy = 12.6f; val ro = 8.6f; val ri = 3.7f
         for (i in 0 until 10) {
@@ -168,5 +161,5 @@ object VIcons {
     }
 
     /** All icons (the icon test checks each stays inside its 2-unit margin). */
-    val all: List<ImageVector> get() = listOf(Close, ChevronLeft, ChevronRight, ChevronDown, Home, Worlds, Diary, Wardrobe, Settings, Play, Stop, Mic, Speaker, SpeakerOff, Calm, Check, Star)
+    val all: List<ImageVector> get() = listOf(Close, ChevronLeft, ChevronRight, ChevronDown, Home, Worlds, Diary, Medal, Settings, Play, Stop, Mic, Speaker, SpeakerOff, Calm, Check, Star)
 }

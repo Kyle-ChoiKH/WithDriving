@@ -3,6 +3,7 @@ package io.vroomi.app
 import io.vroomi.app.runtime.MovingDetector
 import io.vroomi.app.runtime.VroomiRuntime
 import io.vroomi.app.settings.parseTheme
+import io.vroomi.app.ui.ThemeOption
 import io.vroomi.app.ui.ThemeRegistry
 import io.vroomi.character.CharacterDirector
 import io.vroomi.character.CharacterTarget
@@ -143,6 +144,8 @@ class ThemeContractTest {
         assertTrue(ThemeRegistry.has(SceneTheme.PLASMA) && ThemeRegistry.has(SceneTheme.HANGAR))
         assertEquals(SceneTheme.entries.toSet(), ThemeRegistry.all.map { it.theme }.toSet())
     }
+
+    @Test fun everyThemeOffersModelChip() { ThemeRegistry.all.forEach { assertEquals(ThemeOption.MODEL, it.options.first()) } }
 
     @Test fun parseThemeFallsBackToKart() {
         assertEquals(SceneTheme.KART, parseTheme("MARBLE")); assertEquals(SceneTheme.KART, parseTheme(null))

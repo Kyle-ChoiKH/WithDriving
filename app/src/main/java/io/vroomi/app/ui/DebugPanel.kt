@@ -61,6 +61,8 @@ fun DebugPanel(rt: VroomiRuntime) {
             SettingSwitch(stringResource(R.string.debug_mech_sound), st.mechSound) { on -> rt.settingsStore.update { it.copy(mechSound = on) } }
             if (io.vroomi.app.BuildConfig.DEBUG) SettingSwitch(stringResource(R.string.debug_frame_time), st.devFrameTime) { on -> rt.settingsStore.update { it.copy(devFrameTime = on) } }
             if (io.vroomi.app.BuildConfig.DEBUG) SettingSwitch(stringResource(R.string.debug_slow_motion), st.devSlowMotion) { on -> rt.settingsStore.update { it.copy(devSlowMotion = on) } }
+            // Every grade (and so every theme's top step) for a preview; never stored, the real grade is untouched.
+            if (io.vroomi.app.BuildConfig.DEBUG) SettingSwitch(stringResource(R.string.dev_all_grades), st.devAllGrades) { on -> rt.settingsStore.update { it.copy(devAllGrades = on) } }
             Mono("capabilities: " + caps.available.sortedBy { it.ordinal }.joinToString { it.name.lowercase() })
             if (caps.unavailable.isNotEmpty()) Mono("missing: " + caps.unavailable.sortedBy { it.ordinal }.joinToString { it.name.lowercase() })
             Mono("HVAC control: ${if (rt.hub.canControlClimate()) "allowed" else "not approved (read-only)"}")
