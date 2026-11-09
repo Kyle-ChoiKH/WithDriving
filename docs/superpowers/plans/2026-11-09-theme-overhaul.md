@@ -68,8 +68,8 @@
 | Task | 상태 | 브랜치 / PR |
 |---|---|---|
 | 2, 3 | 완료, CI 통과, 병합 승인 대기 | `phase-a/foundation` / PR #1 |
-| 1 + 4 | 진행 중(이 PC) | `phase-a/grade-ui` |
-| 5 | 진행 중(이 PC) | `theme/calibre` |
+| 1 + 4 | Task 1 커밋, Task 4 WIP 커밋(일시정지, 전체 테스트 전) | `phase-a/grade-ui` |
+| 5 | WIP 커밋(일시정지, 2차 그림 검토 중) | `theme/calibre` |
 | 6 ~ 16 | 대기 | 클라우드가 저장소에 접근할 수 있으면 클라우드에서 한꺼번에. 아니면 이 PC에서 2개씩 |
 | 17 | 대기 | 모든 PR이 합쳐진 뒤 |
 
