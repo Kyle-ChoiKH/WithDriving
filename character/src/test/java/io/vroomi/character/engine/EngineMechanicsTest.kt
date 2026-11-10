@@ -292,4 +292,45 @@ class EngineMechanicsTest {
         }
         assertTrue(clean && rocked)
     }
+
+    // ---------------------------------------------------------------- telemetry curves (upgrade steps)
+
+    private fun peakDeg(intake: Boolean): Int = (0 until 720).maxByOrNull { EngineGeometry.valveLift(it.toFloat(), intake) }!!
+
+    @Test fun intakePeakNear470() {
+        assertEquals(470.0, peakDeg(true).toDouble(), 10.0)
+        assertEquals(1f, EngineGeometry.valveLift(peakDeg(true).toFloat(), true), 0.01f)
+        assertEquals(0f, EngineGeometry.valveLift(100f, true), 0f)
+    }
+
+    @Test fun exhaustPeakNear250() {
+        assertEquals(250.0, peakDeg(false).toDouble(), 10.0)
+        assertEquals(0f, EngineGeometry.valveLift(600f, false), 0f)
+    }
+
+    @Test fun raceTorqueAboveBase() {
+        fun peak(m: Int) = (750..7000 step 50).maxOf { EngineGeometry.torqueAt(it.toFloat(), m) }
+        for (m in 1..4) assertTrue("step $m", peak(m) > peak(m - 1))
+        assertTrue(peak(4) > peak(0) * 2f)
+        // The turbo steps reach their plateau early; the naturally aspirated ones peak in the mid range.
+        assertTrue(EngineGeometry.torqueAt(2200f, 2) > EngineGeometry.torqueAt(2200f, 0) * 1.5f)
+        for (m in 0..4) for (r in 0..7200 step 100) assertTrue(EngineGeometry.torqueAt(r.toFloat(), m) > 0f)
+    }
+
+    @Test fun sparkAdvanceGrowsWithSpeedAndShrinksWithLoad() {
+        assertTrue(EngineGeometry.ignitionAdvanceDeg(5000.0, 0.3) > EngineGeometry.ignitionAdvanceDeg(1000.0, 0.3))
+        assertTrue(EngineGeometry.ignitionAdvanceDeg(3000.0, 0.9) < EngineGeometry.ignitionAdvanceDeg(3000.0, 0.2))
+    }
+
+    @Test fun noSpoolChipWithoutATurbo() {
+        val m = EngineMechanics().also { it.turbo = false }
+        var seen = false
+        for (i in 0 until 600) {
+            val t = i / 60f
+            m.step(1f / 60f, CharacterTarget(kart = io.vroomi.character.KartState(driving = true), car = car(60f + t * 9f, a = 2.6f, mode = DriveModeState.SPORT),
+                journey = io.vroomi.character.Journey(active = true, tripSeq = 1)), 1_000_000L + i * 16L, 14f, EnginePowertrain.ICE)
+            if (m.chip == "터보 스풀업") seen = true
+        }
+        assertTrue(!seen)
+    }
 }
