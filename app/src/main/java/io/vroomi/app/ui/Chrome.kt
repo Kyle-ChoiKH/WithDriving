@@ -6,6 +6,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -282,6 +284,7 @@ internal fun MovingOverlay(
     demoCaption: String?, demoProgress: Float?, onEndDemo: () -> Unit,
     modifier: Modifier = Modifier,
     sceneTheme: io.vroomi.character.calibre.SceneTheme? = null,
+    handsOn: HandsOnStrip? = null,
 ) {
     // Over a dark scene (CALIBRE's velvet, ORBIT's display) the driving chrome is the night chrome even by day:
     // a light dock on a black scene would be the brightest thing in the car.
@@ -290,23 +293,48 @@ internal fun MovingOverlay(
         val night = remember(amb) { io.vroomi.app.ui.design.ChromeColors(amb, true) }
         VroomiTheme(night = true, theme = amb.theme) {
             androidx.compose.runtime.CompositionLocalProvider(io.vroomi.app.ui.design.LocalChrome provides night) {
-                MovingOverlay(chip, muted, calm, onMute, onCalm, demoCaption, demoProgress, onEndDemo, modifier, null)
+                MovingOverlay(chip, muted, calm, onMute, onCalm, demoCaption, demoProgress, onEndDemo, modifier, null, handsOn)
             }
         }
         return
     }
     val prefs = io.vroomi.app.ui.motion.currentMotion()
-    Box(modifier.fillMaxSize().padding(Space.moving)) {
+    // The hands-on controls have a band of their own under the scene (the scene is laid out above it), so they
+    // never cover a reading; the chip and the dock keep their corners of the scene.
+    if (handsOn != null) HandsOnControls(handsOn, modifier.fillMaxSize())
+    Box(modifier.fillMaxSize().padding(bottom = if (handsOn != null) Dimens.handsOnBand else 0.dp).padding(Space.moving)) {
         if (!chip.isNullOrBlank()) StatusChip(chip, Modifier.align(Alignment.TopStart))
+        val inDemo = demoProgress != null || handsOn != null
         Column(Modifier.align(Alignment.BottomEnd), horizontalAlignment = Alignment.End) {
-            if (demoProgress != null) {
-                DemoCaption(demoCaption, demoProgress, prefs)
+            if (inDemo) {
+                DemoCaption(demoCaption, demoProgress, prefs, idle = if (handsOn != null) stringResource(R.string.demo_hands_on_idle) else null)
                 Spacer(Modifier.height(Dimens.captionGap))
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Dimens.bigToggleGap)) {
-                if (demoProgress != null) BigToggle(stringResource(R.string.demo_end), VIcons.Stop, on = false, role = Role.Button, onClick = onEndDemo)
+                if (inDemo) BigToggle(stringResource(R.string.demo_end), VIcons.Stop, on = false, role = Role.Button, onClick = onEndDemo)
                 BigToggle(stringResource(if (muted) R.string.unmute else R.string.mute), if (muted) VIcons.SpeakerOff else VIcons.Speaker, muted, onClick = onMute)
                 BigToggle(stringResource(if (calm) R.string.calm_off else R.string.calm), VIcons.Calm, calm, onClick = onCalm)
+            }
+        }
+    }
+}
+
+/** The hands-on demo's controls for the overlay: the buttons of the present theme, which are on, and a press. */
+internal class HandsOnStrip(val controls: List<io.vroomi.app.demo.Cue>, val on: Set<io.vroomi.app.demo.Cue>, val onPress: (io.vroomi.app.demo.Cue) -> Unit)
+
+/**
+ * The hands-on demo's controls: a band along the bottom of the window with one button per control the theme reacts
+ * to, lit while it is on. The row scrolls sideways when the window cannot hold them all.
+ */
+@Composable
+private fun HandsOnControls(strip: HandsOnStrip, modifier: Modifier) {
+    Box(modifier, contentAlignment = Alignment.BottomStart) {
+        Row(
+            Modifier.fillMaxWidth().height(Dimens.handsOnBand).horizontalScroll(rememberScrollState()).padding(horizontal = Space.moving),
+            horizontalArrangement = Arrangement.spacedBy(Space.s8), verticalAlignment = Alignment.CenterVertically,
+        ) {
+            strip.controls.forEach { cue ->
+                BigToggle(io.vroomi.app.demo.HandsOnDrive.label(cue), null, cue in strip.on, Modifier.size(width = Dimens.handsOnW, height = Dimens.handsOnH), role = Role.Button) { strip.onPress(cue) }
             }
         }
     }
@@ -343,7 +371,7 @@ internal fun StatusChip(text: String, modifier: Modifier = Modifier) {
  * the accent leads the line; the drive's progress runs along the bottom as a hairline bar. At most two lines.
  */
 @Composable
-private fun DemoCaption(caption: String?, progress: Float, prefs: io.vroomi.app.ui.motion.MotionPrefs) {
+private fun DemoCaption(caption: String?, progress: Float?, prefs: io.vroomi.app.ui.motion.MotionPrefs, idle: String? = null) {
     val chrome = LocalChrome.current
     val tag = stringResource(R.string.demo_tag)
     val badge = stringResource(R.string.demo_badge)
@@ -358,12 +386,14 @@ private fun DemoCaption(caption: String?, progress: Float, prefs: io.vroomi.app.
             val text = buildAnnotatedString {
                 withStyle(SpanStyle(color = chrome.tint, fontWeight = VType.drive.fontWeight)) { append(tag) }
                 append("  ")
-                append(if (line.isNullOrBlank()) badge else line)
+                append(if (line.isNullOrBlank()) (idle ?: badge) else line)
             }
             Text(text, style = VType.driveBody, color = Ink.primary, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
-        Spacer(Modifier.height(Space.s12))
-        ProgressBar({ progress }, height = Dimens.progressThin)
+        if (progress != null) {
+            Spacer(Modifier.height(Space.s12))
+            ProgressBar({ progress }, height = Dimens.progressThin)
+        }
     }
 }
 

@@ -26,6 +26,6 @@
     { "t": 112, "speed": 60, "naviRemainingM": 900, "caption": "목적지 1km 안 → 토큰 옆에 작은 깃발 (방향은 안 보여요)" },
     { "t": 124, "naviRemainingM": 200 },
     { "t": 128, "speed": 0, "naviRemainingM": 0 },
-    { "t": 130, "gear": "P", "arrive": true, "caption": "도착 → 지도가 말리고 VROOMI 밀랍 도장. 여행 기록에는 64점 그림만 남아요" }
+    { "t": 130, "gear": "P", "arrive": true, "caption": "도착 → 지도가 말리고 밀랍 도장. 기록에는 64점 그림만 남아요" }
   ]
 }

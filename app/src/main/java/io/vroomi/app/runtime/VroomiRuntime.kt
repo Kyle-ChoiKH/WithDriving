@@ -102,6 +102,9 @@ class VroomiRuntime(private val app: Application) {
     val demoCaption: StateFlow<String?> get() = simulator.caption
     val demoProgress: StateFlow<Float> get() = simulator.progress
     val demoScenarios: List<Scenario> by lazy { simulator.scenarios() }
+    /** The hands-on demo: the user's presses drive the simulated car ([startHandsOn]). */
+    val handsOn = io.vroomi.app.demo.HandsOnDrive { change -> simulator.setManual(change) }
+    private var handsJob: kotlinx.coroutines.Job? = null
     /** A demo can show a theme for its duration only (the Calibre and engine showcases); null = the user's own. */
     /** When the last voice line was spoken (theme sound ducks for a few seconds after it). */
     @Volatile var lastSpokeAtMs = 0L
@@ -149,7 +152,12 @@ class VroomiRuntime(private val app: Application) {
     }
 
     fun startDemo(id: String) {
-        val scenario = simulator.loadScenario(id) ?: return
+        startDemo(simulator.loadScenario(id) ?: return)
+    }
+
+    /** Plays [scenario] (a bundled one, or a lesson built for the present theme) as a demo drive. */
+    fun startDemo(scenario: Scenario) {
+        if (handsOn.running.value) stopDemo()
         _lastTrip.value = null
         hub.setMode(SourceMode.SIMULATOR)
         _demoTheme.value = demoThemeOf(scenario)
@@ -160,7 +168,28 @@ class VroomiRuntime(private val app: Application) {
         simulator.play(scenario)
     }
 
+    /**
+     * The hands-on demo of [theme]: the simulated car drives by itself and the user works its controls from the
+     * strip of buttons ([handsOn]); it runs until the user ends it (or the real car starts driving).
+     */
+    fun startHandsOn(theme: SceneTheme) {
+        if (_demo.value) stopDemo()
+        _lastTrip.value = null
+        hub.setMode(SourceMode.SIMULATOR)
+        _demoTheme.value = theme
+        _demoPowertrain.value = if (theme == SceneTheme.ENGINE) Powertrain.ICE else null
+        _demoModel.value = ThemeModels.COUNT - 1
+        io.vroomi.core.vehicle.route.LiveRoute.demoRoute = demoScenarios.firstOrNull { it.id in io.vroomi.app.demo.DemoCatalog.showcaseIds(theme) }?.route
+        _demo.value = true
+        handsOn.start(theme)
+        handsJob = scope.launch {
+            while (true) { kotlinx.coroutines.delay(HANDS_TICK_MS); handsOn.tick(HANDS_TICK_MS / 1000f) }
+        }
+    }
+
     fun stopDemo() {
+        handsJob?.cancel(); handsJob = null
+        handsOn.stop()
         simulator.stopScenario()
         endDemo()
     }
@@ -308,6 +337,8 @@ class VroomiRuntime(private val app: Application) {
     }
 
     companion object {
+        private const val HANDS_TICK_MS = 100L
+
         /** A scenario's own "theme" field wins; older Calibre demos are recognised by their id. */
         fun demoThemeOf(s: Scenario): SceneTheme? =
             s.theme?.let { t -> SceneTheme.entries.find { it.name == t } } ?: if (s.id.startsWith("calibre")) SceneTheme.CALIBRE else null

@@ -83,7 +83,12 @@
     <string name="demo_drive">데모 드라이브</string>
     <string name="demo_end">데모 끝내기</string>
     <string name="demo_badge">데모 · 시뮬레이터</string>
-    <string name="demo_hint">실제 차는 그대로 두고, 가상 주행 신호로 브루미의 반응을 보여 줘요. 화면 위에 지금 어떤 신호에 반응하는지 설명이 나와요.</string>
+    <string name="demo_hint">실제 차는 그대로 두고, 가상 주행 신호로 이 테마가 어떻게 반응하는지 보여 줘요. 화면에 \"내 조작 → 테마의 반응\"이 나와요.</string>
+    <string name="demo_drive_of">데모 드라이브 · %1$s</string>
+    <string name="demo_hands_on_section">직접 해 보기</string>
+    <string name="demo_hands_on">직접 조작해 보기</string>
+    <string name="demo_hands_on_hint">가속, 브레이크, 깜빡이, 온도… 버튼을 누르면 이 테마가 바로 반응해요. 끝낼 때까지 계속 달려요.</string>
+    <string name="demo_hands_on_idle">버튼을 눌러 보세요</string>
     <string name="demo_play">재생</string>
     <string name="ok">좋아요</string>
     <string name="trip_card_title">오늘의 드라이브</string>

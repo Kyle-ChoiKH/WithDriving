@@ -289,27 +289,66 @@ class PassageSnapshotTest {
             demoCaption = "에코 모드 → 푸른 이온 불꽃", demoProgress = 0.42f, onEndDemo = {})
     }
 
+    private fun bundledDemos() = java.io.File("src/main/assets/scenarios").listFiles { f -> f.name.endsWith(".json") }!!
+        .map { io.vroomi.core.vehicle.sim.ScenarioParser.parse(it.readText()) }.sortedBy { it.order }
+
+    /** The demo picker of a theme other than the kart: hands-on, its showcase, its own lessons. */
+    @Test fun ui_sheet_demo_picker_aquarium() = shot(SceneTheme.AQUARIUM) {
+        HomeLayer(SceneTheme.AQUARIUM, stage = remember { newStage(SceneTheme.AQUARIUM) }, bubble = null)
+        DemoPicker(io.vroomi.app.demo.DemoCatalog.sections(SceneTheme.AQUARIUM, bundledDemos()), "아쿠아리움", onPick = {}, onHandsOn = {}, onClose = {})
+    }
+
+    /** The hands-on demo: the theme's controls beside the dock, one of them on, the caption of the last press. */
+    @Test fun ui_hands_on_aquarium() = shot(SceneTheme.AQUARIUM) {
+        val stage = remember { newStage(SceneTheme.AQUARIUM) }
+        val stills = remember { stills(SceneTheme.AQUARIUM) }
+        Stage(stage, stills, Rect(0f, 0f, w, h - io.vroomi.app.ui.design.Dimens.handsOnBand.value), IntSize(w.toInt(), (h - io.vroomi.app.ui.design.Dimens.handsOnBand.value).toInt()))
+        val controls = io.vroomi.app.demo.HandsOnDrive.CONTROLS.filter { io.vroomi.app.demo.ThemeReactions.of(SceneTheme.AQUARIUM, it) != null }
+        MovingOverlay("헤엄치는 중", muted = false, calm = false, onMute = {}, onCalm = {},
+            demoCaption = io.vroomi.app.demo.ThemeReactions.caption(SceneTheme.AQUARIUM, io.vroomi.app.demo.Cue.COOL), demoProgress = null, onEndDemo = {},
+            sceneTheme = SceneTheme.AQUARIUM, handsOn = HandsOnStrip(controls, setOf(io.vroomi.app.demo.Cue.COOL, io.vroomi.app.demo.Cue.LIGHTS)) {})
+    }
+
+    /** The engine room keeps its readings clear of the controls: the scene ends above their band. */
+    @Test fun ui_hands_on_engine() = shot(SceneTheme.ENGINE) {
+        val stage = remember { newStage(SceneTheme.ENGINE) }
+        val stills = remember { stills(SceneTheme.ENGINE) }
+        Stage(stage, stills, Rect(0f, 0f, w, h - io.vroomi.app.ui.design.Dimens.handsOnBand.value), IntSize(w.toInt(), (h - io.vroomi.app.ui.design.Dimens.handsOnBand.value).toInt()))
+        val controls = io.vroomi.app.demo.HandsOnDrive.CONTROLS.filter { io.vroomi.app.demo.ThemeReactions.of(SceneTheme.ENGINE, it) != null }
+        MovingOverlay("D3 주행", muted = false, calm = false, onMute = {}, onCalm = {},
+            demoCaption = io.vroomi.app.demo.ThemeReactions.caption(SceneTheme.ENGINE, io.vroomi.app.demo.Cue.ACCEL), demoProgress = null, onEndDemo = {},
+            sceneTheme = SceneTheme.ENGINE, handsOn = HandsOnStrip(controls, setOf(io.vroomi.app.demo.Cue.ACCEL)) {})
+    }
+
+    @Test fun ui_hands_on_kart() = shot(SceneTheme.KART) {
+        val stills = remember { stills(SceneTheme.KART) }
+        Stage(homeStage, stills, Rect(0f, 0f, w, h - io.vroomi.app.ui.design.Dimens.handsOnBand.value), IntSize(w.toInt(), (h - io.vroomi.app.ui.design.Dimens.handsOnBand.value).toInt()))
+        val controls = io.vroomi.app.demo.HandsOnDrive.CONTROLS.filter { io.vroomi.app.demo.ThemeReactions.of(SceneTheme.KART, it) != null }
+        MovingOverlay("부드러운 주행 중", muted = false, calm = false, onMute = {}, onCalm = {},
+            demoCaption = null, demoProgress = null, onEndDemo = {}, sceneTheme = SceneTheme.KART, handsOn = HandsOnStrip(controls, emptySet()) {})
+    }
+
     @Test fun ui_sheet_demo_picker() = shot(SceneTheme.KART) {
         HomeLayer(SceneTheme.KART, bubble = null)
         DemoPicker(
-            listOf(
+            io.vroomi.app.demo.DemoCatalog.sections(SceneTheme.KART, listOf(
                 Scenario("highlight", "브루미 하이라이트 (3분)", 172f, emptyList(), "출발부터 도착까지, 브루미가 반응하는 모든 순간을 한 번에"),
                 Scenario("commute", "출근길 (3분)", 182f, emptyList(), "도시 출퇴근: 신호 대기, 깜빡이, 에어컨, 급제동, 고속도로"),
                 Scenario("rainy_night", "비 오는 밤 퇴근길 (2분)", 122f, emptyList(), "전조등, 비, 서리 제거, 길안내, 도착 축하"),
-            ),
-            onPick = {}, onClose = {},
+            )), "꼬마차와 친구들",
+            onPick = {}, onHandsOn = {}, onClose = {},
         )
     }
 
     @Test fun ui_sheet_demo_picker_dark() = shot(SceneTheme.KART, dark = true) {
         HomeLayer(SceneTheme.KART, bubble = null)
         DemoPicker(
-            listOf(
+            io.vroomi.app.demo.DemoCatalog.sections(SceneTheme.KART, listOf(
                 Scenario("highlight", "브루미 하이라이트 (3분)", 172f, emptyList(), "출발부터 도착까지, 브루미가 반응하는 모든 순간을 한 번에"),
                 Scenario("commute", "출근길 (3분)", 182f, emptyList(), "도시 출퇴근: 신호 대기, 깜빡이, 에어컨, 급제동, 고속도로"),
                 Scenario("rainy_night", "비 오는 밤 퇴근길 (2분)", 122f, emptyList(), "전조등, 비, 서리 제거, 길안내, 도착 축하"),
-            ),
-            onPick = {}, onClose = {},
+            )), "꼬마차와 친구들",
+            onPick = {}, onHandsOn = {}, onClose = {},
         )
     }
 

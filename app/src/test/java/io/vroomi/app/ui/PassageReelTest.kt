@@ -225,7 +225,7 @@ class PassageReelTest {
                 if (s.sheetCollapse) { transformOrigin = TransformOrigin(1f, 0f); scaleX = 0.4f + 0.6f * s.sheet; scaleY = 0.4f + 0.6f * s.sheet }
                 else translationY = (1 - s.sheet) * 300.dp.toPx()
             }) {
-                DemoPicker(scenarios, onPick = {}, onClose = {})
+                DemoPicker(io.vroomi.app.demo.DemoCatalog.sections(SceneTheme.KART, scenarios), "꼬마차와 친구들", onPick = {}, onHandsOn = {}, onClose = {})
             }
         }
     }

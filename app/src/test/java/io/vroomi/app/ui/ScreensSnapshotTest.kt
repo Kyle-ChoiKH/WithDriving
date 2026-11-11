@@ -304,12 +304,12 @@ class ScreensSnapshotTest {
         Box(Modifier.fillMaxSize()) {
             VroomiSceneStill(CharacterTarget(sizeMode = SizeMode.FULL, accessories = setOf(Accessory.SCARF)), day, modifier = Modifier.fillMaxSize())
             DemoPicker(
-                listOf(
+                io.vroomi.app.demo.DemoCatalog.sections(SceneTheme.KART, listOf(
                     Scenario("highlight", "브루미 하이라이트 (3분)", 172f, emptyList(), "출발부터 도착까지, 브루미가 반응하는 모든 순간을 한 번에"),
                     Scenario("commute", "출근길 (3분)", 182f, emptyList(), "도시 출퇴근: 신호 대기, 깜빡이, 에어컨, 급제동, 고속도로"),
                     Scenario("rainy_night", "비 오는 밤 퇴근길 (2분)", 122f, emptyList(), "전조등, 비, 서리 제거, 길안내, 도착 축하"),
-                ),
-                onPick = {}, onClose = {},
+                )), "꼬마차와 친구들",
+                onPick = {}, onHandsOn = {}, onClose = {},
             )
         }
     }

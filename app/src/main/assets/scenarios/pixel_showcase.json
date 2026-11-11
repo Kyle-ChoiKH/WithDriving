@@ -7,10 +7,10 @@
   "model": 4,
   "durationS": 104,
   "keyframes": [
-    { "t": 0,   "gear": "P", "speed": 0, "door": false, "fan": 2, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 70, "evCharging": false, "caption": "주차 중: 네온 오락실 거리. 주차 중에는 탐사차를 누르면 깡충 뛰고 조종사가 손을 흔들어요" },
+    { "t": 0,   "gear": "P", "speed": 0, "door": false, "fan": 2, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 70, "evCharging": false, "caption": "주차 중: 탐사차를 누르면 깡충 뛰고 조종사가 손을 흔들어요" },
     { "t": 4,   "gear": "D", "caption": "출발 → 가속하면 배기 연기가 퐁퐁 (초당 4번까지)" },
     { "t": 6,   "speed": 0 },
-    { "t": 12,  "speed": 50, "caption": "차속만큼 도트 세계가 흘러요. 100km/h면 1초에 240픽셀, 그 이상은 똑같아요" },
+    { "t": 12,  "speed": 50, "caption": "차속만큼 도트 세계가 흘러요 (100km/h 이상은 같은 빠르기)" },
     { "t": 18,  "speed": 60, "caption": "부드럽게 달리면 탐사차가 깡충 뛰어 보석 조각을 잡아요" },
     { "t": 30,  "turn": "LEFT", "caption": "왼쪽 깜빡이 → 탐사차 깜빡이와 길가 화살표 표지판" },
     { "t": 34,  "turn": "NONE" },
