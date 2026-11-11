@@ -146,6 +146,8 @@ class VroomiRuntime(private val app: Application) {
             }
         }
         scope.launch(logic) { hub.snapshot.collect { s -> onSnapshot(s) } }
+        // The bundled demo drives are read off the main thread, before the picker first asks for them.
+        scope.launch(Dispatchers.IO) { demoScenarios }
         // The demo ends with its scenario; it also stops at once if the real car starts driving.
         scope.launch { simulator.playing.collect { if (it == null && _demo.value) endDemo() } }
         scope.launch { ux.restricted.collect { if (it && _demo.value) stopDemo() } }

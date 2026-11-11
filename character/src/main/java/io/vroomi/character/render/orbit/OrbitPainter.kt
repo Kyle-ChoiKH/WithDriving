@@ -94,6 +94,12 @@ private class OGeo(val dw: Float) {
     val oz = Array(OrbitSim.LEVELS + 1) { FloatArray(n + 1) }
     val back = Array(OrbitSim.LEVELS + 1) { Path() }
     val front = Array(OrbitSim.LEVELS + 1) { Path() }
+    /**
+     * The same halves as dashes (the craft's orbit 6 on 6 off, the moonlets' 3 on 7 off), cut once here: a dash
+     * effect is worked out again on every draw, a path of plain dashes is drawn from the renderer's cache.
+     */
+    val backDash = Array(OrbitSim.LEVELS + 1) { Path() }
+    val frontDash = Array(OrbitSim.LEVELS + 1) { Path() }
 
     init {
         for (o in 0..OrbitSim.LEVELS) {
@@ -110,6 +116,32 @@ private class OGeo(val dw: Float) {
                 if (lastFront != isFront) { if (i > 0) path.moveTo(ox[o][i - 1], oy[o][i - 1]) else path.moveTo(ox[o][i], oy[o][i]) }
                 path.lineTo(ox[o][i], oy[o][i])
                 lastFront = isFront
+            }
+            val on = if (o == 0) 6f else 3f; val off = if (o == 0) 6f else 7f
+            dashes(o, true, on, off, frontDash[o]); dashes(o, false, on, off, backDash[o])
+        }
+    }
+
+    /** Walks the sampled orbit [o] and adds its [wantFront] half to [out] as dashes; the pattern restarts with each run. */
+    private fun dashes(o: Int, wantFront: Boolean, on: Float, off: Float, out: Path) {
+        var pos = 0f          // the distance into the present on + off period
+        var running = false
+        for (i in 1..n) {
+            if ((oz[o][i] >= 0f) != wantFront) { running = false; continue }
+            if (!running) { pos = 0f; running = true }
+            val x0 = ox[o][i - 1]; val y0 = oy[o][i - 1]; val x1 = ox[o][i]; val y1 = oy[o][i]
+            val len = sqrt((x1 - x0) * (x1 - x0) + (y1 - y0) * (y1 - y0))
+            if (len <= 0f) continue
+            var d = 0f
+            while (d < len) {
+                val inOn = pos < on
+                val step = min(len - d, (if (inOn) on else on + off) - pos)
+                if (inOn) {
+                    out.moveTo(x0 + (x1 - x0) * d / len, y0 + (y1 - y0) * d / len)
+                    out.lineTo(x0 + (x1 - x0) * (d + step) / len, y0 + (y1 - y0) * (d + step) / len)
+                }
+                d += step; pos += step
+                if (pos >= on + off - 1e-4f) pos = 0f
             }
         }
     }
@@ -138,6 +170,8 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
     private var geo: OGeo? = null
     private val base = LayerSlot(SceneTheme.ORBIT)
     private val glass = LayerSlot(SceneTheme.ORBIT)
+    /** The steady light the steps add behind the planet (stars, nebulae, the dust band, the halo): drawn once. */
+    private val lights = LayerSlot(SceneTheme.ORBIT)
 
     private val dash = PathEffect.dashPathEffect(floatArrayOf(6f, 6f), 0f)
     private val dashFine = PathEffect.dashPathEffect(floatArrayOf(3f, 7f), 0f)
@@ -146,6 +180,10 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
     private val bloomDash = Stroke(6f, cap = StrokeCap.Butt, pathEffect = dash)
     private val coreDash = Stroke(1.5f, cap = StrokeCap.Butt, pathEffect = dash)
     private val coreFine = Stroke(1.2f, cap = StrokeCap.Butt, pathEffect = dashFine)
+    // Plain strokes for the orbits that are already cut into dashes (OGeo.frontDash, backDash).
+    private val bloomCut = Stroke(6f, cap = StrokeCap.Butt)
+    private val coreCut = Stroke(1.5f, cap = StrokeCap.Butt)
+    private val fineCut = Stroke(1.2f, cap = StrokeCap.Butt)
     private val chevron = Path().apply { moveTo(7f, 0f); lineTo(-6f, -5.5f); lineTo(-2.5f, 0f); lineTo(-6f, 5.5f); close() }
     private val sat = Path().apply {
         moveTo(-2.5f, -2.5f); lineTo(2.5f, -2.5f); lineTo(2.5f, 2.5f); lineTo(-2.5f, 2.5f); close()
@@ -155,6 +193,12 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
     private val hex = Path().apply { for (i in 0..6) { val a = i * PI.toFloat() / 3f; if (i == 0) moveTo(cos(a) * 9f, sin(a) * 9f) else lineTo(cos(a) * 9f, sin(a) * 9f) } }
     private val globeFront = Path()
     private val globeBack = Path()
+    // The globe's lines are kept between frames: the latitudes never change, and the meridians are worked out
+    // again only when the planet has turned far enough to show (a path left alone is drawn from the renderer's cache).
+    private val latFront = Path()
+    private val latBack = Path()
+    private var globeFor: OGeo? = null
+    private var globeSpin = Double.NaN
     private val trace = Path()
     private val tmp = FloatArray(4)
     private val chars = CharArray(8)
@@ -178,6 +222,14 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
         val bmp = base.get(((w.toLong() shl 20) xor h.toLong()) * 8L + f.model, w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { screen(g, f) } }
         s.drawImage(bmp, dstOffset = IntOffset(left.roundToInt(), top.roundToInt()), dstSize = IntSize(bmp.width, bmp.height))
+        if (OrbitStep.moon(f.model)) {
+            val model = f.model
+            val l = lights.get(((w.toLong() shl 20) xor h.toLong()) * 8L + model, w, h, f.density) {
+                withTransform({ scale(k, k, Offset.Zero) }) { with(g.extras) { light(model, g.planetR, OP.ink, 1f, front = false) } }
+            }
+            // The phosphor is dimmer at night: the layer is drawn at that brightness.
+            s.drawImage(l, dstOffset = IntOffset(left.roundToInt(), top.roundToInt()), dstSize = IntSize(l.width, l.height), alpha = 1f - 0.32f * sim.night)
+        }
     }
 
     override fun draw(s: DrawScope, sim: OrbitSim, f: ThemeFrame, tx: ThemeTexts) = with(s) {
@@ -191,7 +243,8 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         star(g, sim)
         meteor(g, sim)
         // Back halves (behind the planet's limb they are hidden by its black disc).
-        with(g.extras) { light(model, g.planetR, OP.ink, lum, front = false); bodies(model, st, OP.ink, lum, front = false) }
+        // (The steady light behind the planet is a cached layer, drawn in drawPx.)
+        with(g.extras) { bodies(model, st, OP.ink, lum, front = false) }
         orbitLines(g, sim, front = false)
         satellites(g, sim, front = false)
         craft(g, sim, front = false)
@@ -296,12 +349,16 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
             if (sim.moonlets <= lvl) break
             val born = ((sim.decoTime - sim.moonBornAt[lvl]) / 1.6).toFloat().coerceIn(0f, 1f)
             val reach = min(born, if (intro < 1f) Intro.out(intro, 0.15f + lvl * 0.08f, 0.6f) else 1f)
-            if (reach >= 1f) drawPath(if (front) g.front[lvl + 1] else g.back[lvl + 1], OP.green.copy(alpha = (0.55f * lum) * (if (front) 1f else 0.6f)), style = coreFine)
+            if (reach >= 1f) drawPath(if (front) g.frontDash[lvl + 1] else g.backDash[lvl + 1], OP.green.copy(alpha = (0.55f * lum) * (if (front) 1f else 0.6f)), style = fineCut)
             else partialOrbit(g, lvl + 1, reach, front, OP.green, 0.55f)
         }
         // The craft's orbit, with its apsides ticked.
         val a = if (front) 0.75f else 0.4f
-        if (e >= 1f) glowPath(if (front) g.front[0] else g.back[0], OP.cyan, a, dashed = true)
+        if (e >= 1f) {
+            val p = if (front) g.frontDash[0] else g.backDash[0]
+            drawPath(p, OP.cyan.copy(alpha = (0.20f * a * lum).coerceIn(0f, 1f)), style = bloomCut)
+            drawPath(p, OP.core.copy(alpha = (0.85f * a * lum).coerceIn(0f, 1f)), style = coreCut)
+        }
         else partialOrbit(g, 0, e, front, OP.cyan, a)
         if (front) {
             apsis(g, g.periX, g.periY, true, e)
@@ -341,40 +398,49 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         val spin = if (sim.reducedMotion) 0.0 else sim.decoTime * 0.06 * (if (sim.calm) 0.5 else 1.0)
         val elev = 0.38f
         val ce = cos(elev); val se = sin(elev)
-        globeFront.reset(); globeBack.reset()
-        // Latitudes every 30°.
-        for (li in -2..2) {
-            val lat = li * PI.toFloat() / 6f
-            var lastF: Boolean? = null
-            for (j in 0..48) {
-                val lon = j * 2f * PI.toFloat() / 48f
-                project(g, lat, lon, ce, se)
-                val f = tmp[2] >= 0f
-                val p = if (f) globeFront else globeBack
-                if (lastF != f) p.moveTo(tmp[0], tmp[1]) else p.lineTo(tmp[0], tmp[1])
-                lastF = f
-            }
-        }
-        // Meridians every 30°, turning with the planet.
-        for (mi in 0 until 6) {
-            val lon = (mi * PI / 6 + spin).toFloat()
-            for (half in 0..1) {
-                val lo = lon + half * PI.toFloat()
+        if (globeFor !== g) {
+            globeFor = g; globeSpin = Double.NaN
+            latFront.reset(); latBack.reset()
+            // Latitudes every 30°.
+            for (li in -2..2) {
+                val lat = li * PI.toFloat() / 6f
                 var lastF: Boolean? = null
-                for (j in 0..24) {
-                    val lat = -PI.toFloat() / 2f + j * PI.toFloat() / 24f
-                    project(g, lat, lo, ce, se)
+                for (j in 0..48) {
+                    val lon = j * 2f * PI.toFloat() / 48f
+                    project(g, lat, lon, ce, se)
                     val f = tmp[2] >= 0f
-                    val p = if (f) globeFront else globeBack
+                    val p = if (f) latFront else latBack
                     if (lastF != f) p.moveTo(tmp[0], tmp[1]) else p.lineTo(tmp[0], tmp[1])
                     lastF = f
+                }
+            }
+        }
+        // Meridians every 30°, turning with the planet (again only after a turn of half a pixel at the limb).
+        if (globeSpin.isNaN() || abs(spin - globeSpin) * r >= 0.5) {
+            globeSpin = spin
+            globeFront.reset(); globeBack.reset()
+            for (mi in 0 until 6) {
+                val lon = (mi * PI / 6 + spin).toFloat()
+                for (half in 0..1) {
+                    val lo = lon + half * PI.toFloat()
+                    var lastF: Boolean? = null
+                    for (j in 0..24) {
+                        val lat = -PI.toFloat() / 2f + j * PI.toFloat() / 24f
+                        project(g, lat, lo, ce, se)
+                        val f = tmp[2] >= 0f
+                        val p = if (f) globeFront else globeBack
+                        if (lastF != f) p.moveTo(tmp[0], tmp[1]) else p.lineTo(tmp[0], tmp[1])
+                        lastF = f
+                    }
                 }
             }
         }
         val c = Offset(g.cx, g.cy)
         // The black disc hides whatever passes behind the planet.
         drawCircle(OP.black, r + 2f, c)
+        drawPath(latBack, OP.green.copy(alpha = 0.16f * lum), style = core)
         drawPath(globeBack, OP.green.copy(alpha = 0.16f * lum), style = core)
+        glowPath(latFront, OP.cyan, 0.62f)
         glowPath(globeFront, OP.cyan, 0.62f)
         // Limb and a faint atmosphere ring.
         drawCircle(OP.cyan.copy(alpha = 0.22f * lum), r, c, style = bloom)

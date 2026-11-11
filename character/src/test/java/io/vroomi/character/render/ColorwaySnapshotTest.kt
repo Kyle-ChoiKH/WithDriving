@@ -24,6 +24,7 @@ import app.cash.paparazzi.Paparazzi
 import com.android.resources.ScreenOrientation
 import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.character.theme.ThemeColorways
+import io.vroomi.character.theme.themeDecor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -73,6 +74,23 @@ class ColorwaySnapshotTest {
         paparazzi.snapshot("colorway_props_${theme.name.lowercase()}") {
             Column(Modifier.fillMaxSize()) {
                 stills.forEach { img -> Image(img, null, Modifier.fillMaxWidth().aspectRatio(8f / 3f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.Low) }
+            }
+        }
+    }
+
+    /**
+     * The live scene's props go through [io.vroomi.character.theme.themeDecor], which draws them once into a picture:
+     * the top half is the scene as that modifier shows it, the bottom half the same props drawn directly (the two match).
+     */
+    @Test fun propsThroughTheModifier() {
+        val renderer = SceneStillRenderer(createFontFamilyResolver(paparazzi.context), Density(1f))
+        val all = (1 shl io.vroomi.character.theme.ThemeDecor.COUNT) - 1
+        val plain = renderer.render(SceneTheme.AQUARIUM, 1000, 375, StillSpec(model = 2))
+        val direct = renderer.render(SceneTheme.AQUARIUM, 1000, 375, StillSpec(model = 2, decor = all))
+        paparazzi.snapshot("props_modifier_aquarium") {
+            Column(Modifier.fillMaxSize()) {
+                Image(plain, null, Modifier.fillMaxWidth().aspectRatio(8f / 3f).themeDecor(SceneTheme.AQUARIUM, all), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.Low)
+                Image(direct, null, Modifier.fillMaxWidth().aspectRatio(8f / 3f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.Low)
             }
         }
     }
