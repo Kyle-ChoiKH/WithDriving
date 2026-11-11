@@ -78,10 +78,13 @@ internal fun DrawScope.drawKartBack(rt: SceneRuntime, t: CharacterTarget, n: Flo
     p.cubicTo(top.x - 0.10f, top.y + wave, tip.x + 0.10f, tip.y - 0.05f - wave, tip.x, tip.y)
     p.cubicTo(tip.x + 0.12f, tip.y + 0.05f + wave, top.x - 0.10f, top.y + 0.20f - wave, top.x, top.y + 0.19f)
     p.close()
-    val flagCol = when (k.style) { KartStyle.ECO -> Color(0xFF6CC24A); KartStyle.SPORT -> Color(0xFFFFFFFF); else -> Pal.raincoat }
+    val parade = KartStep.roadster(rt.model)
+    val flagCol = if (parade) Color(0xFFFFF1C9) else when (k.style) { KartStyle.ECO -> Color(0xFF6CC24A); KartStyle.SPORT -> Color(0xFFFFFFFF); else -> Pal.raincoat }
     drawPath(p, flagCol.night(n, 0.5f))
     drawPath(p, Pal.kartLine.alpha(0.6f), style = Stroke(width = 0.012f))
-    drawStar(rt, Offset(top.x - 0.12f, top.y + 0.10f + wave * 0.5f), 0.035f, if (k.style == KartStyle.SPORT) Pal.kartSport else Color.White, null)
+    drawStar(rt, Offset(top.x - 0.12f, top.y + 0.10f + wave * 0.5f), 0.035f, if (parade) Pal.star else if (k.style == KartStyle.SPORT) Pal.kartSport else Color.White, if (parade) Pal.starEdge else null)
+    // The parade flag carries a row of stars.
+    if (parade) for (i in 1..2) drawStar(rt, Offset(top.x - 0.12f - i * 0.075f + droop * 0.25f * i, top.y + 0.10f + wave * (0.5f + 0.2f * i) + droop * 0.3f * i), 0.024f, Pal.star, Pal.starEdge)
     drawCircle(Pal.sole, 0.028f, top)
 
     // Lantern on the pole at night (the standing pose holds it in the hand instead)
@@ -143,6 +146,23 @@ internal fun DrawScope.drawKartBody(rt: SceneRuntime, t: CharacterTarget, n: Flo
             drawRect(Color.White.night(n, 0.4f), Offset(-1f, -0.36f), Size(2f, 0.045f))
             drawRect(Color.White.night(n, 0.4f), Offset(-1f, -0.30f), Size(2f, 0.02f))
         }
+        if (KartStep.roadster(rt.model)) {
+            // The classic roadster's two-tone: a cream lower body under a chrome waistline.
+            drawRect(Color(0xFFF6EBD2).night(n, 0.5f), Offset(-1f, -0.33f), Size(2f, 0.2f))
+            drawRect(Color(0xFFE2D4B4).night(n, 0.5f), Offset(-1f, -0.21f), Size(2f, 0.08f))
+            drawRect(CHROME.night(n, 0.35f), Offset(-1f, -0.345f), Size(2f, 0.026f))
+            drawRect(Color.White.alpha(0.7f), Offset(-1f, -0.345f), Size(2f, 0.007f))
+        }
+    }
+    if (KartStep.roadster(rt.model)) {
+        // Chrome bumpers, a running board between the wheels, a star on the hood.
+        drawRoundRect(CHROME.night(n, 0.35f), Offset(0.84f, -0.25f), Size(0.14f, 0.06f), CornerRadius(0.03f))
+        drawRoundRect(CHROME.night(n, 0.35f), Offset(-0.97f, -0.26f), Size(0.14f, 0.06f), CornerRadius(0.03f))
+        drawRoundRect(Color.White.alpha(0.7f), Offset(0.86f, -0.243f), Size(0.10f, 0.014f), CornerRadius(0.007f))
+        drawRoundRect(Color.White.alpha(0.7f), Offset(-0.95f, -0.253f), Size(0.10f, 0.014f), CornerRadius(0.007f))
+        drawRoundRect(CHROME.night(n, 0.35f), Offset(KG.REAR_WHEEL_X + 0.25f, -0.155f), Size(KG.FRONT_WHEEL_X - KG.REAR_WHEEL_X - 0.5f, 0.035f), CornerRadius(0.015f))
+        drawLine(CHROME.night(n, 0.35f), Offset(0.70f, -0.62f), Offset(0.70f, -0.69f), strokeWidth = 0.014f)
+        drawStar(rt, Offset(0.70f, -0.715f), 0.04f, Pal.star, Pal.starEdge)
     }
     drawPath(p, Pal.kartLine, style = Stroke(width = 0.024f))
 
@@ -195,6 +215,7 @@ internal fun DrawScope.drawKartBody(rt: SceneRuntime, t: CharacterTarget, n: Flo
     if (headOn) drawCircle(Pal.headlight.alpha(0.45f), 0.11f, hc)
     drawCircle(if (headOn) Pal.headlight else Color(0xFFFFF8E0).night(n, 0.4f), 0.045f, hc)
     drawCircle(Pal.kartLine, 0.045f, hc, style = Stroke(width = 0.012f))
+    if (KartStep.roadster(rt.model)) drawCircle(CHROME.night(n, 0.35f), 0.064f, hc, style = Stroke(width = 0.018f))
     // tail / brake light
     val bg = rt.brakeGlow.value
     val tailCol = lerp(Pal.brakeOff, Pal.brakeOn, maxOf(bg, if (headOn) 0.35f else 0f))
@@ -250,7 +271,22 @@ private fun DrawScope.drawWheel(rt: SceneRuntime, c: Offset, n: Float, style: Ka
     }
     if (spinRate > 0.3f) drawCircle(hubCol.dim(0.7f).alpha(0.35f * spinRate), r * 0.36f, c, style = Stroke(width = 0.03f))
     drawCircle(Pal.kartLine, r * 0.14f, c)
+    if (KartStep.roadster(rt.model)) {
+        // Chrome wire wheels on whitewall tyres.
+        drawCircle(Color.White.night(n, 0.4f), r * 0.76f, c, style = Stroke(width = 0.045f))
+        drawCircle(CHROME.night(n, 0.35f), r * 0.56f, c)
+        rotate(rt.wheelAngle, c) {
+            for (i in 0 until 10) rotate(i * 36f, c) { drawLine(Color(0xFF7E8A93).alpha(spokeA), c, Offset(c.x, c.y - r * 0.52f), strokeWidth = 0.012f) }
+        }
+        drawCircle(Color.White.alpha(0.55f), r * 0.50f, c, style = Stroke(width = 0.012f))
+        drawCircle(Color(0xFF8E9AA3).night(n, 0.35f), r * 0.56f, c, style = Stroke(width = 0.016f))
+        drawCircle(Pal.star.night(n, 0.3f), r * 0.16f, c)
+        drawCircle(Pal.kartLine, r * 0.16f, c, style = Stroke(width = 0.012f))
+    }
 }
+
+/** Chrome on the parade roadster (step 5). */
+private val CHROME = Color(0xFFD5DEE4)
 
 /** Windshield (wiper, raindrops, fog) and steering wheel: between Vroomi's body and the front arm. */
 internal fun DrawScope.drawKartDash(rt: SceneRuntime, t: CharacterTarget, n: Float) {
