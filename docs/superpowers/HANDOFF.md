@@ -58,7 +58,15 @@ Task 1~16이 모두 끝나 PR로 올라가 있다. 모든 PR은 base main이고 
 | Task 13: 보물지도 | `theme/treasure_map` | #13 |
 | Task 15: 종이 팝업북 | `theme/paper` | #14 |
 | Task 12: 꼬마차 | `theme/kart` | #15 |
-| Task 17: 통합, 문서, 버전 1.7.0-contest(8), 에뮬레이터 확인 | `phase-c/integration` | **시작 안 함(병합 승인 대기)** |
+| Task 17: 통합, 문서, 버전 1.7.0-contest(8) | `phase-c/integration` | 통합 PR(base main). **이 PR 하나만 합치면 #1~#15가 전부 들어간다** |
+
+Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로 병합한 뒤 작업):
+- 공용 테스트: `PassageCostTest.stepFiveOfEveryTheme`(12개 테마 5단계의 레이어 48MB 이하·해제 확인, `build/reports/passage_cost_step5.txt`), `ScenarioGoldenTest`의 `plasmaShowcase`·`hangarShowcase`.
+- 밝기 재측정(12개 테마, `Ambience.kt`와 `theme_luminance.json`이 일치), 전체 `testDebugUnitTest lint assembleDebug` 통과: 테스트 793개(단위 285 + 화면 508) 실패 0, lint 오류 0.
+- 스냅샷 517장 재기록 → `docs/screenshots/` 갱신, `marble_*` 그림과 gif 삭제.
+- 문서: README(등급·업그레이드 절, 플라즈마·격납고), 제안서, 독창성 문서, 영상 대본, 제출 점검표. 버전 1.7.0-contest(8).
+- **하지 않은 것:** 에뮬레이터 확인(이 PC에 adb·에뮬레이터 없음, 사용자가 해야 함), 사다리 헬퍼를 `KitShots.ladder()`로 모으기(동작에 영향 없어 생략), 릴리스 APK 서명 빌드(키는 본 체크아웃에만 있음).
+- 5단계 한 프레임 시간(빌드 PC의 JVM 기준, 차량 아님)은 종이 팝업북 220ms, 시계 137ms로 다른 테마보다 길다. 실제 기기에서 끊기면 이 둘부터 본다.
 
 알아 둘 점:
 - 테마 PR이 고친 공용 파일은 `Ambience.kt`와 `theme_luminance.json`의 자기 테마 줄뿐이다(서로 이웃한 줄이라 병합 때 충돌이 나면 양쪽 줄을 모두 받는다). `theme/hangar`만 `AppRoot.kt`의 `ThemeKeeper`에 데모 알림 5줄을 더했다.
@@ -69,8 +77,8 @@ Task 1~16이 모두 끝나 PR로 올라가 있다. 모든 PR은 base main이고 
 
 ## 5. 다음에 할 일 (순서대로)
 
-1. **PR 병합(사용자 승인 후).** 순서: #1 → #2 → #3 → 테마 PR(#4 ~ #15). 각 PR은 합치기 전에 최신 main으로 rebase하고 CI를 다시 본다. 충돌 처리는 계획 Task 17 Step 1.
-2. **Task 17 통합**(`phase-c/integration`): 공용 테스트 정리, 밝기 재측정, 전체 빌드와 lint, 스냅샷 재기록(marble_* 삭제), 에뮬레이터 확인, 문서 갱신, 버전 1.7.0-contest(8).
+1. **PR 병합(사용자 승인 후).** 통합 PR(`phase-c/integration`) 하나를 main에 합친다. 그러면 #1~#15는 내용이 이미 들어가므로 닫으면 된다. (따로 합치고 싶으면 #1 → #2 → #3 → #4~#15 순서.)
+2. **에뮬레이터 확인**(사용자): Pleos Connect Virtual Console에서 등급 탭, 테마 12개의 단계 고르기, 쇼케이스 재생.
 3. **제출 준비**(9장).
 
 각 테마 작업의 공통 단계(스냅샷 이름, 사다리 그림, 직접 보기, 반복, 올리기)는 계획의 "Phase B 공통 단계"와 "병렬 작업 규칙"에 있다. 요점:

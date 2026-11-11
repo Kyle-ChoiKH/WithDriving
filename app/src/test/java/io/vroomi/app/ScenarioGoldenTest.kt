@@ -216,6 +216,24 @@ class ScenarioGoldenTest {
         assertTrue(r.maxChip <= 12)
     }
 
+    @Test fun plasmaShowcase() {
+        val r = play("plasma_showcase")
+        assertTrue("captions=${r.captions}", r.captions >= 8)
+        assertTrue(r.kartBrake && r.kartBlink)
+        assertTrue("stars=${r.maxStars}", r.maxStars >= 2)
+        assertEquals(1, r.trips.size)
+        assertTrue(r.maxChip <= 12)
+    }
+
+    @Test fun hangarShowcase() {
+        val r = play("hangar_showcase")
+        assertTrue("captions=${r.captions}", r.captions >= 8)
+        assertTrue(r.kartBrake && r.kartBlink)
+        assertTrue("stars=${r.maxStars}", r.maxStars >= 2)
+        assertEquals(1, r.trips.size)
+        assertTrue(r.maxChip <= 12)
+    }
+
     @Test fun engineShowcase() {
         val r = play("engine_showcase")
         assertTrue("actions=${r.actions}", r.actions.containsAll(listOf(Action.SKID, Action.POINT_LEFT, Action.BLOW, Action.TUMBLE, Action.DEFROST_WIPE, Action.CELEBRATE)))
