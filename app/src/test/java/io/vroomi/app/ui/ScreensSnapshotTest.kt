@@ -1,14 +1,37 @@
 package io.vroomi.app.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.createFontFamilyResolver
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import app.cash.paparazzi.Paparazzi
 import io.vroomi.app.diary.TripRecord
+import io.vroomi.app.progress.Grade
+import io.vroomi.app.progress.SafetyGrade
+import io.vroomi.app.progress.ThemeAccess
+import io.vroomi.app.ui.design.Ambience
+import io.vroomi.app.ui.design.ChromeColors
+import io.vroomi.app.ui.design.Layout
+import io.vroomi.app.ui.design.LocalChrome
+import io.vroomi.app.ui.design.MaterialToken
+import io.vroomi.app.ui.design.material
+import io.vroomi.app.ui.motion.LocalMotion
+import io.vroomi.app.ui.motion.MotionPrefs
+import io.vroomi.app.ui.passage.HeroStills
 import io.vroomi.character.Accessory
 import io.vroomi.character.Action
 import io.vroomi.character.Biome
@@ -18,8 +41,11 @@ import io.vroomi.character.Gait
 import io.vroomi.character.Journey
 import io.vroomi.character.KartState
 import io.vroomi.character.SizeMode
+import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.character.render.SceneOptions
+import io.vroomi.character.render.SceneStillRenderer
 import io.vroomi.character.render.Season
+import io.vroomi.character.render.StillSpec
 import io.vroomi.character.render.VroomiSceneStill
 import io.vroomi.core.vehicle.sim.Scenario
 import org.junit.Rule
@@ -285,6 +311,108 @@ class ScreensSnapshotTest {
                 ),
                 onPick = {}, onClose = {},
             )
+        }
+    }
+
+    // ---------------------------------------------------------------- the safe-driving grade (plan Task 4)
+
+    private val renderer by lazy { SceneStillRenderer(createFontFamilyResolver(paparazzi.context), Density(1f)) }
+    private val stillCache = HashMap<Pair<SceneTheme, Int>, ImageBitmap>()
+    /** A theme's still at an upgrade step (the gallery's 960 x 360 hero size). */
+    private fun still(t: SceneTheme, model: Int): ImageBitmap =
+        stillCache.getOrPut(t to model) { renderer.render(t, HeroStills.W, HeroStills.H, StillSpec(model = model)) }
+
+    /** A screen in [theme]'s chrome colours (the accent and the backdrop the app gives it). */
+    private fun themed(theme: SceneTheme, night: Boolean = false, content: @Composable () -> Unit) {
+        val chrome = ChromeColors(Ambience.of(theme), night)
+        io.vroomi.character.render.theme.ChromeZones.screenH = TestScreen.dpH
+        paparazzi.snapshot {
+            VroomiTheme(night = night, theme = theme) {
+                CompositionLocalProvider(LocalMotion provides MotionPrefs(still = true), LocalChrome provides chrome) {
+                    Box(Modifier.fillMaxSize().drawBehind { drawRect(chrome.backdrop) }) { content() }
+                }
+            }
+        }
+    }
+
+    private var tripId = 1L
+    private fun trip(km: Float, score: Int, stars: Int = 0) = TripRecord(tripId++, 0, 60_000, km, 0, 0, 0, 0, 0, 0, score, stars = stars)
+
+    /** Gold: 47.7 safe km at a recent score of 82 (platinum needs 60 km and 85). */
+    private val goldTrips get() = listOf(trip(20.5f, 84, 18), trip(15.2f, 80, 14), trip(12f, 82, 10))
+    /** Diamond: ten long smooth drives. */
+    private val diamondTrips get() = List(10) { trip(11.4f, 96, 12) }
+
+    /**
+     * The grade tab as the app lays it out: the rail, and on a wide display the scene in the 42 % pane with the page
+     * beside it; on a narrow one the page over the full-bleed scene.
+     */
+    @Composable
+    private fun GradeScreen(grade: Grade, trips: List<TripRecord>, theme: SceneTheme, worn: Set<Accessory>) {
+        val wide = TestScreen.pxW / TestScreen.scale >= io.vroomi.app.ui.design.Dimens.wideBreak.value
+        val page: @Composable () -> Unit = {
+            val next = gradePreviewModel(grade)
+            GradeContent(
+                grade, SafetyGrade.recentScore(trips), SafetyGrade.safeKm(trips), SafetyGrade.kmToNext(trips, grade.level), theme,
+                nextPreview = { m -> Image(still(theme, next), null, m, contentScale = ContentScale.Crop) },
+                worn = worn,
+            ) { _, _ -> }
+        }
+        Row(Modifier.fillMaxSize()) {
+            TabRail(Tab.GRADE) {}
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                val scene = still(theme, ThemeAccess.maxModel(grade))
+                if (wide) Row(Modifier.fillMaxSize()) {
+                    Image(scene, null, Modifier.weight(Layout.SCENE_PANE).fillMaxHeight(), contentScale = ContentScale.Crop)
+                    val bg = MaterialTheme.colorScheme.background
+                    Box(Modifier.weight(1f - Layout.SCENE_PANE).fillMaxHeight().drawBehind { drawRect(bg) }) { page() }
+                } else {
+                    Image(scene, null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                    Box(Modifier.fillMaxSize().material(MaterialToken.Thick, RectangleShape)) { page() }
+                }
+            }
+        }
+    }
+
+    @Test fun grade_bronze() = themed(SceneTheme.KART) { GradeScreen(Grade.BRONZE, emptyList(), SceneTheme.KART, setOf(Accessory.SCARF)) }
+
+    @Test fun grade_gold() = themed(SceneTheme.CALIBRE) {
+        GradeScreen(Grade.GOLD, goldTrips, SceneTheme.CALIBRE, setOf(Accessory.SCARF, Accessory.BEANIE))
+    }
+
+    @Test fun grade_diamond() = themed(SceneTheme.ORBIT, night = true) {
+        GradeScreen(Grade.DIAMOND, diamondTrips, SceneTheme.ORBIT, setOf(Accessory.CABLE_LASSO))
+    }
+
+    @Test fun gallery_steps_gold() = themed(SceneTheme.CALIBRE) {
+        // Gold opens Lv.1-3 everywhere; the pop-up book was set back to Lv.2 by hand.
+        Row(Modifier.fillMaxSize()) {
+            TabRail(Tab.THEMES) {}
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                FriendsPicker(selected = io.vroomi.character.CharacterSkin.VROOMI, theme = SceneTheme.CALIBRE, grade = Grade.GOLD,
+                    models = mapOf(SceneTheme.PAPER to 1)) {}
+            }
+        }
+    }
+
+    @Test fun sheet_model_calibre_silver() = themed(SceneTheme.CALIBRE) {
+        // Silver: Lv.1-2 open (Lv.2 shown), Lv.3-5 locked (preview only).
+        Image(still(SceneTheme.CALIBRE, 1), null, Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+        val ctx = PickerContext(
+            io.vroomi.character.CharacterSkin.VROOMI, io.vroomi.character.calibre.CalibreFinish.AUTO, io.vroomi.character.engine.EnginePowertrain.AUTO,
+            io.vroomi.character.render.calibre.DEFAULT_NOW_MS, 0L, grade = Grade.SILVER, modelOf = { 1 },
+        )
+        BottomSheet(true, onDismiss = {}) { OptionSheet(ThemeOption.MODEL, SceneTheme.CALIBRE, ctx) }
+    }
+
+    @Test fun home_badge_gold() = themed(SceneTheme.KART) {
+        val trips = goldTrips
+        val status = GradeStatus.of(trips, Grade.GOLD)
+        Row(Modifier.fillMaxSize()) { TabRail(Tab.HOME) {} }
+        Image(still(SceneTheme.KART, 2), null, Modifier.padding(start = io.vroomi.app.ui.design.Dimens.railWidth).fillMaxSize(), contentScale = ContentScale.Crop)
+        Box(Modifier.fillMaxSize().padding(start = io.vroomi.app.ui.design.Dimens.railWidth).padding(io.vroomi.app.ui.design.Space.parked)) {
+            GradeBadge(Grade.GOLD, status.stars, status.progress, status.badgeDetail(), Modifier.align(Alignment.TopStart))
+            HomeActions(demo = false, listening = false, canTalk = true, modifier = Modifier.align(Alignment.BottomEnd), onDemo = {}, onTalk = {})
         }
     }
 }

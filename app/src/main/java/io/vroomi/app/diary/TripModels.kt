@@ -1,6 +1,5 @@
 package io.vroomi.app.diary
 
-import io.vroomi.character.Accessory
 import io.vroomi.core.vehicle.signal.Thresholds
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -22,7 +21,7 @@ data class TripRecord(
     val bestCombo: Int = 0,
     /** Different sceneries Vroomi's road passed through. */
     val biomes: Int = 1,
-    /** Recorded during a demo drive (simulator): shown in the diary, never counted for the bond level. */
+    /** Recorded during a demo drive (simulator): shown in the diary, never counted for the safe-driving grade. */
     val demo: Boolean = false,
     /** The map theme's sketch of the trail: 64 points (x, y) in the unit square, origin removed. Never coordinates. */
     val sketch: List<Float>? = null,
@@ -54,24 +53,4 @@ object SmoothnessScore {
             overMin * Thresholds.SCORE_OVERSPEED_PER_MIN_PENALTY
         return max(0, raw.roundToInt())
     }
-}
-
-/** Bond level 1..5 from "care distance" (km driven in trips scoring at least 70). */
-object Bond {
-    private val levelKm = floatArrayOf(0f, 10f, 30f, 60f, 100f)
-
-    fun careKm(trips: List<TripRecord>): Float =
-        trips.filter { it.countsAsCare && !it.demo }.sumOf { it.distanceKm.toDouble() }.toFloat()
-
-    fun totalStars(trips: List<TripRecord>): Int = trips.filter { !it.demo }.sumOf { it.stars }
-
-    fun level(careKm: Float): Int = levelKm.indexOfLast { careKm >= it } + 1
-
-    /** km left to the next level, or null at max level. */
-    fun kmToNext(careKm: Float): Float? {
-        val l = level(careKm)
-        return if (l >= levelKm.size) null else levelKm[l] - careKm
-    }
-
-    fun unlocked(level: Int): Set<Accessory> = Accessory.entries.filter { it.wardrobe && it.unlockLevel <= level }.toSet()
 }

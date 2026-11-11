@@ -190,7 +190,7 @@ internal fun androidx.compose.ui.graphics.drawscope.DrawScope.drawStill(img: Ima
 }
 
 /**
- * The theme gallery (the FRIENDS tab, parked only), on a clear grid: the page title and the segmented category
+ * The theme gallery (the THEMES tab, parked only), on a clear grid: the page title and the segmented category
  * control share the header row; below it, a snapping shelf of 8:3 windows centred on the focused card (the applied
  * theme's window is the live scene, drawn by the stage above it; every other card is a hero still). Only the
  * focused card shows its name, one-line hint and status, on one baseline grid; the applied theme's option chips
@@ -206,6 +206,8 @@ internal fun Gallery(
     onOpen: (SceneTheme) -> Unit,
     modifier: Modifier = Modifier,
     staticStills: Map<SceneTheme, ImageBitmap>? = null,
+    /** The upgrade step each card shows ("Lv.3", top right of the card; null: no tag). */
+    stepTag: (SceneTheme) -> String? = { null },
 ) {
     val prefs = io.vroomi.app.ui.motion.currentMotion()
     val chrome = LocalChrome.current
@@ -270,7 +272,7 @@ internal fun Gallery(
                     GalleryCard(
                         state, theme, stringResource(spec.title), stringResource(spec.hint),
                         applied = theme == applied, still = still, width = cardW, height = cardH,
-                        chips = if (theme == applied) chips else null,
+                        chips = if (theme == applied) chips else null, step = stepTag(theme),
                         modifier = Modifier.animateItem(),
                         onOpen = {
                             scope.launch {
@@ -290,14 +292,17 @@ internal fun Gallery(
     }
 }
 
-/** The text block under a card: the name row (52 dp, room for the option chips) and the hint line. */
-private val GalleryInfoHeight = Dimens.chipHeight + Space.s4 + 28.dp
+/** The name row under a card (the title role's line). */
+private val GalleryTitleRow = 40.dp
+/** The text block under a card: the name row, the hint line and the row of option chips. */
+private val GalleryInfoHeight = GalleryTitleRow + Space.s4 + 28.dp + Space.s12 + Dimens.chipHeight
 
 @Composable
 private fun GalleryCard(
     state: GalleryState, theme: SceneTheme, title: String, hint: String,
     applied: Boolean, still: ImageBitmap?, width: androidx.compose.ui.unit.Dp, height: androidx.compose.ui.unit.Dp,
     chips: (@Composable RowScope.() -> Unit)?,
+    step: String?,
     modifier: Modifier, onOpen: () -> Unit,
 ) {
     val prefs = io.vroomi.app.ui.motion.currentMotion()
@@ -359,6 +364,8 @@ private fun GalleryCard(
                     if (d > 0.003f) drawRect(Color.Black, alpha = d)
                 }
             }
+            // The step the theme shows (every theme is open; the grade decides how far it is upgraded).
+            if (step != null) StepTag(step, Modifier.align(Alignment.TopEnd).padding(Space.s16).graphicsLayer { alpha = 1f - state.dimOf(theme) })
         }
         // Only the focused card speaks: its text fades with the distance from the centre (no text is ever cut
         // by the edge of the page).
@@ -369,18 +376,35 @@ private fun GalleryCard(
                 .graphicsLayer { alpha = (1f - state.distance(theme) * 1.6f).coerceIn(0f, 1f) }
                 .blockWhen { state.distance(theme) > 0.4f },
         ) {
-            Row(Modifier.fillMaxWidth().height(Dimens.chipHeight), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().height(GalleryTitleRow), verticalAlignment = Alignment.CenterVertically) {
                 Text(title, style = VType.title, color = Ink.primary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 if (applied) {
                     Spacer(Modifier.width(Space.s16))
                     Tag(stringResource(R.string.theme_current), check = true)
                 }
-                Spacer(Modifier.weight(1f).widthIn(min = Space.s24))
-                if (chips != null) Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically, content = chips)
             }
             Spacer(Modifier.height(Space.s4))
             Text(hint, style = VType.callout, color = Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // The applied theme's option chips (the upgrade step first) on their own row, so the name is never cut.
+            Spacer(Modifier.height(Space.s12))
+            Row(Modifier.height(Dimens.chipHeight), horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically) {
+                chips?.invoke(this)
+            }
         }
+    }
+}
+
+/**
+ * A card's upgrade-step tag ("Lv.3") over its picture: a small capsule of the static Regular material (opaque enough
+ * to read over any scene) with the step in primary ink.
+ */
+@Composable
+internal fun StepTag(text: String, modifier: Modifier = Modifier) {
+    Box(
+        modifier.height(32.dp).material(MaterialToken.Regular, Shapes.capsule, blur = false, shadow = false).padding(horizontal = Space.s12),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = VType.caption.copy(fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold).merge(VType.tabular), color = Ink.primary, maxLines = 1)
     }
 }
 
@@ -400,6 +424,7 @@ private fun Modifier.blockWhen(block: () -> Boolean): Modifier = pointerInput(Un
  * chips and "데모로 보기" as quiet secondaries, "이 테마로 달리기" as the one primary). [shown] rises it in,
  * staggered; [leaving] dissolves it (a fade and 8 dp down) when the theme is applied.
  */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 internal fun StageChrome(
     theme: SceneTheme,
@@ -452,18 +477,10 @@ internal fun StageChrome(
                     }
                 }
             }
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = Dimens.stagePanel)
-                    .staggered(parts[3])
-                    .material(MaterialToken.Regular, Shapes.sheet, blur = true)
-                    .padding(horizontal = Space.s32, vertical = Space.s24),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                // The text crossfades with the passage (it never slides).
+            // The text crossfades with the passage (it never slides). [note]: the theme's note beside the name.
+            val text: @Composable (Modifier, Boolean) -> Unit = { m, withNote ->
                 androidx.compose.animation.AnimatedContent(
-                    theme, Modifier.weight(1f),
+                    theme, m,
                     transitionSpec = { androidx.compose.animation.fadeIn(prefs.fade(Motion.CAPTION_MS)) togetherWith androidx.compose.animation.fadeOut(prefs.fade(Motion.FADE_FAST_MS)) },
                     label = "stageTitle",
                 ) { t ->
@@ -474,24 +491,63 @@ internal fun StageChrome(
                             Spacer(Modifier.height(Space.s4))
                             Text(stringResource(sp.hint), style = VType.body, color = Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
-                        sp.note?.let { n ->
+                        if (withNote) sp.note?.let { n ->
                             Spacer(Modifier.width(Space.s32))
                             Box(Modifier.width(Dimens.hairline).height(Space.s64).drawBehind { drawRect(Color.Gray.copy(alpha = 0.25f)) })
                             Spacer(Modifier.width(Space.s32))
-                            Text(stringResource(n), Modifier.widthIn(max = Dimens.stageNote), style = VType.callout, color = Ink.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            // The note shares the room with the name (the option chips take theirs first), so the
+                            // theme's name is never cut.
+                            Text(stringResource(n), Modifier.weight(1f, fill = false).widthIn(max = Dimens.stageNote), style = VType.callout, color = Ink.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
                         }
                     }
                 }
-                Spacer(Modifier.width(Space.s32))
-                Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically) {
-                    chips()
-                    if (onDemo != null) VButton(stringResource(R.string.stage_demo), ButtonStyle.Secondary, icon = VIcons.Play, onClick = onDemo)
-                    VButton(stringResource(R.string.stage_apply), ButtonStyle.Primary, onClick = onApply)
+            }
+            val buttons: @Composable RowScope.() -> Unit = {
+                if (onDemo != null) VButton(stringResource(R.string.stage_demo), ButtonStyle.Secondary, icon = VIcons.Play, onClick = onDemo)
+                VButton(stringResource(R.string.stage_apply), ButtonStyle.Primary, onClick = onApply)
+            }
+            BoxWithConstraints(Modifier.fillMaxWidth().staggered(parts[3])) {
+                val panel = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Dimens.stagePanel)
+                    .material(MaterialToken.Regular, Shapes.sheet, blur = true)
+                    .padding(horizontal = Space.s32, vertical = Space.s24)
+                if (maxWidth >= StagePanelOneRow) {
+                    // One row: the name, hint and note on the left, the option chips and the buttons on the right.
+                    Row(panel, verticalAlignment = Alignment.CenterVertically) {
+                        text(Modifier.weight(1f), true)
+                        Spacer(Modifier.width(Space.s32))
+                        Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically) {
+                            chips()
+                            buttons()
+                        }
+                    }
+                } else {
+                    // A narrower display: the name with the buttons, then the option chips with the note, so neither
+                    // the theme's name nor "이 테마로 달리기" is ever cut and the panel stays clear of the arrows.
+                    Column(panel) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            text(Modifier.weight(1f), false)
+                            Spacer(Modifier.width(Space.s24))
+                            Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically, content = buttons)
+                        }
+                        Spacer(Modifier.height(Space.s16))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically, content = chips)
+                            ThemeRegistry.of(theme).note?.let { n ->
+                                Spacer(Modifier.width(Space.s24))
+                                Text(stringResource(n), Modifier.weight(1f), style = VType.callout, color = Ink.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
+/** From this width the stage panel keeps its text and its actions (the upgrade chip first) on one row. */
+private val StagePanelOneRow = 1500.dp
 
 /** The drag handling of the stage: axis-locked horizontal swipe (P5) or downward pull (P4). Taps pass through. */
 internal fun Modifier.stageGestures(

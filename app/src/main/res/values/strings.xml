@@ -2,10 +2,10 @@
 <resources>
     <string name="app_name">위드라이빙</string>
     <string name="tab_home">홈</string>
-    <string name="tab_friends">친구</string>
+    <string name="tab_themes">테마</string>
     <string name="tab_diary">다이어리</string>
     <string name="friends_title">같이 탈 친구 고르기</string>
-    <string name="friends_hint">15명의 친구 중 누가 꼬마차를 탈지 골라요. 옷장과 별, 다이어리는 함께 써요.</string>
+    <string name="friends_hint">15명의 친구 중 누가 꼬마차를 탈지 골라요. 등급과 별, 다이어리는 함께 써요.</string>
     <string name="friends_cute">귀여운 친구</string>
     <string name="friends_mech">기계 감성 친구</string>
     <string name="theme_title">테마</string>
@@ -58,7 +58,7 @@
     <string name="theme_cat_play">놀이</string>
     <string name="debug_mech_sound">기계 소리 (실험, 기본 꺼짐)</string>
     <string name="debug_frame_time">프레임 시간 표시</string>
-    <string name="tab_wardrobe">옷장</string>
+    <string name="tab_grade">등급</string>
     <string name="tab_settings">설정</string>
     <string name="mute">음소거</string>
     <string name="unmute">소리 켜기</string>
@@ -66,13 +66,10 @@
     <string name="calm_off">차분 끄기</string>
     <string name="talk">브루미에게 말하기</string>
     <string name="listening">듣고 있어요…</string>
-    <string name="bond_level">우정 레벨 %1$d</string>
-    <string name="care_km">함께한 부드러운 거리 %1$.1f km</string>
-    <string name="next_level">다음 레벨까지 %1$.1f km</string>
+    <string name="next_level">다음 등급까지 %1$.1f km</string>
     <string name="diary_empty_title">아직 다이어리가 비어 있어요</string>
     <string name="diary_empty_body">한 번 주행을 마치고 주차하면 브루미가 오늘의 이야기를 적어 둘게요.</string>
-    <string name="wardrobe_hint">부드럽게 운전할수록 새 옷이 열려요.</string>
-    <string name="locked_at">레벨 %1$d에 열려요</string>
+    <string name="wardrobe_hint">등급이 오르면 새 옷이 열려요.</string>
     <string name="settings_voice">브루미 목소리</string>
     <string name="settings_voice_rare">가끔만 말하기</string>
     <string name="settings_calm">차분 모드 (움직임 줄이기)</string>
@@ -134,6 +131,32 @@
     <string name="settings_source_sub">자동은 차의 신호가 들어오면 실제 차량을, 아니면 시뮬레이터를 써요</string>
     <string name="settings_vehicle_foot">브루미는 차의 신호를 읽기만 하고, 차를 조작하지 않아요.</string>
     <string name="settings_sec_data">기록</string>
-    <string name="settings_reset_sub">주행 기록을 모두 지워요. 우정 레벨도 처음으로 돌아가요</string>
+    <string name="settings_reset_sub">주행 기록을 모두 지워요. 등급도 처음으로 돌아가요</string>
     <string name="settings_data_foot">기록은 이 기기에만 남고, 위치는 저장하지 않아요.</string>
+    <!-- Safe-driving grade: the grade tab, the home badge, the upgrade steps -->
+    <string name="grade_badge">%1$s 등급</string>
+    <string name="locked_grade">%1$s 등급에 열려요</string>
+    <string name="grade_score">최근 안전 점수</string>
+    <string name="grade_safe_km">안전 거리 %1$.1f km</string>
+    <string name="grade_next">다음 등급 %1$s</string>
+    <string name="grade_need_km">안전 거리 %1$.0f km</string>
+    <string name="grade_need_score">최근 점수 %1$d 이상</string>
+    <string name="grade_rule">급제동 −6 · 급가속 −4 · 110 km/h 초과 1분당 −2 (100점 만점)</string>
+    <string name="grade_next_upgrade">%1$s이(가) 되면: %2$s</string>
+    <string name="grade_ladder">등급별 업그레이드</string>
+    <string name="grade_outfits">꼬마차 옷장</string>
+    <string name="chip_model">업그레이드 · %1$s %2$s</string>
+    <string name="dev_all_grades">모든 등급 미리 열기 (저장 안 함)</string>
+    <string name="grade_badge_km_score">다음 등급까지 %1$.1f km · %2$d점 필요</string>
+    <string name="grade_badge_score">다음 등급까지 %1$d점 필요</string>
+    <string name="grade_km_left">%1$.1f km 남음</string>
+    <string name="grade_met">달성</string>
+    <string name="grade_current">지금 등급</string>
+    <string name="grade_top">가장 높은 등급이에요</string>
+    <string name="grade_preview">다음 업그레이드 미리 보기</string>
+    <string name="grade_all_open">모든 업그레이드가 열렸어요</string>
+    <string name="grade_ladder_foot">등급이 오를 때마다 모든 테마가 한 단계씩 업그레이드되고, 꼬마차 옷이 하나씩 열려요.</string>
+    <string name="model_title">업그레이드 단계</string>
+    <string name="model_hint">안전운전 등급이 오르면 다음 단계가 열려요. 잠긴 단계는 눌러서 무대에서 미리 볼 수만 있고, 저장되지 않아요.</string>
+    <string name="model_previewing">미리 보기</string>
 </resources>

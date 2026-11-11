@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import io.vroomi.app.R
+import io.vroomi.app.progress.Grade
 import io.vroomi.app.ui.design.BigToggle
 import io.vroomi.app.ui.design.ButtonStyle
 import io.vroomi.app.ui.design.Dimens
@@ -81,9 +82,9 @@ import kotlin.math.sin
 
 enum class Tab(val label: Int, val icon: ImageVector) {
     HOME(R.string.tab_home, VIcons.Home),
-    FRIENDS(R.string.tab_friends, VIcons.Worlds),
+    THEMES(R.string.tab_themes, VIcons.Worlds),
     DIARY(R.string.tab_diary, VIcons.Diary),
-    WARDROBE(R.string.tab_wardrobe, VIcons.Wardrobe),
+    GRADE(R.string.tab_grade, VIcons.Medal),
     SETTINGS(R.string.tab_settings, VIcons.Settings),
 }
 
@@ -163,11 +164,12 @@ internal fun PanelTitle(text: String, modifier: Modifier = Modifier, subtitle: S
 }
 
 /**
- * The bond badge (top left, parked): a Regular material card with the level, the star count, a thin progress bar
- * in the accent and the distance to the next level. Its size is the chrome-zone contract's status corner.
+ * The grade badge (top left, parked): a Regular material card with the grade's medal and name, the star count, a
+ * thin progress bar in the accent towards the next grade and what that grade still needs. Its size is the
+ * chrome-zone contract's status corner.
  */
 @Composable
-internal fun BondBadge(level: Int, stars: Int, progress: Float, detail: String, modifier: Modifier = Modifier) {
+internal fun GradeBadge(grade: Grade, stars: Int, progress: Float, detail: String, modifier: Modifier = Modifier) {
     val prefs = io.vroomi.app.ui.motion.currentMotion()
     val fill = remember { Animatable(progress) }
     LaunchedEffect(progress) { fill.animateTo(progress, prefs.spring(Motion.Smooth)) }
@@ -179,7 +181,9 @@ internal fun BondBadge(level: Int, stars: Int, progress: Float, detail: String, 
             .padding(horizontal = Space.s24, vertical = Space.s20),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.bond_level, level), Modifier.weight(1f), style = VType.headline, color = Ink.primary, maxLines = 1)
+            Medal(grade, 28.dp, number = false)
+            Spacer(Modifier.width(Space.s8))
+            Text(stringResource(R.string.grade_badge, grade.label), Modifier.weight(1f), style = VType.headline, color = Ink.primary, maxLines = 1)
             Image(VIcons.Star, null, Modifier.size(18.dp), colorFilter = ColorFilter.tint(VroomiColors.Amber))
             Spacer(Modifier.width(Space.s4))
             Text(stringResource(R.string.stars_total, stars), style = VType.callout.merge(VType.tabular), color = Ink.secondary, maxLines = 1)

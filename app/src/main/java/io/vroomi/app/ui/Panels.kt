@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,7 +39,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -50,7 +47,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.vroomi.app.BuildConfig
 import io.vroomi.app.R
-import io.vroomi.app.diary.Bond
 import io.vroomi.app.diary.TripRecord
 import io.vroomi.app.runtime.VroomiRuntime
 import io.vroomi.app.settings.CharacterSize
@@ -72,18 +68,17 @@ import io.vroomi.app.ui.design.VType
 import io.vroomi.app.ui.design.grouped
 import io.vroomi.app.ui.motion.Motion
 import io.vroomi.app.ui.motion.pressFeedback
-import io.vroomi.character.Accessory
 import io.vroomi.core.vehicle.SourceMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * A list page (wardrobe, settings): the page title and its content with the page margins. The content gets the
+ * A list page (grade, settings): the page title and its content with the page margins. The content gets the
  * pane's inner width (to choose one or two columns).
  */
 @Composable
-private fun Page(title: String, subtitle: String? = null, content: @Composable ColumnScope.(pane: Dp) -> Unit) {
+internal fun Page(title: String, subtitle: String? = null, content: @Composable ColumnScope.(pane: Dp) -> Unit) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val margin = Space.margin(maxWidth >= Dimens.wideBreak / 2)
         val inner = maxWidth - margin * 2
@@ -185,54 +180,7 @@ internal fun scoreColor(score: Int, dark: Boolean): Int = when {
     else -> Semantic.critical(dark)
 }
 
-// ---------------------------------------------------------------- Wardrobe
-
-private val Accessory.label: String get() = when (this) {
-    Accessory.SCARF -> "드라이브 목도리"; Accessory.GOGGLES -> "동글 고글"; Accessory.BEANIE -> "니트 비니"
-    Accessory.RAINCOAT -> "노란 우비"; Accessory.CABLE_LASSO -> "충전 케이블 올가미"
-    else -> name
-}
-
-@Composable
-fun WardrobePanel(rt: VroomiRuntime, careKm: Float) {
-    val settings by rt.settingsStore.settings.collectAsStateWithLifecycle()
-    WardrobeContent(Bond.level(careKm), settings.wardrobe) { a, worn ->
-        rt.settingsStore.update { s -> s.copy(wardrobe = if (worn) s.wardrobe - a else s.wardrobe + a) }
-    }
-}
-
-/** The wardrobe's grid (stateless, for the app and the snapshots). */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun WardrobeContent(level: Int, wardrobe: Set<Accessory>, onToggle: (Accessory, Boolean) -> Unit) {
-    val chrome = LocalChrome.current
-    Page(stringResource(R.string.tab_wardrobe), subtitle = stringResource(R.string.wardrobe_hint)) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s16), verticalArrangement = Arrangement.spacedBy(Space.s16)) {
-            Accessory.entries.filter { it.wardrobe }.forEach { a ->
-                val unlocked = a.unlockLevel <= level
-                val worn = a in wardrobe
-                Column(
-                    Modifier
-                        .width(Dimens.wardrobeCard)
-                        .grouped(Shapes.card)
-                        .drawBehind { if (worn) drawOutline(Shapes.card.createOutline(size, layoutDirection, this), chrome.tint, style = Stroke(Dimens.ring.toPx())) }
-                        .pressFeedback(Shapes.card, enabled = unlocked)
-                        .clickable(enabled = unlocked, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.Checkbox) { onToggle(a, worn) }
-                        .heightIn(min = Dimens.listRow + Space.s32)
-                        .padding(Space.s24),
-                ) {
-                    Text(a.label, style = VType.headline, color = if (unlocked) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Spacer(Modifier.height(Space.s12))
-                    when {
-                        !unlocked -> Text(stringResource(R.string.locked_at, a.unlockLevel), style = VType.callout, color = Ink.secondary)
-                        worn -> Tag(stringResource(R.string.wardrobe_worn), check = true)
-                        else -> Text(stringResource(R.string.wardrobe_wear), style = VType.callout, color = Ink.secondary)
-                    }
-                }
-            }
-        }
-    }
-}
+// The kart's wardrobe lives in the grade tab now ([GradeContent], "꼬마차 옷장").
 
 // ---------------------------------------------------------------- Settings (parked only)
 
