@@ -26,4 +26,10 @@ object ThemeAccess {
      * choice the theme keeps its own colours, and a choice above the grade falls back to them.
      */
     fun effectiveColor(grade: Grade, choice: Int?): Int = choice?.takeIf { it in 0..maxModel(grade) } ?: 0
+
+    /** How many of a theme's props the grade has opened (silver 1, gold 2, platinum and above 3). */
+    fun openDecor(grade: Grade): Int = (grade.level - 1).coerceIn(0, io.vroomi.character.theme.ThemeDecor.COUNT)
+
+    /** The props shown: those switched on among the ones the grade has opened. */
+    fun effectiveDecor(grade: Grade, mask: Int?): Int = (mask ?: 0) and ((1 shl openDecor(grade)) - 1)
 }

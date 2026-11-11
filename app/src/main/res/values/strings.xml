@@ -167,6 +167,14 @@
     <string name="grade_colors_foot">색상은 테마마다 따로 고르고, 버전과 함께 쓸 수 있어요.</string>
     <string name="color_worn">쓰는 중</string>
     <string name="color_wear">눌러서 쓰기</string>
+    <string name="chip_decor">소품 · %1$d개</string>
+    <string name="chip_decor_none">소품 · 없음</string>
+    <string name="decor_title">소품 고르기</string>
+    <string name="decor_hint">안전운전 등급이 오르면 이 테마의 소품이 하나씩 열려요. 열린 소품은 여러 개를 함께 켤 수 있어요.</string>
+    <string name="grade_decor">이 테마의 소품 · 눌러서 켜고 끄기</string>
+    <string name="grade_decor_foot">소품은 실버·골드·플래티넘 등급에서 하나씩 열리고, 주행 중 장면이 작아지면 잠시 숨어요.</string>
+    <string name="decor_on">놓는 중</string>
+    <string name="decor_off">눌러서 놓기</string>
     <string name="nudge_demo">데모 주행은 안전운전 등급에 들어가지 않아요.</string>
     <string name="nudge_promoted">%1$s 등급이 됐어요!</string>
     <string name="nudge_opened">모든 테마에 새 버전이 열렸어요 · %1$s %2$s</string>

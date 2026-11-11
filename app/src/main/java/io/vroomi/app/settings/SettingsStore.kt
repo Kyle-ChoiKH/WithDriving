@@ -50,6 +50,8 @@ data class Settings(
     val models: Map<SceneTheme, Int> = emptyMap(),
     /** The colourway chosen per theme (0..4, stored as "color.<THEME>"); a theme without one keeps its own colours. */
     val colors: Map<SceneTheme, Int> = emptyMap(),
+    /** The props switched on per theme (a bit mask, stored as "decor.<THEME>"). */
+    val decor: Map<SceneTheme, Int> = emptyMap(),
     /** Developer: preview every grade (debug builds only, not stored). */
     val devAllGrades: Boolean = false,
 )
@@ -85,6 +87,7 @@ class SettingsStore(context: Context) {
         launchBackdrop = prefs.getInt("launchBackdrop", 0),
         gradeReached = prefs.getInt(KEY_GRADE, 1).coerceIn(1, 5),
         models = SceneTheme.entries.filter { prefs.contains(modelKey(it)) }.associateWith { prefs.getInt(modelKey(it), 0).coerceIn(0, ThemeModels.COUNT - 1) },
+        decor = SceneTheme.entries.filter { prefs.contains(decorKey(it)) }.associateWith { prefs.getInt(decorKey(it), 0) and ((1 shl io.vroomi.character.theme.ThemeDecor.COUNT) - 1) },
         colors = SceneTheme.entries.filter { prefs.contains(colorKey(it)) }.associateWith { prefs.getInt(colorKey(it), 0).coerceIn(0, io.vroomi.character.theme.ThemeColorways.COUNT - 1) },
         devAllGrades = false,
     )
@@ -133,6 +136,7 @@ class SettingsStore(context: Context) {
         if (s.gradeReached > 1 || prefs.contains(KEY_GRADE)) e.putInt(KEY_GRADE, s.gradeReached)
         SceneTheme.entries.forEach { t -> s.models[t]?.let { e.putInt(modelKey(t), it) } ?: e.remove(modelKey(t)) }
         SceneTheme.entries.forEach { t -> s.colors[t]?.takeIf { it > 0 }?.let { e.putInt(colorKey(t), it) } ?: e.remove(colorKey(t)) }
+        SceneTheme.entries.forEach { t -> s.decor[t]?.takeIf { it > 0 }?.let { e.putInt(decorKey(t), it) } ?: e.remove(decorKey(t)) }
         e.apply()
     }
 
@@ -140,5 +144,6 @@ class SettingsStore(context: Context) {
         const val KEY_GRADE = "gradeReached"
         fun modelKey(t: SceneTheme) = "model.${t.name}"
         fun colorKey(t: SceneTheme) = "color.${t.name}"
+        fun decorKey(t: SceneTheme) = "decor.${t.name}"
     }
 }

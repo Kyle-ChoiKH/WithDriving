@@ -31,10 +31,12 @@ class HeroStills(private val renderer: SceneStillRenderer, private val scope: Co
     var modelOf: (SceneTheme) -> Int = { spec.model }
     /** The colourway each theme shows. */
     var colorOf: (SceneTheme) -> Int = { 0 }
+    /** The props each theme shows (a bit mask). */
+    var decorOf: (SceneTheme) -> Int = { 0 }
     var version by mutableIntStateOf(0)
         private set
 
-    private fun key(theme: SceneTheme): String = "${theme.name}|${spec.skin}|${spec.finish}|${spec.powertrain}|${modelOf(theme)}|${colorOf(theme)}"
+    private fun key(theme: SceneTheme): String = "${theme.name}|${spec.skin}|${spec.finish}|${spec.powertrain}|${modelOf(theme)}|${colorOf(theme)}|${decorOf(theme)}"
 
     /** The still if it is ready (and marks it recently used); otherwise starts drawing it and returns null. */
     fun get(theme: SceneTheme): ImageBitmap? {
@@ -55,7 +57,7 @@ class HeroStills(private val renderer: SceneStillRenderer, private val scope: Co
     fun request(theme: SceneTheme) {
         val k = key(theme)
         if (entries.any { it.key == k } || !inFlight.add(k)) return
-        val s = spec.copy(model = modelOf(theme), color = colorOf(theme))
+        val s = spec.copy(model = modelOf(theme), color = colorOf(theme), decor = decorOf(theme))
         if (synchronous) {
             put(k, renderer.render(theme, W, H, s))
             inFlight.remove(k)

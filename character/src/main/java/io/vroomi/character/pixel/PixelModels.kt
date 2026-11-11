@@ -35,16 +35,23 @@ object PixelModels {
         return if (reverse) -v else v
     }
 
-    /** Integer scale for a canvas of [w] × [h] px: max(1, floor(min(w ÷ 480, h ÷ 180))). */
-    fun scale(w: Float, h: Float): Int = max(1, floor(min(w / VW, h / VH)).toInt())
+    /** The least width of the world (virtual px) a window shows: a narrower window gets a smaller scale instead. */
+    const val MIN_VIEW_W = 320
 
     /**
-     * Top-left offset that centres the scaled screen in [w] × [h]. In a box smaller than 480 × 180 (only possible
-     * at scale 1) the screen is cropped instead of shrunk: the bottom stays (road and hero) and the hero keeps
-     * 40 px of room on its left.
+     * Integer scale for a canvas of [w] × [h] px: max(1, floor(min(w ÷ 320, h ÷ 180))). On the wide display this is
+     * the whole 480 px world; a 16:9, split or upright window keeps the world large and loses its right side (down
+     * to [MIN_VIEW_W] px), since the hero rides at the left.
+     */
+    fun scale(w: Float, h: Float): Int = max(1, floor(min(w / MIN_VIEW_W, h / VH)).toInt())
+
+    /**
+     * Top-left offset (canvas px) that centres the scaled screen in [w] × [h]. In a box narrower or lower than the
+     * scaled screen it is cropped instead of shrunk: the bottom stays (road and hero) and the hero keeps 40 virtual
+     * px of room on its left.
      */
     fun offset(w: Float, h: Float, s: Int): Pair<Int, Int> {
-        val ox = if (w >= VW * s) ((w - VW * s) / 2f).toInt() else -(HERO_X - 40).coerceIn(0, (VW - w).toInt())
+        val ox = if (w >= VW * s) ((w - VW * s) / 2f).toInt() else -((HERO_X - 40) * s).coerceIn(0, (VW * s - w).toInt())
         val oy = if (h >= VH * s) ((h - VH * s) / 2f).toInt() else (h - VH * s).toInt()
         return ox to oy
     }
