@@ -125,7 +125,7 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
     override fun drawPx(s: DrawScope, sim: TreasureMapSim, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
         val g = geo(f.dw, f.dh)
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
-        val bmp = base.get((w.toLong() shl 20) xor h.toLong(), w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { sheet(g, f) } }
+        val bmp = base.get(((w.toLong() shl 20) xor h.toLong()) * 8L + f.model, w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { sheet(g, f) } }
         s.drawImage(bmp, dstOffset = IntOffset(left.roundToInt(), top.roundToInt()), dstSize = IntSize(bmp.width, bmp.height))
     }
 
@@ -136,6 +136,9 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
 
     /** Entrance accent: how much of the trail's ink is drawn (1 = all of it, the normal frame). */
     private var inkReach = 1f
+    /** Step 5: the track is gilded. */
+    private var routeGold = false
+    private val goldUnder = Stroke(3.6f, cap = StrokeCap.Round, join = StrokeJoin.Round)
 
     /**
      * Legibility rule: small labels show only while parked (1 parked .. 0 moving, eased over 0.3 s; the painter's own
@@ -173,6 +176,7 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
 
     override fun draw(s: DrawScope, sim: TreasureMapSim, f: ThemeFrame, tx: ThemeTexts) = with(s) {
         inkReach = if (f.options.intro < 1f) Intro.out(f.options.intro, 0.1f, 0.85f) else 1f
+        routeGold = MapStep.gold(f.model)
         fade = textFade(sim)
         big = max(15f, minText(f))
         zones(f, sim.moving)
@@ -185,6 +189,8 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
         clipRect(g.ml, g.mt, g.mr, g.mb) {
             symbolsAlong(g, sim, f)
             rhumbs(g, sim)
+            // The point of departure is marked from the first metre (the sheet is never empty around it).
+            if (sim.count >= 1) departure(mx(sim.xs[0]), my(sim.ys[0]), inkReach)
             engrave(g, sim)
             restStamps(g, sim)
             seals(g, sim)
@@ -193,7 +199,7 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             labels(g, sim)
             rain(g, sim)
         }
-        scaleBar(g, sim)
+        scaleBar(g, sim, MapStep.rose(f.model))
         arrival(g, sim)
         night(g, sim, f)
     }
@@ -214,6 +220,9 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             drawLine(MP.inkFaint.copy(alpha = 0.025f + 0.03f * hash01(i, 13)), Offset(x, y), Offset(x + 200f + hash01(i, 14) * 500f, y + (hash01(i, 15) - 0.5f) * 3f), 0.8f + hash01(i, 16) * 2f)
         }
         drawRect(Brush.radialGradient(listOf(Color.Transparent, MP.paperEdge.copy(alpha = 0.8f)), Offset(f.dw / 2f, f.dh / 2f), max(f.dw, 1180f) * 0.62f), size = Size(f.dw, f.dh))
+        val model = f.model
+        parchment(f.dw, f.dh)
+        if (MapStep.wash(model)) washes(g.ml, g.mt, g.mr, g.mb)
         // The copper plate's mark: a bevel pressed into the paper just outside the neatline.
         drawRect(MP.plate.copy(alpha = 0.55f), Offset(8f, 8f), Size(f.dw - 16f, f.dh - 16f), style = Stroke(1.6f))
         drawRect(Color.White.copy(alpha = 0.5f), Offset(9.5f, 9.5f), Size(f.dw - 19f, f.dh - 19f), style = Stroke(0.8f))
@@ -250,16 +259,23 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             for (i in 1 until 7) { drawLine(MP.ink, Offset(l + i * 20f / 7f, t), Offset(l, t + i * 20f / 7f), 0.5f); drawLine(MP.ink, Offset(l + 20f - i * 20f / 7f, t + 20f), Offset(l + 20f, t + 20f - i * 20f / 7f), 0.5f) }
         }
         // The rose's network of rhumb lines across the whole chart, very faint (sixteen winds).
+        val roseStart = if (MapStep.rose(model)) g.roseR + 16f else 32f
         clipRect(g.ml, g.mt, g.mr, g.mb) {
+            graticule(g.ml, g.mt, g.mr, g.mb)
+            if (MapStep.decor(model)) seaLife(g.ml, g.mt, g.mr, g.mb)
             for (i in 0 until 16) {
                 val a = i * PI.toFloat() / 8f
                 val c = g.compass
-                drawLine(MP.inkFaint.copy(alpha = if (i % 2 == 0) 0.50f else 0.30f), Offset(c.x + cos(a) * (g.roseR + 16f), c.y + sin(a) * (g.roseR + 16f)),
+                drawLine(MP.inkFaint.copy(alpha = if (i % 2 == 0) 0.50f else 0.30f), Offset(c.x + cos(a) * roseStart, c.y + sin(a) * roseStart),
                     Offset(c.x + cos(a) * 3000f, c.y + sin(a) * 3000f), if (i % 4 == 0) 0.8f else 0.5f)
             }
         }
-        compassRose(g)
-        cartouche(g, f)
+        if (MapStep.rose(model)) compassRose(g) else windMark(g.compass)
+        cartouche(g, f, framed = MapStep.decor(model))
+        if (MapStep.gold(model)) {
+            goldBorder(f.dw, f.dh, g.outer, g.bandIn, g.bandOut, g.inner)
+            waxSeal(Offset(g.mr - 66f, g.mb - 150f))
+        }
     }
 
     /** A 32-point rose: each point split into a hatched (shaded) half and a clean (lit) half, in rings of ticks. */
@@ -309,7 +325,7 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
     }
 
     /** The title cartouche: a double-ruled frame with cut corners and an engraved shadow, "여정 일지". */
-    private fun DrawScope.cartouche(g: MGeo, f: ThemeFrame) {
+    private fun DrawScope.cartouche(g: MGeo, f: ThemeFrame, framed: Boolean) {
         val l = g.cartL; val t = g.cartT; val w = g.cartW; val h = g.cartH
         val cut = 12f
         val frame = Path().apply {
@@ -319,15 +335,17 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             lineTo(l, t + cut); quadraticTo(l + cut, t + cut, l + cut, t); close()
         }
         // Engraved shadow to the lower right (diagonal hatching).
-        withTransform({ translate(5f, 5f) }) {
+        if (framed) withTransform({ translate(5f, 5f) }) {
             clipRect(l, t, l + w + 6f, t + h + 6f) {
                 var d = -h
                 while (d < w + h) { drawLine(MP.ink, Offset(l + d, t + h + 6f), Offset(l + d + h + 6f, t), 0.5f); d += 2.6f }
             }
         }
-        drawPath(frame, MP.paper)
-        drawPath(frame, MP.ink, style = Stroke(1.6f))
-        withTransform({ scale(0.94f, 0.88f, Offset(l + w / 2f, t + h / 2f)) }) { drawPath(frame, MP.ink, style = Stroke(0.6f)) }
+        if (framed) {
+            drawPath(frame, MP.paper)
+            drawPath(frame, MP.ink, style = Stroke(1.6f))
+            withTransform({ scale(0.94f, 0.88f, Offset(l + w / 2f, t + h / 2f)) }) { drawPath(frame, MP.ink, style = Stroke(0.6f)) }
+        }
         // Small scroll flourishes at the ends of a rule under the title.
         drawLine(MP.ink, Offset(l + 50f, t + 64f), Offset(l + w - 50f, t + 64f), 0.7f)
         drawCircle(MP.ink, 2.2f, Offset(l + 46f, t + 64f), style = Stroke(0.7f))
@@ -458,7 +476,8 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             trail.lineTo(ax + (mx(sim.xs[whole + 1]) - ax) * t, ay + (my(sim.ys[whole + 1]) - ay) * t)
         }
         drawPath(trail, MP.ink, style = trackTicks)
-        drawPath(trail, MP.ink, style = trackLine)
+        if (routeGold) { drawPath(trail, GOLD_DARK, style = goldUnder); drawPath(trail, GOLD_LIGHT, style = trackLine) }
+        else drawPath(trail, MP.ink, style = trackLine)
         if (freshStart < n) {
             for (i in max(0, freshStart - 1) until n) {
                 val x = mx(sim.xs[i]); val y = my(sim.ys[i])
@@ -466,7 +485,8 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             }
             if (sim.rain > 0.3f) drawPath(fresh, MP.inkSoft.copy(alpha = 0.16f * sim.rain), style = smudge)
             drawPath(fresh, MP.ink, style = trackTicks)
-            drawPath(fresh, MP.ink, style = freshLine)
+            if (routeGold) { drawPath(fresh, GOLD_DARK, style = goldUnder); drawPath(fresh, GOLD_LIGHT, style = freshLine) }
+            else drawPath(fresh, MP.ink, style = freshLine)
         }
         // Point of departure: a ring with a dot.
         val sx0 = mx(sim.xs[0]); val sy0 = my(sim.ys[0])
@@ -621,13 +641,13 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
     }
 
     /** A scale bar of alternating blocks; its length is a round distance at the chart's current scale. */
-    private fun DrawScope.scaleBar(g: MGeo, sim: TreasureMapSim) {
+    private fun DrawScope.scaleBar(g: MGeo, sim: TreasureMapSim, bar: Boolean) {
         var pick = 0
         for (i in SCALE_M.indices) { if (SCALE_M[i] * sx <= 200f) pick = i }
         val len = SCALE_M[pick] * sx
         val x = g.scaleX; val y = g.scaleY
         val seg = len / 4f
-        for (i in 0 until 4) {
+        if (bar) for (i in 0 until 4) {
             if (i % 2 == 0) drawRect(MP.ink, Offset(x + i * seg, y - 3f), Size(seg, 4f))
             drawRect(MP.ink, Offset(x + i * seg, y - 3f), Size(seg, 4f), style = rule)
         }
@@ -636,8 +656,10 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
         val p = italicPaint()
         p.textSize = 12f; p.color = MP.ink.copy(alpha = fade).toArgb()
         p.textAlign = Paint.Align.CENTER
-        nc.drawText("0", x, y - 9f, p)
-        nc.drawText(SCALE_LABEL[pick], x + len, y - 9f, p)
+        if (bar) {
+            nc.drawText("0", x, y - 9f, p)
+            nc.drawText(SCALE_LABEL[pick], x + len, y - 9f, p)
+        }
         // The cartouche's subtitle (a note on what the chart shows), parked only.
         p.color = MP.inkSoft.copy(alpha = fade).toArgb()
         nc.drawText("지나온 길만 새긴 항적도", g.cartL + g.cartW / 2f, g.cartT + 82f, p)

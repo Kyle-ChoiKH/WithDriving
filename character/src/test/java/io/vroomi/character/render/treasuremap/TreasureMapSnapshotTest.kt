@@ -15,6 +15,14 @@ import io.vroomi.core.vehicle.model.TurnSignal
 import io.vroomi.core.vehicle.route.LiveRoute
 import org.junit.After
 import org.junit.Rule
+import io.vroomi.character.render.theme.simulate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.junit.Test
 
 /** A scripted route (metres east, north) shared by the map snapshots and the demo. */
@@ -26,6 +34,24 @@ class TreasureMapSnapshotTest {
     @get:Rule val paparazzi = KitShots.wide()
 
     @After fun clear() { LiveRoute.demoRoute = null }
+
+    // ---- the upgrade ladder (spec 5.7)
+    private fun lv(name: String, model: Int, o: SceneOptions = KitShots.day, seconds: Float = 150f, block: io.vroomi.character.CarSignals.() -> io.vroomi.character.CarSignals = { this }) {
+        LiveRoute.demoRoute = MAP_ROUTE
+        KitShots.script<TreasureMapSim>(paparazzi, SceneTheme.TREASURE_MAP, name, seconds, o.copy(model = model)) { t ->
+            driving(car(60f) { block() }, Journey(active = true, tripSeq = 4, tripKm = 60f * t / 3600f, stars = (t / 40f).toInt(), starSeq = (t / 40f).toInt(), milestoneKm = (60f * t / 3600f).toInt(), biome = Biome.PARK))
+        }
+    }
+    @Test fun lv1Day() = lv("map_lv1_day", 0)
+    @Test fun lv2Day() = lv("map_lv2_day", 1)
+    @Test fun lv3Day() = lv("map_lv3_day", 2)
+    @Test fun lv4Day() = lv("map_lv4_day", 3)
+    @Test fun lv5Day() = lv("map_lv5_day", 4)
+    @Test fun lv5Night() = lv("map_lv5_night", 4, KitShots.night) { copy(headlightsOn = true) }
+    @Test fun lv3BlinkerLeft() = lv("map_lv3_blinker_left", 2) { copy(turnSignal = io.vroomi.core.vehicle.model.TurnSignal.LEFT) }
+    @Test fun lv3Brake() = lv("map_lv3_brake", 2) { copy(brakePressed = true) }
+    /** Right after setting off at step 1: the graticule, the rhumb net, the stains and the departure mark are there. */
+    @Test fun startLv1() = lv("map_start_lv1", 0, seconds = 2f)
 
     /** A drive along [MAP_ROUTE] at [kmh] for [s] seconds; stars every [starEvery] s; biome by distance. */
     private fun journey(t: Float, kmh: Float, starEvery: Float = 0f, combos: Int = 0, dest: Int? = null): Journey {
@@ -91,5 +117,52 @@ class TreasureMapDetailSnapshotTest {
         KitShots.script<TreasureMapSim>(paparazzi, SceneTheme.TREASURE_MAP, "map_detail_compass", 40f, zoom = 3f, fx = 0.86f, fy = 0.22f) { t ->
             driving(car(60f), Journey(active = true, tripSeq = 5, tripKm = 60f * t / 3600f))
         }
+    }
+}
+
+/** The upgrade ladder in one picture: Lv.1 to Lv.5 as five stacked 8:3 strips (1000 x 1875), labelled "Lv.n" top left. */
+class TreasureMapLadderSnapshotTest {
+    @get:Rule val paparazzi = app.cash.paparazzi.Paparazzi(
+        deviceConfig = app.cash.paparazzi.DeviceConfig.PIXEL_5.copy(
+            screenWidth = 1000, screenHeight = 1875, xdpi = 120, ydpi = 120,
+            density = com.android.resources.Density.LOW, orientation = com.android.resources.ScreenOrientation.PORTRAIT, softButtons = false,
+        ),
+        maxPercentDifference = 100.0,
+    )
+
+    @After fun clear() { LiveRoute.demoRoute = null }
+
+    @Test fun ladder() {
+        LiveRoute.demoRoute = MAP_ROUTE
+        val runtimes = (0 until 5).map { i ->
+            requireNotNull(io.vroomi.character.render.theme.ThemeCatalog.create(SceneTheme.TREASURE_MAP)).also { rt ->
+                rt.simulate(150f, SceneOptions(hourOfDay = 14f, model = i), io.vroomi.character.render.calibre.DEFAULT_NOW_MS) { t ->
+                    driving(car(60f), Journey(active = true, tripSeq = 4, tripKm = 60f * t / 3600f, stars = (t / 40f).toInt(), starSeq = (t / 40f).toInt(), biome = Biome.PARK))
+                }
+            }
+        }
+        paparazzi.snapshot("map_ladder") {
+            val tm = androidx.compose.ui.text.rememberTextMeasurer()
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize()) {
+                runtimes.forEachIndexed { i, rt ->
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxWidth().aspectRatio(8f / 3f)) {
+                        androidx.compose.foundation.Canvas(androidx.compose.ui.Modifier.fillMaxSize()) { rt.draw(this, tm) }
+                        androidx.compose.foundation.text.BasicText(
+                            io.vroomi.character.theme.ThemeModels.tag(i),
+                            androidx.compose.ui.Modifier.padding(start = 12.dp, top = 10.dp).background(androidx.compose.ui.graphics.Color(0xD9101316), androidx.compose.foundation.shape.RoundedCornerShape(4.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
+                            style = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White, fontSize = 15.sp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** The ladder's rule: every step keeps what the one before had. */
+class MapStepTest {
+    @Test fun stepsAreCumulative() {
+        val has = (0 until 5).map { m -> listOf(MapStep.rose(m), MapStep.wash(m), MapStep.decor(m), MapStep.gold(m)).count { it } }
+        org.junit.Assert.assertEquals(listOf(0, 1, 2, 3, 4), has)
     }
 }
