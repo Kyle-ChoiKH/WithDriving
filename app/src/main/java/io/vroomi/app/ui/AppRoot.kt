@@ -116,6 +116,7 @@ import io.vroomi.character.render.theme.isKitTheme
 import io.vroomi.character.render.theme.releaseThemeLayers
 import io.vroomi.character.render.theme.rememberThemeSceneState
 import io.vroomi.character.theme.ThemeModels
+import io.vroomi.character.theme.colorway
 import io.vroomi.core.voice.ListenState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -253,6 +254,12 @@ fun AppRoot(rt: VroomiRuntime) {
     val modelOf: (SceneTheme) -> Int = { t -> modelPreview?.takeIf { it.first == t }?.second ?: ThemeAccess.effectiveModel(grade, settings.models[t]) }
     val sceneModel = demoModel ?: modelOf(shownTheme)
     stills.modelOf = modelOf
+    // The colourway of each theme: the user's choice among those the grade has opened.
+    val colorOf: (SceneTheme) -> Int = { t -> ThemeAccess.effectiveColor(grade, settings.colors[t]) }
+    stills.colorOf = colorOf
+    val pickColor: (SceneTheme, Int) -> Unit = { t, c ->
+        if (c <= ThemeAccess.maxModel(realGrade)) rt.settingsStore.update { s -> s.copy(colors = if (c == 0) s.colors - t else s.colors + (t to c)) }
+    }
     val options = SceneOptions(
         calm = settings.calm, reducedMotion = systemReduced, bubbleColor = MaterialTheme.colorScheme.surface,
         sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin, model = sceneModel,
@@ -586,7 +593,7 @@ fun AppRoot(rt: VroomiRuntime) {
                                 when (t) {
                                     Tab.THEMES -> Gallery(
                                         gallery, applied, stills,
-                                        chips = { ThemeOptionChips(applied, pickerContext(rt, settings, grade, modelOf, ::pickModel)) { optionSheet = it } },
+                                        chips = { ThemeOptionChips(applied, pickerContext(rt, settings, grade, modelOf, ::pickModel, colorOf = colorOf, onColor = pickColor)) { optionSheet = it } },
                                         onOpen = ::openCard,
                                         stepTag = { t -> ThemeModels.tag(modelOf(t)) },
                                     )
@@ -610,7 +617,7 @@ fun AppRoot(rt: VroomiRuntime) {
                         val lt = liveTheme
                         // The entrance accent is read here so only the live scene recomposes while it runs.
                         val intro = stage.intro.floatValue
-                        if (lt != null) host.Draw(target, if (intro < 1f) options.copy(intro = intro) else options, m,
+                        if (lt != null) host.Draw(target, if (intro < 1f) options.copy(intro = intro) else options, m.colorway(lt, colorOf(lt)),
                             interactive = !moving && place != Place.CARD, onFirstFrame = { stage.firstFrame(lt); firstFrameSeen = true })
                     }
 
@@ -640,7 +647,7 @@ fun AppRoot(rt: VroomiRuntime) {
                             onNext = if (shownOnStage != null && ThemeRegistry.indexOf(shownOnStage) < ThemeRegistry.all.size - 1) ({ step(1) }) else null,
                             onApply = ::applyStaged,
                             onDemo = shownOnStage?.let { s -> ThemeRegistry.of(s).showcase?.let { id -> { startDemo(id, s) } } },
-                            chips = { ThemeOptionChips(shownOnStage ?: applied, pickerContext(rt, settings, grade, modelOf, ::pickModel)) { optionSheet = it } },
+                            chips = { ThemeOptionChips(shownOnStage ?: applied, pickerContext(rt, settings, grade, modelOf, ::pickModel, colorOf = colorOf, onColor = pickColor)) { optionSheet = it } },
                         )
                         // The applied card's step tag: its picture is the live scene drawn above the gallery, so the
                         // tag is drawn here, at the card's top right (the other cards draw their own).
@@ -681,7 +688,7 @@ fun AppRoot(rt: VroomiRuntime) {
             }
 
             // Overlays above the blur: sheets and the welcome card.
-            val ctx = pickerContext(rt, settings, grade, modelOf, ::pickModel, previewing = { t -> modelPreview?.first == t }) { change -> stage.crossfade(prefs, change) }
+            val ctx = pickerContext(rt, settings, grade, modelOf, ::pickModel, previewing = { t -> modelPreview?.first == t }, colorOf = colorOf, onColor = pickColor) { change -> stage.crossfade(prefs, change) }
             BottomSheet(optionSheet != null && !moving, onDismiss = { optionSheet = null }, progress = { sheetAmount = it }) {
                 optionSheet?.let { o -> OptionSheet(o, staged ?: applied, ctx) }
             }
@@ -763,7 +770,8 @@ private fun PanelFor(tab: Tab, rt: VroomiRuntime, trips: List<io.vroomi.app.diar
 @Composable
 private fun pickerContext(
     rt: VroomiRuntime, s: io.vroomi.app.settings.Settings, grade: Grade, modelOf: (SceneTheme) -> Int, onModel: (SceneTheme, Int) -> Unit,
-    previewing: (SceneTheme) -> Boolean = { false }, crossfade: (() -> Unit) -> Unit = { it() },
+    previewing: (SceneTheme) -> Boolean = { false }, colorOf: (SceneTheme) -> Int = { 0 }, onColor: (SceneTheme, Int) -> Unit = { _, _ -> },
+    crossfade: (() -> Unit) -> Unit = { it() },
 ): PickerContext {
     val openedAt = remember { System.currentTimeMillis() }
     return PickerContext(
@@ -776,6 +784,8 @@ private fun pickerContext(
         onThemeSound = { on -> rt.settingsStore.update { it.copy(themeSound = on) } },
         grade = grade, modelOf = modelOf, previewing = previewing,
         onModel = { t, m -> if (m != modelOf(t)) crossfade { onModel(t, m) } else onModel(t, m) },
+        colorOf = colorOf,
+        onColor = { t, c -> if (c != colorOf(t)) crossfade { onColor(t, c) } else onColor(t, c) },
     )
 }
 

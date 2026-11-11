@@ -103,6 +103,13 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 
 **2026-11-11 밤: #18, #19 병합(사용자 승인) 후 릴리스 APK 교체.** 최신 main으로 `apk/Kyle_WithDriving_release.apk`를 다시 빌드했다(1.7.0-contest, versionCode 8, 19.9MB, v2 서명 확인). 에뮬레이터에 릴리스 빌드를 설치해 격납고 쇼케이스(12초 736프레임, 끊김 0%), 데모 중간 종료 후 원래 테마 복귀를 확인했다. 테스트 825개(단위 294 + 화면 531), 그림 539장.
 
+**2026-11-11 심야: 색상 고르기 + 약한 단계 보강**(`feat/colorways`). 사용자 요청: "꼬마차 옷장처럼 다른 테마도 등급이 오를수록 고를 수 있는 색상·꾸미기를 열어 달라", "등급별 차등을 더 주고 부족한 테마를 보완해 달라".
+- 색상(`character/.../theme/ThemeColorways.kt`): 꼬마차를 뺀 11개 테마에 이름 붙은 색상 5종. 완성된 그림에 색 행렬 한 겹(색상 회전·채도·빛 색조)을 씌우므로 그리기 코드는 그대로다. 등급마다 하나씩 열리고(`ThemeAccess.effectiveColor`: 고르지 않으면 기본색, 새 색이 저절로 입혀지지 않음), 설정에 `color.<THEME>`으로 저장한다.
+- 화면: 테마 탭 칩 "색상 · 이름"과 색상 시트(`ColorOptions`), 등급 탭의 색상 카드(`ColorSection`, 옷장과 같은 모양). 실시간 장면은 `Modifier.colorway`, 정지 그림은 `StillSpec.color`.
+- 보강: 엔진룸은 단계마다 방 조명(회색 작업장·청색 조립동·주황 다이노실·청록 시험실·진홍 피트), 태양계 4단계 넓은 먼지 고리, 팝업북 4단계 종이 무지개, 보물지도 2단계 산·숲을 크게·4단계 포르톨라노식 색 방위선과 둘째 나침반.
+- 단계 변화량 하한을 1.5%로 올렸다(지금 최소 1.81% 보물지도 Lv.2). 테스트 841개 통과.
+- 하지 않은 것: 색상 외의 "추가 아이템"(테마별 소품 고르기), 꼬마차의 색상(옷장·친구가 그 역할).
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 

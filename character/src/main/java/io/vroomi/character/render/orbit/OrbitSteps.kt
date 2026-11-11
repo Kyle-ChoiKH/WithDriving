@@ -86,8 +86,8 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
 
     private val starX = FloatArray(STARS) { hash01(it, 211) }
     private val starY = FloatArray(STARS) { hash01(it, 212) }
-    private val bandOuter = Ring(cx, cy, 168f, -6f, 0.34f)
-    private val bandInner = Ring(cx, cy, 138f, -6f, 0.34f)
+    private val bandOuter = Ring(cx, cy, 236f, -6f, 0.34f)
+    private val bandInner = Ring(cx, cy, 136f, -6f, 0.34f)
     private val band = Path()
 
     /** Half of the wide outer ring as a filled band between [bandInner] and [bandOuter]. */
@@ -121,7 +121,7 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
                     if (big) drawCircle(ink.a.copy(alpha = 0.16f * lum), 5f, Offset(x, y))
                 }
             }
-            if (OrbitStep.rings(model)) drawPath(bandPath(false), ink.b.copy(alpha = 0.16f * lum))
+            if (OrbitStep.rings(model)) drawPath(bandPath(false), ink.b.copy(alpha = 0.22f * lum))
             if (OrbitStep.duo(model)) {
                 val c = Offset(cx, cy)
                 drawCircle(Brush.radialGradient(0.62f to Color.Transparent, 0.74f to ink.a.copy(alpha = 0.30f * lum), 1f to Color.Transparent, center = c, radius = planetR * 1.42f), planetR * 1.42f, c)
@@ -134,8 +134,9 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
                 drawCircle(Brush.radialGradient(0f to ink.a.copy(alpha = 0.10f * lum), 1f to ink.a.copy(alpha = 0.30f * lum), center = Offset(cx, cy), radius = planetR), planetR, Offset(cx, cy))
             }
             if (OrbitStep.rings(model)) {
-                drawPath(bandPath(true), ink.b.copy(alpha = 0.26f * lum))
-                drawPath(bandOuter.front, ink.bCore.copy(alpha = 0.55f * lum), style = THIN)
+                drawPath(bandPath(true), ink.b.copy(alpha = 0.34f * lum))
+                drawPath(bandOuter.front, ink.bCore.copy(alpha = 0.7f * lum), style = THIN)
+                drawPath(bandOuter.back, ink.bCore.copy(alpha = 0.4f * lum), style = THIN)
             }
         }
     }
