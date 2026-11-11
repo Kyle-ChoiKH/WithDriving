@@ -37,34 +37,41 @@
 | `docs/superpowers/plans/2026-11-09-theme-overhaul.md` | 구현 계획 17개 작업. Global Constraints, 병렬 작업 규칙, 실행 현황, Task 17 병합 순서 |
 | `docs/superpowers/plans/cloud-agent-brief.md` | Linux 환경 준비, 명령, 규칙, 보고서 형식 |
 
-## 4. 지금 상태
+## 4. 지금 상태 (2026-11-11 밤 기준)
 
-| 작업 | 상태 | 브랜치 / PR |
+Task 1~16이 모두 끝나 PR로 올라가 있다. 모든 PR은 base main이고 `phase-a/foundation`(PR #1) 위에 쌓았다. 각 PR은 전체 `testDebugUnitTest` 통과와 스냅샷 직접 확인을 마쳤다.
+
+| 작업 | 브랜치 | PR |
 |---|---|---|
-| Task 2+3: 테마 목록(MARBLE 삭제, PLASMA·HANGAR 뼈대), 단계 배관(`SceneOptions.model`, 시나리오 `"model"`, 설정 저장, `ThemeModels`) | 완료. 테스트 554개 중 실패 0, CI 통과 | `phase-a/foundation` / **PR #1 병합 대기** |
-| 계획 갱신 + 이 인수인계 문서 + `CLAUDE.md` + `.claude/` 무시 | 완료 | `chore/plan-update` / **PR #2** |
-| Task 1: 등급 규칙(`Grade`, `SafetyGrade`, `ThemeAccess`, `Bond` 대체) | 커밋됨(4bb02df) | `phase-a/grade-ui` |
-| Task 4: 테마·등급 탭, 등급 화면(`GradePanel`), 단계 시트, 갤러리 "Lv.n", 개발자 스위치 | **WIP 커밋**(3a3d7d9), 전체 테스트 전에 멈춤 | `phase-a/grade-ui` |
-| Task 5: 오토매틱 시계(밝은 공방 + 5단계, `CalibreTourbillon` 신규) | **WIP 커밋**(09d5229), 2차 스냅샷을 검토하던 중 멈춤 | `theme/calibre` |
-| Task 6~16: 나머지 테마 11개 사다리 | 시작 안 함 | `theme/<테마 소문자>` |
-| Task 17: 통합, 문서, 버전 1.7.0-contest(8), 에뮬레이터 확인 | 시작 안 함 | `phase-c/integration` |
+| Task 2+3: 테마 목록, 단계 배관 | `phase-a/foundation` | #1 |
+| 계획 갱신 + 인수인계 문서 + `CLAUDE.md` | `chore/plan-update` | #2 |
+| Task 1+4: 등급 규칙, 테마·등급 탭, 등급 화면 | `phase-a/grade-ui` | #3 |
+| Task 5: 오토매틱 시계 | `theme/calibre` | #4 |
+| Task 6: 엔진룸 | `theme/engine` | #5 |
+| Task 7: 오르골 | `theme/music_box` | #6 |
+| Task 10: 플라즈마(신규) | `theme/plasma` | #7 |
+| Task 11: 로봇 격납고(신규) | `theme/hangar` | #8 |
+| Task 8: 아쿠아리움 | `theme/aquarium` | #9 |
+| Task 9: 유리병 정원 | `theme/terrarium` | #10 |
+| Task 14: 작은 태양계 | `theme/orbit` | #11 |
+| Task 16: 도트 월드 | `theme/pixel` | #12 |
+| Task 13: 보물지도 | `theme/treasure_map` | #13 |
+| Task 15: 종이 팝업북 | `theme/paper` | #14 |
+| Task 12: 꼬마차 | `theme/kart` | #15 |
+| Task 17: 통합, 문서, 버전 1.7.0-contest(8), 에뮬레이터 확인 | `phase-c/integration` | **시작 안 함(병합 승인 대기)** |
 
-`phase-a/grade-ui`와 `theme/calibre`는 `phase-a/foundation` 위에서 땄다. PR #1이 합쳐지면 main으로 rebase한다.
+알아 둘 점:
+- 테마 PR이 고친 공용 파일은 `Ambience.kt`와 `theme_luminance.json`의 자기 테마 줄뿐이다(서로 이웃한 줄이라 병합 때 충돌이 나면 양쪽 줄을 모두 받는다). `theme/hangar`만 `AppRoot.kt`의 `ThemeKeeper`에 데모 알림 5줄을 더했다.
+- 기존 테마의 사다리는 새 파일 `<Theme>Steps.kt`(또는 `KartSceneries.kt`, `VehicleSprites.kt`)에 단계 게이트와 소품을 두고, 기존 화가는 작은 치환만 했다.
+- **꼬마차는 계획과 다르게 구현했다.** 공용 `Biome`·`JourneyTracker`·음성 대사를 건드리지 않고, 가로수길·도시·산길이 격바퀴(첫 바퀴 포함)마다 새 얼굴(벚꽃 강변·네온 야경·오로라 설원)로 나온다(`KartStep.variant`). 이유와 되돌리는 방법은 PR #15 본문에 있다.
+- 저장소에 CRLF 파일과 LF 파일이 섞여 있다. 스크립트로 고칠 때는 원래 줄바꿈을 유지한다(`git ls-files --eol -m`에 `i/crlf w/lf`가 없어야 한다).
+- 각 PR이 Task 17로 미룬 것: `ScenarioGoldenTest`의 신규 쇼케이스 항목(plasma, hangar), `PassageCostTest`의 단계 5 항목, 사다리 헬퍼를 `KitShots.ladder()`로 모으기, 쇼케이스 시나리오의 단계 지정.
 
 ## 5. 다음에 할 일 (순서대로)
 
-1. **`phase-a/grade-ui` 마무리.**
-   - 전체 `testDebugUnitTest`를 돌린다.
-   - `ScreensSnapshotTest` 새 스냅샷 6장을 다시 기록하고 직접 본다: `grade_bronze`, `grade_gold`, `grade_diamond`, `gallery_steps_gold`, `sheet_model_calibre_silver`, `home_badge_gold`.
-   - `VROOMI_SCREEN=1024x600@160`에서 등급 화면이 한 열로 접히는지 본다.
-   - WIP 커밋을 정리하고 push한 뒤 PR(base main)을 연다.
-2. **`theme/calibre` 마무리.**
-   - 사다리 그림 `calibre_ladder`와 단계별 그림을 다시 기록해서 본다.
-   - 낮 배경 밝기 0.6 이상, 밤 0.3 이상으로 맞추고 `theme_luminance.json`을 다시 만든다.
-   - 전체 테스트를 돌리고 PR을 연다. 완료 조건은 계획 Task 5.
-3. **Task 6 엔진룸 → 7 오르골 → 10 플라즈마 → 11 격납고 → 8, 9, 12~16.** 한 번에 1~2개씩 진행한다.
-4. **Task 17 통합.** PR 병합은 사용자 승인 후에만 한다(6장).
-5. **제출 준비**(9장).
+1. **PR 병합(사용자 승인 후).** 순서: #1 → #2 → #3 → 테마 PR(#4 ~ #15). 각 PR은 합치기 전에 최신 main으로 rebase하고 CI를 다시 본다. 충돌 처리는 계획 Task 17 Step 1.
+2. **Task 17 통합**(`phase-c/integration`): 공용 테스트 정리, 밝기 재측정, 전체 빌드와 lint, 스냅샷 재기록(marble_* 삭제), 에뮬레이터 확인, 문서 갱신, 버전 1.7.0-contest(8).
+3. **제출 준비**(9장).
 
 각 테마 작업의 공통 단계(스냅샷 이름, 사다리 그림, 직접 보기, 반복, 올리기)는 계획의 "Phase B 공통 단계"와 "병렬 작업 규칙"에 있다. 요점:
 - 사다리 헬퍼는 각 테스트 파일 안에 private으로 만들고 `KitShots.kt`는 고치지 않는다.
