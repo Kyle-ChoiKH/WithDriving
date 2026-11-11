@@ -49,10 +49,17 @@ import kotlin.math.sqrt
 /** The theme's private palette (two phosphors on black). */
 private object OP {
     val black = Color(0xFF000000)
-    val core = Color(0xFFE2FFFF)
-    val cyan = Color(0xFF3FD9F2)
-    val green = Color(0xFF3FBF7F)
-    val greenCore = Color(0xFFA6F5C6)
+    var core = Color(0xFFE2FFFF)
+    var cyan = Color(0xFF3FD9F2)
+    var green = Color(0xFF3FBF7F)
+    var greenCore = Color(0xFFA6F5C6)
+    var ink = INK_DUO
+
+    /** The phosphors of the upgrade step: one green up to step 2, teal and amber from step 3 (set before each draw). */
+    fun use(model: Int) {
+        ink = if (OrbitStep.duo(model)) INK_DUO else INK_MONO
+        cyan = ink.a; core = ink.aCore; green = ink.b; greenCore = ink.bCore
+    }
 }
 
 /** Orbit geometry: projection of the orbital plane, sampled orbits, Kepler positions. */
@@ -116,6 +123,8 @@ private class OGeo(val dw: Float) {
     val dotY = FloatArray(70) { 20f + hash01(it, 4) * 560f }
     val windX = FloatArray(30) { hash01(it, 71) }
     val windY = FloatArray(30) { 40f + hash01(it, 72) * 520f }
+    /** What the upgrade steps add (OrbitSteps.kt). */
+    val extras = OrbitExtras(cx, cy, dw)
     val vignette = Brush.radialGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.55f)), Offset(cx, 300f), max(dw, 1080f) * 0.62f)
 }
 
@@ -163,8 +172,9 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
 
     override fun drawPx(s: DrawScope, sim: OrbitSim, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
         val g = geo(f.dw)
+        OP.use(f.model)
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
-        val bmp = base.get((w.toLong() shl 20) xor h.toLong(), w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { screen(g, f) } }
+        val bmp = base.get(((w.toLong() shl 20) xor h.toLong()) * 8L + f.model, w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { screen(g, f) } }
         s.drawImage(bmp, dstOffset = IntOffset(left.roundToInt(), top.roundToInt()), dstSize = IntSize(bmp.width, bmp.height))
     }
 
@@ -172,20 +182,32 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         intro = f.options.intro
         lum = 1f - 0.32f * sim.night
         val g = geo(f.dw)
+        val model = f.model
+        OP.use(model)
+        val st = if (sim.reducedMotion) 0f else sim.decoTime.toFloat() * (if (sim.calm) 0.5f else 1f)
         wind(g, sim, f)
         star(g, sim)
         meteor(g, sim)
         // Back halves (behind the planet's limb they are hidden by its black disc).
+        with(g.extras) { bodies(model, st, OP.ink, lum, front = false) }
         orbitLines(g, sim, front = false)
         satellites(g, sim, front = false)
         craft(g, sim, front = false)
         globe(g, sim)
+        with(g.extras) { bodies(model, st, OP.ink, lum, front = true) }
         orbitLines(g, sim, front = true)
         markerRing(g, sim)
-        station(g, sim)
+        station(g, sim, model, st)
         satellites(g, sim, front = true)
         craft(g, sim, front = true)
         telemetry(g, sim, f)
+        // The instrument columns: drawn gauges without lettering, so they stay while the car moves.
+        val e = if (intro < 1f) Intro.out(intro, 0.4f, 0.6f) else 1f
+        val phase = (((sim.angle - OrbitSim.STATION) / (2.0 * PI)) % 1.0).let { if (it < 0) it + 1.0 else it }.toFloat()
+        with(g.extras) {
+            column(44f, f.dh - 330f, phase, min(sim.kmh, 110f) / 110f, OP.ink, lum, e)
+            if (OrbitStep.station(model)) dockColumn(f.dw - 150f, 150f, min(phase, 1f - phase) * 2f, sim.docked, sim.laps, OP.ink, lum, e)
+        }
         val k = f.k
         val img = glass.get((f.w.roundToInt().toLong() shl 20) xor f.h.roundToInt().toLong(), f.w.roundToInt(), f.h.roundToInt(), f.density) { scanlines(g, f, k) }
         drawNative(img, f, 0f, 0f)
@@ -201,6 +223,8 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
             drawLine(OP.green.copy(alpha = 0.35f), Offset(x, y), Offset(x + sx * l, y), 1f)
             drawLine(OP.green.copy(alpha = 0.35f), Offset(x, y), Offset(x, y + sy * l), 1f)
         }
+        // The orbital plane's grid: range circles and bearing lines.
+        with(g.extras) { grid(OP.green) }
         // A centre reticle, very faint.
         drawLine(OP.green.copy(alpha = 0.10f), Offset(g.cx - 14f, f.dh - 46f), Offset(g.cx + 14f, f.dh - 46f), 1f)
         for (i in 0 until 9) drawLine(OP.green.copy(alpha = 0.16f), Offset(g.cx - 120f + i * 30f, f.dh - 50f), Offset(g.cx - 120f + i * 30f, f.dh - 42f), 1f)
@@ -212,7 +236,8 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
     /** Scanlines in device pixels and a soft tube falloff at the edges (drawn over everything). */
     private fun DrawScope.scanlines(g: OGeo, f: ThemeFrame, k: Float) {
         var y = 0f
-        while (y < size.height) { drawRect(Color.Black.copy(alpha = 0.30f), Offset(0f, y), Size(size.width, 1f)); y += 3f }
+        // Scanlines stay very faint (4 %): they are a texture of the tube, not a pattern over the picture.
+        while (y < size.height) { drawRect(Color.Black.copy(alpha = 0.04f), Offset(0f, y), Size(size.width, 1f)); y += 3f }
         withTransform({ scale(k, k, Offset.Zero) }) { drawRect(g.vignette, size = Size(f.dw, f.dh)) }
     }
 
@@ -382,17 +407,20 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         }
     }
 
-    private fun DrawScope.station(g: OGeo, sim: OrbitSim) {
+    private fun DrawScope.station(g: OGeo, sim: OrbitSim, model: Int, st: Float) {
         // The ring station waits just outside periapsis (where the craft docks).
         kepler(g, 0, OrbitSim.STATION)
         val x = tmp[0]; val y = tmp[1] - 22f
-        withTransform({ translate(x, y) }) { glowPath(hex, OP.cyan, 0.7f) }
-        glowLine(OP.cyan, 0.6f, Offset(x, y + 9f), Offset(x, y + 16f), 1f)
-        val lampA = 0.35f + 0.65f * sim.docked
-        drawCircle(OP.core.copy(alpha = lampA * lum), 1.6f, Offset(x - 13f, y)); drawCircle(OP.core.copy(alpha = lampA * lum), 1.6f, Offset(x + 13f, y))
+        if (OrbitStep.station(model)) with(g.extras) { station(x, y - 8f, sim.docked, st, OP.ink, lum) }
+        else {
+            withTransform({ translate(x, y) }) { glowPath(hex, OP.cyan, 0.7f) }
+            glowLine(OP.cyan, 0.6f, Offset(x, y + 9f), Offset(x, y + 16f), 1f)
+            val lampA = 0.35f + 0.65f * sim.docked
+            drawCircle(OP.core.copy(alpha = lampA * lum), 1.6f, Offset(x - 13f, y)); drawCircle(OP.core.copy(alpha = lampA * lum), 1.6f, Offset(x + 13f, y))
+        }
         // Lap ticks: one per km, stacked beside the station.
         for (i in 0 until min(sim.laps, 20)) {
-            val tx = x + 22f + i * 4.5f
+            val tx = x + (if (OrbitStep.station(model)) 58f else 22f) + i * 4.5f
             drawLine(OP.green.copy(alpha = 0.8f * lum), Offset(tx, y - 5f), Offset(tx, y + 5f), 1.2f)
         }
     }
