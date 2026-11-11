@@ -7,8 +7,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Canvas
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -53,33 +56,59 @@ internal object CW {
 internal class Part(val bmp: ImageBitmap, val half: Float)
 
 /**
- * Every static layer of one finish, rendered once into bitmaps at movement radius [u] px and
- * re-rendered only when the key (size, tone, light hour) changes. Dial layers are made on demand.
+ * Every static layer of one finish at one upgrade step ([model], see [CalStep]), rendered once into bitmaps at
+ * movement radius [u] px and re-rendered only when the key (size, tone, step) changes. Dial layers are made on demand.
  */
 internal class CalibreLayers(
     val u: Float,
     val tone: CalibreTone,
+    model: Int,
     private val density: Density,
     private val tm: TextMeasurer,
 ) {
+    val step = CalStep(model)
     val pal = CalPal.of(tone)
     /** One soft key light, upper left, for every finish (a studio, not a room). */
     val light = KeyLight.STUDIO
     val half = ceil(CW.HALF * u)
     val c = Offset(half, half)
+    /** Screws in the movement: plain polished steel on the first step, heat-blued from the second. */
+    val screwMetal: Metal = if (step.deco) CalPal.blued else CalPal.steelScrew
+    /** The main plate: the finish's own, or dark ruthenium once the movement is openworked (black DLC stays black). */
+    val plate: Metal = if (step.skeleton && tone != CalibreTone.BLACK_DLC) CalPal.ruthenium else pal.plate
+    /** Where the crown (at 9 or 3 o'clock) and the pushers (30° above and below it) meet the case flank, in u. */
+    val crownEdge: Float = CaseGeo.edge(step.shape, 0f)
+    val pusherEdge: Float = CaseGeo.edge(step.shape, 30f * PI.toFloat() / 180f)
+
+    /** The case seen from above (outline and lugs), for its shadow on the bench and the flip's shading. */
+    val silhouette: Path = silhouetteAt(c)
+    /** The soft shadow the watch casts on the bench, centred like the other layers but [shadowHalf] px half-size. */
+    val shadowHalf = ceil(2.0f * u)
+    val shadow: ImageBitmap = render(shadowHalf) { drawCaseShadow() }
+
+    internal val grain: Brush by lazy { ShaderBrush(ImageShader(grainTile(), TileMode.Repeated, TileMode.Repeated)) }
 
     val base: ImageBitmap = render(half) { drawBase() }
     val bridges: ImageBitmap = render(half) { drawBridges() }
-    val cock: ImageBitmap = render(half) { drawCock() }
-    val rotor: Part = part(CalibreGeometry.ROTOR_R + 0.02f) { o, r -> drawRotor(o) }
+    /** The balance cock; the tourbillon step has none (its balance rides in the cage). */
+    val cock: ImageBitmap? = if (step.tourbillon) null else render(half) { drawCock() }
+    val rotor: Part = part(CalibreGeometry.ROTOR_R + 0.02f) { o, _ -> drawRotor(o) }
     val wheels: Map<Wheel, Part> = Wheel.entries.associateWith { w -> part(w.pivot.r + 0.01f) { o, _ -> drawWheel(o, w) } }
     val escape: Part = part(CalibreGeometry.ESCAPE.r + 0.01f) { o, _ -> drawEscape(o) }
     val ratchet: Part = part(CalibreGeometry.RATCHET.r + 0.01f) { o, _ -> drawRatchet(o) }
     val crownWheel: Part = part(CalibreGeometry.CROWN_WHEEL.r + 0.01f) { o, _ -> drawCrownWheel(o) }
     val column: Part = part(CalibreGeometry.COLUMN.r + 0.01f) { o, _ -> drawColumnWheel(o) }
+    /** The tourbillon's cage, balance and escape wheel (top step only). */
+    val tourbillon: TourbillonParts? by lazy { if (step.tourbillon) TourbillonParts(this) else null }
 
     /** Rotor outline around (0,0), heavy segment toward +x (for its shadow and sheen). */
-    val rotorPath: Path = rotorShape(Offset.Zero, u)
+    val rotorPath: Path = rotorShape(Offset.Zero, u, step.rotor)
+
+    /** Where a star's glint travels (barrel to balance, or to the tourbillon) and where the combo lights every jewel. */
+    val trainGlints: Array<Offset> = if (step.tourbillon) arrayOf(p(CalibreGeometry.JEWELS[0]), p(CalibreGeometry.JEWELS[1]), p(CalibreGeometry.JEWELS[2]), p(TB.C.x, TB.C.y))
+        else CalibreGeometry.TRAIN_PATH.map { p(CalibreGeometry.JEWELS[it]) }.toTypedArray()
+    val allGlints: Array<Offset> = (CalibreGeometry.JEWELS.indices.filter { !step.tourbillon || it !in TOURBILLON_REPLACES }
+        .map { p(CalibreGeometry.JEWELS[it]) } + (if (step.tourbillon) listOf(p(TB.C.x, TB.C.y)) else emptyList())).toTypedArray()
 
     /** Levers, fork, click... pre-built once per size (no per-frame path building). */
     val parts: MovingParts by lazy { MovingParts(this) }
@@ -97,7 +126,7 @@ internal class CalibreLayers(
     val rotorSheen: Brush by lazy {
         val px = -light.y; val py = light.x
         Brush.linearGradient(
-            0f to Color.Transparent, 0.40f to Color.Transparent, 0.5f to Color.White.a(0.38f), 0.60f to Color.Transparent, 1f to Color.Transparent,
+            0f to Color.Transparent, 0.40f to Color.Transparent, 0.5f to Color.White.a(0.34f), 0.60f to Color.Transparent, 1f to Color.Transparent,
             start = Offset(-px * u * 0.55f, -py * u * 0.55f), end = Offset(px * u * 0.55f, py * u * 0.55f),
         )
     }
@@ -117,10 +146,22 @@ internal class CalibreLayers(
         return bmp
     }
 
-    private fun part(rUnits: Float, block: DrawScope.(Offset, Float) -> Unit): Part {
+    internal fun part(rUnits: Float, block: DrawScope.(Offset, Float) -> Unit): Part {
         val h = ceil(rUnits * u + 2f)
         val bmp = render(h) { block(Offset(h, h), rUnits * u) }
         return Part(bmp, h)
+    }
+
+    private fun grainTile(): ImageBitmap {
+        val n = 64
+        val img = ImageBitmap(n, n)
+        CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(img), Size(n.toFloat(), n.toFloat())) {
+            for (i in 0 until 520) {
+                val x = hash01(i, 201) * n; val y = hash01(i, 202) * n
+                drawCircle(if (hash01(i, 203) > 0.5f) Color.White.a(0.10f) else Color.Black.a(0.07f), 0.45f + 0.5f * hash01(i, 204), Offset(x, y))
+            }
+        }
+        return img
     }
 
     internal fun engraving(text: String, sizeU: Float, weight: FontWeight = FontWeight.Medium, spacing: Float = 0.12f, serif: Boolean = true, smallCaps: Boolean = false) =
@@ -145,12 +186,12 @@ internal class CalibreLayers(
         val l = engraving(text, sizeU, serif = serif, smallCaps = smallCaps, spacing = spacing)
         rotate(deg, at) {
             val tl = Offset(at.x - l.size.width / 2f, at.y - l.size.height / 2f)
-            drawText(l, color = Color.Black.a(0.55f), topLeft = tl + Offset(0.8f, 1.1f))
+            drawText(l, color = Color.Black.a(0.45f), topLeft = tl + Offset(0.8f, 1.1f))
             drawText(l, color = color, topLeft = tl)
         }
     }
 
-    // ------------------------------------------------------------------ base: lugs, case back, plate
+    // ------------------------------------------------------------------ the case (shared by both views)
 
     private fun lugPath(sx: Float, sy: Float): Path = Path().apply {
         fun pt(x: Float, y: Float) = Offset(c.x + sx * x * u, c.y + sy * y * u)
@@ -168,13 +209,42 @@ internal class CalibreLayers(
         close()
     }
 
+    /** Lugs of this step's case, one path per lug, around [o]. */
+    private fun lugs(o: Offset): List<Path> {
+        val out = ArrayList<Path>(4)
+        for (sx in listOf(-1f, 1f)) for (sy in listOf(-1f, 1f)) {
+            out += if (step.shape == CaseShape.ROUND) lugPath(sx, sy).also { if (o != c) it.translate(o - c) }
+            else CaseGeo.shortLug(step.shape, o, u, sx, sy)
+        }
+        return out
+    }
+
+    private fun silhouetteAt(o: Offset): Path = union(CaseGeo.outline(step.shape, o, u), *lugs(o).toTypedArray())
+
+    private fun DrawScope.drawCaseShadow() {
+        val o = Offset(shadowHalf, shadowHalf)
+        val s = silhouetteAt(o)
+        // The watch lies on the bench under a soft light from the upper left: a wide, soft shadow falls down and to
+        // the right, a faint occlusion surrounds it, and a tight, darker contact shadow hugs the case edge.
+        blurred(s, CalPal.benchShadow.a(0.42f), u * 0.13f, -light.x * u * 0.11f, -light.y * u * 0.11f)
+        blurred(s, CalPal.benchShadow.a(0.22f), u * 0.07f)
+        blurred(s, CalPal.benchShadow.a(0.55f), u * 0.025f, -light.x * u * 0.014f, -light.y * u * 0.02f)
+    }
+
+    /** The lugs (brushed along their length, a polished facet on the outer flank). */
     internal fun DrawScope.drawLugs(m: Metal) {
+        if (step.shape != CaseShape.ROUND) {
+            for (lp in lugs(c)) {
+                drawPath(lp, metalBrush(m, c, u * 1.4f, light, 0.9f))
+                clipPath(lp) { satin(m, vertical = true) }
+                bevel(lp, c, u * 1.4f, light, (u * 0.008f).coerceAtLeast(1.2f))
+            }
+            return
+        }
         for (sx in listOf(-1f, 1f)) for (sy in listOf(-1f, 1f)) {
             val lp = lugPath(sx, sy)
-            softShadow(lp, -light.x * u * 0.03f, -light.y * u * 0.03f, 0.4f)
             drawPath(lp, metalBrush(m, c, u * 1.4f, light, 0.9f))
             clipPath(lp) {
-                // Brushed along the lug, with a polished facet on the outer flank
                 var x = 0.45f
                 while (x < 0.95f) {
                     val xx = c.x + sx * x * u
@@ -190,59 +260,121 @@ internal class CalibreLayers(
         }
     }
 
+    /** Fine satin brushing (soft parallel lines), clipped by the caller. */
+    private fun DrawScope.satin(m: Metal, vertical: Boolean) {
+        var t = -1.6f
+        var k = 0
+        while (t < 1.6f) {
+            val col = if (k % 2 == 0) Color.White.a(0.045f) else Color.Black.a(0.04f)
+            if (vertical) drawLine(col, Offset(c.x + t * u, c.y - 1.6f * u), Offset(c.x + t * u, c.y + 1.6f * u), 1f)
+            else drawLine(col, Offset(c.x - 1.6f * u, c.y + t * u), Offset(c.x + 1.6f * u, c.y + t * u), 1f)
+            t += 0.007f; k++
+        }
+    }
+
+    /**
+     * The case body: lugs, the case middle in this step's shape and, on a shaped case, the round bezel (dial side) or
+     * case-back ring (back) raised on it. [turned] is the strength of the lathe-turned sheen on the round part.
+     */
+    internal fun DrawScope.drawCaseBody(m: Metal, turned: Float) {
+        drawLugs(m)
+        if (step.shape == CaseShape.ROUND) {
+            drawCircle(metalBrush(m, c, CW.CASE_OUT * u, light), CW.CASE_OUT * u, c)
+            rotate(light.deg + 45f, c) { drawCircle(turnedBrush(m, c), CW.CASE_OUT * u * 0.995f, c, alpha = turned) }
+            bevel(circlePath(c, CW.CASE_OUT * u), c, CW.CASE_OUT * u, light, (u * 0.007f).coerceAtLeast(1.2f), 0.7f)
+            return
+        }
+        val o = CaseGeo.outline(step.shape, c, u)
+        val ext = 1.45f * u
+        drawPath(o, metalBrush(m, c, ext, light))
+        clipPath(o) {
+            satin(m, vertical = step.shape == CaseShape.TONNEAU)
+            // The case middle is domed: it rolls away from the light toward its outline.
+            drawPath(o, Brush.radialGradient(0.62f to Color.Transparent, 0.9f to m.dark.a(0.16f), 1f to m.dark.a(0.30f),
+                center = Offset(c.x + light.x * u * 0.10f, c.y + light.y * u * 0.10f), radius = ext))
+        }
+        // The polished chamfer along the outline catches the light on the lit side.
+        bevel(o, c, ext, light, (u * 0.012f).coerceAtLeast(1.4f))
+        // The round part raised on the shaped middle (its step casts a thin shadow).
+        val rr = CW.CASE_OUT * u
+        drawCircle(Brush.radialGradient(0.92f to Color.Black.a(0.28f), 1f to Color.Transparent, center = Offset(c.x - light.x * u * 0.02f, c.y - light.y * u * 0.02f), radius = rr * 1.04f), rr * 1.04f, Offset(c.x - light.x * u * 0.02f, c.y - light.y * u * 0.02f))
+        drawCircle(metalBrush(m, c, rr, light), rr, c)
+        rotate(light.deg + 45f, c) { drawCircle(turnedBrush(m, c), rr * 0.995f, c, alpha = turned) }
+        bevel(circlePath(c, rr), c, rr, light, (u * 0.008f).coerceAtLeast(1.2f))
+    }
+
+    // ------------------------------------------------------------------ base: case back, plate
+
     private fun DrawScope.drawBase() {
         val m = pal.case
-        drawLugs(m)
-        // Case back: polished bezel with eight screws, a gasket, then the sapphire window
-        softShadow(circlePath(c, CW.CASE_OUT * u), -light.x * u * 0.05f, -light.y * u * 0.05f, 0.45f)
-        drawCircle(metalBrush(m, c, CW.CASE_OUT * u, light), CW.CASE_OUT * u, c)
-        rotate(light.deg + 45f, c) { drawCircle(turnedBrush(m, c), CW.CASE_OUT * u * 0.995f, c, alpha = 0.35f) }
+        drawCaseBody(m, 0.35f)
         drawCircle(Color.Black.a(0.35f), CW.BEZEL_IN * u, c, style = Stroke(width = u * 0.008f))
         drawCircle(lerp(m.dark, Color.Black, 0.3f), CW.BEZEL_IN * u, c)
         drawCircle(Color(0xFF16171A), CW.GASKET * u, c)
-        // A fine lume ring set in the flange: pale by day, the only light at night.
+        // A fine lume ring set in the flange: pale by day, glowing at night.
         drawCircle(CalPal.lumeDay.a(0.8f), CW.LUME_RING * u, c, style = Stroke(width = u * 0.010f))
-        for (i in 0 until 8) {
-            val a = (i * 45f + 22.5f) * PI.toFloat() / 180f
-            screw(pol(c, 1.14f * u, a), u * 0.026f, hash01(i, 5) * 180f, light)
+        if (step.shape == CaseShape.ROUND) {
+            // Eight polished steel screws hold the back.
+            for (i in 0 until 8) {
+                val a = (i * 45f + 22.5f) * PI.toFloat() / 180f
+                screw(pol(c, 1.14f * u, a), u * 0.026f, hash01(i, 5) * 180f, light, CalPal.steelScrew)
+            }
+        } else {
+            // A screw-down back: six notches for the case wrench.
+            for (i in 0 until 6) {
+                val a = (i * 60f + 30f) * PI.toFloat() / 180f
+                val p0 = pol(c, 1.165f * u, a); val p1 = pol(c, 1.205f * u, a)
+                drawLine(lerp(m.dark, Color.Black, 0.25f), p0, p1, strokeWidth = u * 0.05f, cap = StrokeCap.Butt)
+                drawLine(m.light.a(0.5f), p0 + Offset(light.x, light.y) * (u * 0.022f), p1 + Offset(light.x, light.y) * (u * 0.022f), strokeWidth = u * 0.006f)
+            }
         }
-        // Case-back engraving between the screws (allowed words only)
-        val words = listOf("CALIBRE VR-01", "28 800 A/h", "72H", "ADJUSTED TO YOUR DRIVE")
+        // Case-back engraving (allowed words only)
+        val words = listOf("CALIBRE VR-01", "28 800 A/h", if (step.tourbillon) "TOURBILLON" else "72H", "ADJUSTED TO YOUR DRIVE")
         val angles = listOf(-90f, 0f, 180f, 90f)
-        val sizes = listOf(0.045f, 0.04f, 0.045f, 0.032f)
+        val sizes = listOf(0.045f, 0.04f, if (step.tourbillon) 0.036f else 0.045f, 0.032f)
         words.forEachIndexed { i, w -> engraveArc(w, 1.135f, angles[i], sizes[i]) }
 
-        // Main plate with perlage (circular graining)
-        val plate = circlePath(c, u)
-        clipPath(plate) {
-            drawCircle(pal.plate.base, u, c)
-            val sp = u * 0.042f
-            var row = 0
-            var y = c.y - u
-            while (y < c.y + u + sp) {
-                var x = c.x - u + if (row % 2 == 0) 0f else sp * 0.5f
-                while (x < c.x + u + sp) {
-                    val o = Offset(x, y)
-                    drawCircle(
-                        Brush.radialGradient(
-                            0f to pal.plate.light.a(0.9f), 0.55f to pal.plate.base, 0.85f to pal.plate.dark.a(0.85f), 1f to pal.plate.base,
-                            center = Offset(x + light.x * sp * 0.18f, y + light.y * sp * 0.18f), radius = sp * 0.62f,
-                        ),
-                        sp * 0.62f, o,
-                    )
-                    x += sp * 0.72f
-                }
-                y += sp * 0.62f; row++
+        // Main plate: matte on the first step, perlage (circular graining) from the second.
+        val plateShape = circlePath(c, u)
+        clipPath(plateShape) {
+            drawCircle(plate.base, u, c)
+            if (step.deco) perlage(plate) else {
+                drawCircle(Brush.radialGradient(listOf(plate.light.a(0.35f), Color.Transparent), Offset(c.x + light.x * u * 0.5f, c.y + light.y * u * 0.5f), u * 1.4f), u, c)
+                drawCircle(grain, u, c)
             }
             // Sinks under the wheels and the barrel (depth)
-            for (w in Wheel.entries) drawCircle(Color.Black.a(0.28f), (w.pivot.r + 0.02f) * u, p(w.pivot))
-            drawCircle(Color.Black.a(0.35f), (CalibreGeometry.BARREL.r + 0.02f) * u, p(CalibreGeometry.BARREL))
-            drawCircle(Color.Black.a(0.30f), (CalibreGeometry.BALANCE.r + 0.025f) * u, p(CalibreGeometry.BALANCE))
-            drawCircle(Color.Black.a(0.25f), (CalibreGeometry.ESCAPE.r + 0.02f) * u, p(CalibreGeometry.ESCAPE))
+            for (w in Wheel.entries) if (!(step.tourbillon && w == Wheel.FOURTH_W)) drawCircle(Color.Black.a(0.24f), (w.pivot.r + 0.02f) * u, p(w.pivot))
+            drawCircle(Color.Black.a(0.30f), (CalibreGeometry.BARREL.r + 0.02f) * u, p(CalibreGeometry.BARREL))
+            if (!step.tourbillon) {
+                drawCircle(Color.Black.a(0.26f), (CalibreGeometry.BALANCE.r + 0.025f) * u, p(CalibreGeometry.BALANCE))
+                drawCircle(Color.Black.a(0.22f), (CalibreGeometry.ESCAPE.r + 0.02f) * u, p(CalibreGeometry.ESCAPE))
+            }
             // Inner shadow cast by the case
-            drawCircle(Brush.radialGradient(0.86f to Color.Transparent, 1f to Color.Black.a(0.55f), center = c, radius = u), u, c)
+            drawCircle(Brush.radialGradient(0.86f to Color.Transparent, 1f to Color.Black.a(0.45f), center = c, radius = u), u, c)
         }
-        bevel(plate, c, u, light, u * 0.006f)
+        bevel(plateShape, c, u, light, u * 0.006f)
+        if (step.tourbillon) drawTourbillonSeat(this@CalibreLayers)
+    }
+
+    /** Perlage: overlapping circular grains, kept low in contrast (a soft shimmer, not a honeycomb). */
+    internal fun DrawScope.perlage(m: Metal = plate) {
+        val sp = u * 0.048f
+        var row = 0
+        var y = c.y - u
+        while (y < c.y + u + sp) {
+            var x = c.x - u + if (row % 2 == 0) 0f else sp * 0.5f
+            while (x < c.x + u + sp) {
+                drawCircle(
+                    Brush.radialGradient(
+                        0f to m.light.a(0.38f), 0.55f to m.base, 0.85f to m.dark.a(0.26f), 1f to m.base,
+                        center = Offset(x + light.x * sp * 0.18f, y + light.y * sp * 0.18f), radius = sp * 0.62f,
+                    ),
+                    sp * 0.62f, Offset(x, y),
+                )
+                x += sp * 0.72f
+            }
+            y += sp * 0.62f; row++
+        }
     }
 
     private fun DrawScope.engraveArc(text: String, rU: Float, centreDeg: Float, sizeU: Float) {
@@ -261,35 +393,69 @@ internal class CalibreLayers(
 
     // ------------------------------------------------------------------ bridges
 
+    /** One element of a bridge (units of u): a capsule or a circle; [open] ones are cut out on a skeleton step. */
+    private class El(val a: Offset, val b: Offset, val w: Float, val open: Boolean)
+
+    private fun cap(a: Pivot, b: Pivot, w: Float, open: Boolean = true) = El(Offset(a.x, a.y), Offset(b.x, b.y), w, open)
+    private fun cap(a: Pivot, bx: Float, by: Float, w: Float, open: Boolean = true) = El(Offset(a.x, a.y), Offset(bx, by), w, open)
+    private fun disc(x: Float, y: Float, r: Float, open: Boolean = false) = El(Offset(x, y), Offset(x, y), r, open)
+    private fun disc(v: Pivot, r: Float, open: Boolean = false) = disc(v.x, v.y, r, open)
+
+    /**
+     * A bridge from its elements. On a skeleton step every [El.open] element is hollowed to a rim of [RIM] u, while
+     * the bosses, the screw seats and the jewel settings ([keep], (x, y, r) in u) stay solid.
+     */
+    private fun bridgePath(els: List<El>, hole: Triple<Float, Float, Float>? = null, keep: List<Triple<Float, Float, Float>> = emptyList()): Path {
+        fun pathOf(e: El, shrink: Float): Path? {
+            val w = e.w - shrink
+            if (w <= 0.012f) return null
+            return if (e.a == e.b) circlePath(p(e.a.x, e.a.y), w * u) else capsule(p(e.a.x, e.a.y), p(e.b.x, e.b.y), w * u)
+        }
+        var outer = union(*els.mapNotNull { pathOf(it, 0f) }.toTypedArray())
+        hole?.let { outer = subtract(outer, circlePath(p(it.first, it.second), it.third * u)) }
+        outer = intersect(outer, circlePath(c, 0.992f * u))
+        if (!step.skeleton) return outer
+        val inner = els.filter { it.open }.mapNotNull { pathOf(it, RIM) }
+        if (inner.isEmpty()) return outer
+        var cut = union(*inner.toTypedArray())
+        val solid = els.filter { !it.open }.mapNotNull { pathOf(it, -0.012f) } + keep.map { circlePath(p(it.first, it.second), it.third * u) }
+        if (solid.isNotEmpty()) cut = subtract(cut, union(*solid.toTypedArray()))
+        return subtract(outer, cut)
+    }
+
     internal fun barrelBridge(): Path {
         val g = CalibreGeometry
-        val shape = union(
-            circlePath(p(g.BARREL), 0.355f * u),
-            capsule(p(g.BARREL), p(-0.70f, -0.58f), 0.12f * u),
-            capsule(p(g.BARREL), p(-0.82f, 0.16f), 0.11f * u),
-            circlePath(p(-0.70f, -0.58f), 0.12f * u),
+        return bridgePath(
+            listOf(disc(g.BARREL, 0.355f), cap(g.BARREL, -0.70f, -0.58f, 0.12f), cap(g.BARREL, -0.82f, 0.16f, 0.11f), disc(-0.70f, -0.58f, 0.12f, open = true)),
+            hole = Triple(g.BARREL.x, g.BARREL.y, 0.278f),
+            keep = listOf(Triple(-0.70f, -0.58f, 0.052f), Triple(-0.80f, 0.12f, 0.052f), Triple(-0.52f, -0.455f, 0.055f)),
         )
-        return intersect(subtract(shape, circlePath(p(g.BARREL), 0.278f * u)), circlePath(c, 0.992f * u))
     }
 
     internal fun trainBridge(): Path {
         val g = CalibreGeometry
-        val w = 0.072f * u
-        return intersect(union(
-            capsule(p(g.THIRD), p(g.FOURTH), w), capsule(p(g.FOURTH), p(g.ESCAPE), w * 0.9f),
-            capsule(p(g.THIRD), p(-0.62f, 0.56f), w), capsule(p(g.FOURTH), p(-0.28f, 0.90f), w),
-            circlePath(p(g.THIRD), 0.07f * u), circlePath(p(g.FOURTH), 0.075f * u), circlePath(p(g.ESCAPE), 0.06f * u),
-        ), circlePath(c, 0.992f * u))
+        if (step.tourbillon) return bridgePath(
+            listOf(cap(g.THIRD, -0.62f, 0.56f, 0.072f), disc(g.THIRD, 0.07f)),
+            keep = listOf(Triple(-0.62f, 0.56f, 0.048f), Triple(-0.54f, 0.50f, 0.052f)),
+        )
+        return bridgePath(
+            listOf(
+                cap(g.THIRD, g.FOURTH, 0.072f), cap(g.FOURTH, g.ESCAPE, 0.065f), cap(g.THIRD, -0.62f, 0.56f, 0.072f), cap(g.FOURTH, -0.28f, 0.90f, 0.072f),
+                disc(g.THIRD, 0.07f), disc(g.FOURTH, 0.075f), disc(g.ESCAPE, 0.06f),
+            ),
+            keep = listOf(Triple(-0.62f, 0.56f, 0.048f), Triple(-0.28f, 0.88f, 0.048f), Triple(-0.54f, 0.50f, 0.052f)),
+        )
     }
 
     internal fun chronoBridge(): Path {
         val g = CalibreGeometry
-        val w = 0.066f * u
-        return intersect(union(
-            capsule(p(g.RUNNER), p(g.COUNTER), w), capsule(p(g.COUNTER), p(0.62f, -0.76f), w),
-            capsule(p(g.RUNNER), p(-0.02f, -0.92f), w), capsule(p(g.RUNNER), p(0.33f, -0.38f), w * 0.85f),
-            circlePath(p(g.RUNNER), 0.07f * u), circlePath(p(g.COUNTER), 0.06f * u),
-        ), circlePath(c, 0.992f * u))
+        return bridgePath(
+            listOf(
+                cap(g.RUNNER, g.COUNTER, 0.066f), cap(g.COUNTER, 0.62f, -0.76f, 0.066f), cap(g.RUNNER, -0.02f, -0.92f, 0.066f),
+                cap(g.RUNNER, 0.33f, -0.38f, 0.056f), disc(g.RUNNER, 0.07f), disc(g.COUNTER, 0.06f),
+            ),
+            keep = listOf(Triple(0.62f, -0.76f, 0.046f), Triple(-0.02f, -0.90f, 0.046f), Triple(0.55f, -0.715f, 0.05f), Triple(0.33f, -0.38f, 0.05f)),
+        )
     }
 
     internal fun palletBridge(): Path {
@@ -298,9 +464,14 @@ internal class CalibreLayers(
     }
 
     private fun DrawScope.bridge(shape: Path, angleDeg: Float, m: Metal) {
-        softShadow(shape, -light.x * u * 0.022f, -light.y * u * 0.022f, 0.42f)
-        cotesDeGeneve(shape, c, u, m, angleDeg, u * 0.085f)
-        bevel(shape, c, u, light, (u * 0.009f).coerceAtLeast(1.3f))
+        softShadow(shape, -light.x * u * 0.022f, -light.y * u * 0.022f, 0.38f)
+        if (step.deco) cotesDeGeneve(shape, c, u, m, angleDeg, u * 0.085f)
+        else {
+            // Matte (bead-blasted) bridges: an even soft sheen and a fine grain, no stripes.
+            drawPath(shape, metalBrush(m, c, u, light, 0.45f))
+            clipPath(shape) { drawCircle(grain, u, c) }
+        }
+        bevel(shape, c, u, light, (u * 0.009f).coerceAtLeast(1.3f), if (step.deco) 1f else 0.7f)
     }
 
     private fun DrawScope.drawBridges() {
@@ -309,31 +480,34 @@ internal class CalibreLayers(
         bridge(barrelBridge(), -32f, m)
         bridge(trainBridge(), -32f, m)
         bridge(chronoBridge(), -32f, m)
-        bridge(palletBridge(), -32f, m)
+        if (!step.tourbillon) bridge(palletBridge(), -32f, m)
 
-        // Jewels set in the bridges (balance, column wheel and reversers are drawn with their parts)
+        // Jewels set in the bridges (balance, column wheel and reversers are drawn with their parts). The top step
+        // sets every visible one in a screwed gold chaton.
         val sink = lerp3(pal.bridge)
-        listOf(2, 3, 4, 5, 8, 9).forEach { i -> val j = g.JEWELS[i]; jewel(p(j.x, j.y), j.r * u, light, sink) }
-        // Gold chatons held by two tiny screws
+        val inBridges = if (step.tourbillon) listOf(2, 8, 9) else listOf(2, 3, 4, 5, 8, 9)
+        for (i in inBridges) {
+            val j = g.JEWELS[i]
+            if (step.tourbillon) goldChaton(p(j.x, j.y), j.r * u, u, light, 40f + i * 20f) else jewel(p(j.x, j.y), j.r * u, light, sink)
+        }
         for (i in 12 until g.JEWELS.size) {
+            if (step.tourbillon && i in TOURBILLON_REPLACES) continue
             val j = g.JEWELS[i]; val o = p(j.x, j.y)
-            drawCircle(metalBrush(CalPal.yellowGold, o, j.r * u * 2.6f, light), j.r * u * 2.5f, o)
-            bevel(circlePath(o, j.r * u * 2.5f), o, j.r * u * 2.5f, light, 1f)
-            jewel(o, j.r * u, light, CalPal.yellowGold)
-            for (k in 0..1) screw(pol(o, j.r * u * 3.4f, (k * 180f + 40f + i * 20f) * PI.toFloat() / 180f), u * 0.016f, i * 37f, light)
+            if (step.tourbillon) goldChaton(o, j.r * u, u, light, 40f + i * 20f) else jewel(o, j.r * u, light, sink)
         }
         // Bridge screws
-        listOf(p(-0.70f, -0.58f) to 20f, p(-0.80f, 0.12f) to 75f, p(-0.62f, 0.56f) to 130f, p(-0.28f, 0.88f) to 15f,
-            p(0.62f, -0.76f) to 160f, p(-0.02f, -0.90f) to 95f, p(0.30f, 0.86f) to 50f, p(-0.05f, -0.30f) to 140f,
-        ).forEach { (o, a) -> screw(o, u * 0.03f, a, light) }
+        val screws = mutableListOf(p(-0.70f, -0.58f) to 20f, p(-0.80f, 0.12f) to 75f, p(-0.62f, 0.56f) to 130f,
+            p(0.62f, -0.76f) to 160f, p(-0.02f, -0.90f) to 95f, p(-0.05f, -0.30f) to 140f)
+        if (!step.tourbillon) { screws += p(-0.28f, 0.88f) to 15f; screws += p(0.30f, 0.86f) to 50f }
+        screws.forEach { (o, a) -> screw(o, u * 0.03f, a, light, screwMetal) }
 
-        // Engravings
-        val arm1a = p(g.BARREL); val arm1b = p(-0.82f, 0.16f)
-        engraveAlong("CALIBRE VR-01", arm1a, arm1b, 0.62f, 0.058f)
-        val arm2a = p(g.BARREL); val arm2b = p(-0.70f, -0.58f)
-        engraveAlong("AUTOMATIC", arm2a, arm2b, 0.62f, 0.042f)
-        engraveAlong(CalibreGeometry.jewelEngraving(), p(g.THIRD), p(-0.62f, 0.56f), 0.62f, 0.042f)
-        engraveAlong("28 800 A/h", p(g.RUNNER), p(-0.02f, -0.92f), 0.6f, 0.036f)
+        // Engravings along the solid bridges (an openworked bridge has no room for them).
+        if (!step.skeleton) {
+            engraveAlong("CALIBRE VR-01", p(g.BARREL), p(-0.82f, 0.16f), 0.62f, 0.058f)
+            engraveAlong("AUTOMATIC", p(g.BARREL), p(-0.70f, -0.58f), 0.62f, 0.042f)
+            engraveAlong(CalibreGeometry.jewelEngraving(), p(g.THIRD), p(-0.62f, 0.56f), 0.62f, 0.042f)
+            engraveAlong("28 800 A/h", p(g.RUNNER), p(-0.02f, -0.92f), 0.6f, 0.036f)
+        }
     }
 
     private fun DrawScope.engraveAlong(text: String, a: Offset, b: Offset, at: Float, sizeU: Float) {
@@ -359,8 +533,9 @@ internal class CalibreLayers(
     private fun DrawScope.drawCock() {
         val g = CalibreGeometry
         val s = cockShape()
-        softShadow(s, -light.x * u * 0.035f, -light.y * u * 0.035f, 0.5f)
-        cotesDeGeneve(s, c, u, pal.bridge, 58f, u * 0.06f)
+        softShadow(s, -light.x * u * 0.035f, -light.y * u * 0.035f, 0.45f)
+        if (step.deco) cotesDeGeneve(s, c, u, pal.bridge, 58f, u * 0.06f)
+        else { drawPath(s, metalBrush(pal.bridge, c, u, light, 0.45f)); clipPath(s) { drawCircle(grain, u, c) } }
         bevel(s, c, u, light, (u * 0.009f).coerceAtLeast(1.3f))
         // Regulator index (black-polished steel) and its engraved scale
         val b = p(g.BALANCE)
@@ -369,7 +544,7 @@ internal class CalibreLayers(
         drawLine(CalPal.blackSteel.light.a(0.8f), b + Offset(light.x, light.y), tip + Offset(light.x, light.y), strokeWidth = u * 0.006f, cap = StrokeCap.Round)
         engrave("−", p(0.62f, 0.165f), 0f, 0.05f)
         engrave("+", p(0.73f, 0.215f), 0f, 0.05f)
-        screw(p(0.86f, 0.285f), u * 0.032f, 30f, light)
+        screw(p(0.86f, 0.285f), u * 0.032f, 30f, light, screwMetal)
         jewel(b, g.JEWELS[6].r * u, light, lerp3(pal.bridge))
     }
 
@@ -377,13 +552,21 @@ internal class CalibreLayers(
 
     private fun DrawScope.drawRotor(o: Offset) {
         val r = CalibreGeometry.ROTOR_R * u
-        val s = rotorShape(o, u)
+        val s = rotorShape(o, u, step.rotor)
         val m = pal.rotor
+        if (!step.deco) {
+            // Lv.1: a plain bead-blasted rotor (no graining, no engraving), only the functional km scale.
+            drawPath(s, Brush.radialGradient(0f to lerp(m.base, m.light, 0.35f), 0.7f to m.base, 1f to lerp(m.base, m.dark, 0.25f), center = o, radius = r))
+            clipPath(s) { drawCircle(grain, r, o) }
+            bevel(s, o, r, KeyLight(-PI.toFloat() / 2), (u * 0.007f).coerceAtLeast(1.1f), 0.6f)
+            rotorScale(o, r, m)
+            return
+        }
         drawPath(s, Brush.radialGradient(0f to m.light, 0.35f to m.base, 0.8f to lerp(m.base, m.dark, 0.35f), 1f to m.base, center = o, radius = r))
         clipPath(s) {
-            circularGrain(o, r * 0.14f, r, (u * 0.012f).coerceAtLeast(1.4f), 0.07f)
+            circularGrain(o, r * 0.14f, r, (u * 0.012f).coerceAtLeast(1.4f), 0.06f)
             // Heavy rim: a slightly darker, thicker band
-            drawCircle(m.dark.a(0.25f), r * 0.90f, o, style = Stroke(width = r * 0.14f))
+            drawCircle(m.dark.a(0.22f), r * 0.90f, o, style = Stroke(width = r * 0.14f))
             drawCircle(m.light.a(0.5f), r * 0.828f, o, style = Stroke(width = (u * 0.006f).coerceAtLeast(1f)))
         }
         bevel(s, o, r, KeyLight(-PI.toFloat() / 2), (u * 0.008f).coerceAtLeast(1.2f))
@@ -402,7 +585,11 @@ internal class CalibreLayers(
                 drawText(l, color = lerp(m.light, Color.White, 0.2f), topLeft = tl)
             }
         }
-        // Fine engraved km scale along the outer edge (a marker steps one division per km)
+        rotorScale(o, r, m)
+    }
+
+    /** Fine engraved km scale along the rotor's outer edge (a marker steps one division per km). */
+    private fun DrawScope.rotorScale(o: Offset, r: Float, m: Metal) {
         for (k in 0..30) {
             val a = (-78f + k * 5.2f) * PI.toFloat() / 180f
             val len = if (k % 5 == 0) 0.035f else 0.018f
@@ -466,10 +653,10 @@ internal class CalibreLayers(
         val shape = evenOdd(gearOutline(o, r, CalibreGeometry.RATCHET_TEETH, r * 0.07f, ratchet = true))
         addWindows(shape, o, r * 0.80f, r * 0.36f, 5, 7f, 18f, 10f)
         drawPath(shape, Brush.radialGradient(0f to m.light, 0.7f to m.base, 1f to m.dark, center = o, radius = r))
-        clipPath(shape) { sunray(o, r, 220, 0.09f) }
+        clipPath(shape) { sunray(o, r, 220, 0.07f) }
         drawCircle(m.light.a(0.7f), r * 0.80f, o, style = Stroke(width = 1.2f))
         drawCircle(m.dark.a(0.7f), r * 0.36f, o, style = Stroke(width = 1.2f))
-        screw(o, r * 0.2f, 35f, light)
+        screw(o, r * 0.2f, 35f, light, screwMetal)
     }
 
     private fun DrawScope.drawCrownWheel(o: Offset) {
@@ -478,8 +665,8 @@ internal class CalibreLayers(
         val shape = evenOdd(gearOutline(o, r, CalibreGeometry.CROWN_WHEEL_TEETH, r * 0.14f))
         addWindows(shape, o, r * 0.72f, r * 0.40f, 3, 14f, 22f)
         drawPath(shape, Brush.radialGradient(0f to m.light, 0.7f to m.base, 1f to m.dark, center = o, radius = r))
-        clipPath(shape) { sunray(o, r, 90, 0.09f) }
-        screw(o, r * 0.32f, 110f, light)
+        clipPath(shape) { sunray(o, r, 90, 0.07f) }
+        screw(o, r * 0.32f, 110f, light, screwMetal)
     }
 
     private fun DrawScope.drawColumnWheel(o: Offset) {
@@ -498,16 +685,38 @@ internal class CalibreLayers(
     }
 
     companion object {
-        /** Half rotor: heavy segment toward +x, with an original turbine-blade skeleton. */
-        fun rotorShape(o: Offset, u: Float): Path {
+        /** Bridge rim left on an openworked (skeleton) step, in units of the movement radius. */
+        const val RIM = 0.026f
+        /** Jewels the tourbillon replaces (fourth wheel, escape, pallet, balance and the pallet bridge's chaton). */
+        val TOURBILLON_REPLACES = setOf(3, 4, 5, 6, 16)
+
+        /**
+         * The rotor, heavy segment toward +x: a solid half disc (Lv.1-2), openworked with three turbine-blade
+         * windows (Lv.3-4), or a skeleton rim on two spokes (Lv.5) so the tourbillon stays in view.
+         */
+        fun rotorShape(o: Offset, u: Float, kind: RotorKind = RotorKind.OPEN): Path {
             val r = CalibreGeometry.ROTOR_R * u
             val hub = CalibreGeometry.BEARING_R * u * 1.12f
+            if (kind == RotorKind.SKELETON) {
+                val rim = Path().apply {
+                    arcTo(Rect(o, r), -90f, 180f, true)
+                    arcTo(Rect(o, r * 0.855f), 90f, -180f, false)
+                    close()
+                }
+                val spokes = union(
+                    capsule(o, pol(o, r * 0.90f, -0.95f), u * 0.028f),
+                    capsule(o, pol(o, r * 0.90f, 0.95f), u * 0.028f),
+                    circlePath(o, hub),
+                )
+                return union(rim, spokes)
+            }
             val p = Path().apply {
                 arcTo(Rect(o, r), -90f, 180f, true)
                 lineTo(o.x, o.y + hub)
                 arcTo(Rect(o, hub), 90f, 180f, false) // a ring around the bearing
                 close()
             }
+            if (kind == RotorKind.SOLID) return p
             // Three windows between blades that lean like a turbine (original pattern)
             val windows = Path()
             val tw = 12f

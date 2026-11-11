@@ -36,12 +36,19 @@ class CalibreDetailSnapshotTest {
     private val car = CarSignals(speedKmh = 0f, gear = GearState.PARK, fanLevel = 6, fanMax = 8, acOn = false, setTempC = 22f,
         turnSignal = TurnSignal.NONE, drivingMode = DriveModeState.NORMAL, safetyWarningActive = false)
 
-    private fun shot(name: String, finish: CalibreFinish, view: CalibreView, hour: Float = 10.2f, c: CarSignals = car, seconds: Float = 2.5f) = paparazzi.snapshot(name) {
+    private fun shot(name: String, finish: CalibreFinish, view: CalibreView, hour: Float = 10.2f, c: CarSignals = car, seconds: Float = 2.5f, model: Int = 0) = paparazzi.snapshot(name) {
         CalibreSceneStill(
             CharacterTarget(sizeMode = SizeMode.FULL, kart = KartState(), car = c, journey = Journey()),
-            SceneOptions(hourOfDay = hour), finish, Modifier.fillMaxSize(), view, seconds = seconds,
+            SceneOptions(hourOfDay = hour, model = model), finish, Modifier.fillMaxSize(), view, seconds = seconds,
         )
     }
+
+    /** Lv.3: the cushion case and the engine-turned dial, up close. */
+    @Test fun lv3Cushion() = shot("calibre_detail_lv3_cushion", CalibreFinish.RHODIUM_BLUE, CalibreView.DIAL, 14f, model = 2)
+    /** Lv.5: the flying tourbillon at six, the gold chatons and the skeleton rotor, from the back. */
+    @Test fun lv5Tourbillon() = shot("calibre_detail_lv5_tourbillon", CalibreFinish.YELLOW_GOLD, CalibreView.CASEBACK, 14f, model = 4)
+    /** Lv.5 from the front: the skeleton dial with the tourbillon in its opening at six. */
+    @Test fun lv5Dial() = shot("calibre_detail_lv5_dial", CalibreFinish.YELLOW_GOLD, CalibreView.DIAL, 14f, model = 4)
 
     @Test fun macroCaseback() = shot("macro_caseback_yellow", CalibreFinish.YELLOW_GOLD, CalibreView.CASEBACK)
     @Test fun macroDial() = shot("macro_dial_yellow", CalibreFinish.YELLOW_GOLD, CalibreView.DIAL)
