@@ -57,11 +57,11 @@ object Ambience {
     val all: List<ThemeAmbience> = listOf(
         a(SceneTheme.KART, 0xFF3CC8B4, 0xFF15262A, 0.52f),        // brand teal over a dusk-teal letterbox
         a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.433f),      // fluorescent pink ink, the night mat's violet
-        a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF2B2520, 0.677f),    // brushed steel, the bench's warm shadow
+        a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF2B2520, 0.659f),    // brushed steel, the bench's warm shadow
         a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF14171A, 0.062f),     // oil amber, the graphite studio
         a(SceneTheme.MUSIC_BOX, 0xFF8E2F45, 0xFF241A14, 0.097f),   // burgundy velvet, the lamp-lit brown room
         a(SceneTheme.PLASMA, 0xFFB45CFF, 0xFF0E1016, 0.013f),     // plasma violet, the dark lab's blue-black
-        a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.057f),     // signal orange, the hangar's graphite
+        a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.058f),     // signal orange, the hangar's graphite
         a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.286f),  // fresh leaf, moonlit moss
         a(SceneTheme.AQUARIUM, 0xFF2F8FD8, 0xFF081622, 0.320f),   // open-water blue, the deep
         a(SceneTheme.ORBIT, 0xFF7FF0FF, 0xFF020405, 0.003f),      // phosphor cyan, the display's black

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.TextMeasurer
@@ -167,6 +168,15 @@ internal fun CalibreRuntime.draw(ds: DrawScope, tm: TextMeasurer, text: CalibreT
     val py = if (o.reducedMotion) 0f else (-m.accelSmooth * 0.8f).coerceIn(-4f, 4f) * (1f - m.freeze)
 
     fun watch(L: CalibreLayers) {
+        // The strap of the upgrade step lies under the case; it runs off the picture, so it is clipped to it.
+        clipRect(0f, 0f, w, h) {
+            withTransform({
+                translate(wx, wy)
+                rotate(winderDeg, Offset.Zero)
+                scale(k * flipX.coerceAtLeast(0.02f), k, Offset.Zero)
+                translate(-L.half, -L.half)
+            }) { drawStrap(L.half, L.u, model) }
+        }
         withTransform({
             translate(wx, wy)
             rotate(winderDeg, Offset.Zero)
@@ -615,6 +625,11 @@ private fun CalibreRuntime.drawCaption(ds: DrawScope, text: CalibreText, w: Floa
     if (a < 0.02f) return@with
     // Parked: the fine catalogue line. Driving: the values alone at 24 sp or more (cross-faded with the info spring).
     studio.caption(h, with(ds) { MIN_DRIVING_SP.sp.toPx() }, text)
+    // The strap runs under the catalogue line: a paper label keeps the line readable on it.
+    val sr = fullRadius(w, h) * scale.value
+    val label = androidx.compose.ui.graphics.lerp(Color(0xFFF3EEE4), Color(0xFF8E7C63), mech.night * 0.6f)
+    drawRoundRect(Color.Black.a(0.14f * a), Offset(cx.value * w - 0.74f * sr + h * 0.004f, h * 0.905f + h * 0.005f), androidx.compose.ui.geometry.Size(1.48f * sr, h * 0.064f), androidx.compose.ui.geometry.CornerRadius(h * 0.008f))
+    drawRoundRect(label.a(0.94f * a), Offset(cx.value * w - 0.74f * sr, h * 0.905f), androidx.compose.ui.geometry.Size(1.48f * sr, h * 0.064f), androidx.compose.ui.geometry.CornerRadius(h * 0.008f))
     val d = info.value.coerceIn(0f, 1f)
     if (d < 0.99f) captionLine(ds, studio.parkedCaption, w, h, a * 0.92f * (1f - d), moving = false)
     if (d > 0.01f) captionLine(ds, studio.drivingCaption, w, h, a * d, moving = true)

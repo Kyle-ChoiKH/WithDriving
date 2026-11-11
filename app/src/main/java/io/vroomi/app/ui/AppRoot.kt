@@ -814,7 +814,10 @@ private fun HomeChrome(
             onDemo = { if (demo) rt.stopDemo() else onDemo() },
             onTalk = { if (listen == ListenState.LISTENING) rt.recognizer.cancel() else rt.recognizer.listen() },
         )
-        lastTrip?.let { trip -> TripSummaryCard(trip, Modifier.align(Alignment.TopEnd)) { rt.dismissLastTrip() } }
+        lastTrip?.let { trip ->
+            val nudge = remember(trip.id, trips, settings.gradeReached) { io.vroomi.app.progress.GradeNudge.of(trip, trips, settings.gradeReached) }
+            TripSummaryCard(trip, Modifier.align(Alignment.TopEnd), nudge, ThemeRegistry.resolve(settings.sceneTheme)) { rt.dismissLastTrip() }
+        }
     }
 }
 

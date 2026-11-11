@@ -32,15 +32,17 @@ internal class MechStyle(
     val ch: Float, val bulk: Float, val taper: Float, val footW: Float,
     val camo: Boolean = false, val quilt: Boolean = false,
     val workLamps: Boolean = false, val toolArm: Boolean = false, val winch: Boolean = false, val searchlight: Boolean = false, val thrusters: Boolean = false,
+    /** The gear on the unit's back, which gives each unit its own outline: 0 roll cage, 1 crane booms, 2 light masts, 3 heater tanks, 4 dish and wing. */
+    val pack: Int = 0,
 ) {
     companion object {
         /** Spec 5.12, Lv.1..5: work, maintenance, rescue, polar, survey. */
         val STEPS = arrayOf(
-            MechStyle(Color(0xFF4B5159), Color(0xFF32373D), Color(0xFFF07A1A), Color(0xFFFFC46B), 10f, 1.12f, 1.0f, 80f),
-            MechStyle(Color(0xFFE2DFD6), Color(0xFF4B5159), Color(0xFFF07A1A), Color(0xFF9FE3FF), 7f, 1.04f, 0.96f, 74f, workLamps = true, toolArm = true),
-            MechStyle(Color(0xFFF26A1B), Color(0xFFECEAE4), Color(0xFF2E3338), Color(0xFF9FE3FF), 7f, 1.04f, 0.96f, 74f, winch = true, searchlight = true),
-            MechStyle(Color(0xFFD5DADF), Color(0xFFAEB6BD), Color(0xFF5E6770), Color(0xFFBFF0FF), 8f, 1.10f, 1.0f, 106f, camo = true, quilt = true),
-            MechStyle(Color(0xFFB9C0C8), Color(0xFF24606A), Color(0xFF2FB3A3), Color(0xFFE9C25A), 4f, 0.94f, 0.82f, 70f, thrusters = true),
+            MechStyle(Color(0xFF4B5159), Color(0xFF32373D), Color(0xFFF07A1A), Color(0xFFFFC46B), 10f, 1.12f, 1.0f, 80f, pack = 0),
+            MechStyle(Color(0xFFE2DFD6), Color(0xFF4B5159), Color(0xFFF07A1A), Color(0xFF9FE3FF), 7f, 1.04f, 0.96f, 74f, workLamps = true, toolArm = true, pack = 1),
+            MechStyle(Color(0xFFF26A1B), Color(0xFFECEAE4), Color(0xFF2E3338), Color(0xFF9FE3FF), 7f, 1.04f, 0.96f, 74f, winch = true, searchlight = true, pack = 2),
+            MechStyle(Color(0xFFD5DADF), Color(0xFFAEB6BD), Color(0xFF5E6770), Color(0xFFBFF0FF), 8f, 1.10f, 1.0f, 106f, camo = true, quilt = true, pack = 3),
+            MechStyle(Color(0xFFB9C0C8), Color(0xFF24606A), Color(0xFF2FB3A3), Color(0xFFE9C25A), 4f, 0.94f, 0.82f, 70f, thrusters = true, pack = 4),
         )
     }
 }
@@ -93,6 +95,45 @@ internal class Mech(val style: MechStyle) {
         add(Plate(quad(0f, -442f, 50f, 0f, -396f, 60f, min(ch, 7f)), P, HEAD))
     }
     val plateCount: Int get() = plates.size
+
+    /** The gear on the back ([MechStyle.pack]): large pieces that stand out past the shoulders and above the head. */
+    private val gear: List<Plate> = buildList {
+        fun poly(vararg v: Float) = Path().apply { moveTo(v[0], v[1]); var i = 2; while (i < v.size) { lineTo(v[i], v[i + 1]); i += 2 }; close() }
+        when (style.pack) {
+            0 -> { // a roll cage over the head and two exhaust stacks
+                for (s in floatArrayOf(-1f, 1f)) add(Plate(quad(s * 58f, -486f, 12f, s * 62f, -396f, 12f, 3f), S, BODY))
+                add(Plate(quad(0f, -494f, 136f, 0f, -480f, 136f, 5f), A, BODY))
+                for (s in floatArrayOf(-1f, 1f)) add(Plate(quad(s * 86f, -470f, 18f, s * 86f, -398f, 16f, 4f), S, BODY))
+            }
+            1 -> { // two crane booms, each with a pulley block
+                for (s in floatArrayOf(-1f, 1f)) {
+                    add(Plate(poly(s * 60f, -396f, s * 84f, -396f, s * 196f, -500f, s * 178f, -512f), A, BODY))
+                    add(Plate(quad(s * 190f, -516f, 30f, s * 190f, -490f, 24f, 5f), S, BODY))
+                    add(Plate(quad(s * 190f, -490f, 5f, s * 190f, -440f, 5f, 1f), S, BODY))
+                    add(Plate(quad(s * 190f, -442f, 20f, s * 190f, -424f, 14f, 4f), A, BODY))
+                }
+            }
+            2 -> { // a wide rescue pack and two tall masts with light bars
+                add(Plate(quad(0f, -438f, 214f, 0f, -372f, 190f, 8f), S, BODY))
+                for (s in floatArrayOf(-1f, 1f)) {
+                    add(Plate(quad(s * 132f, -506f, 12f, s * 132f, -400f, 14f, 3f), S, BODY))
+                    add(Plate(quad(s * 132f, -522f, 58f, s * 132f, -502f, 58f, 6f), A, BODY))
+                }
+            }
+            3 -> { // twin heater tanks, a fur collar, a whip antenna
+                for (s in floatArrayOf(-1f, 1f)) add(Plate(quad(s * 80f, -500f, 44f, s * 80f, -392f, 44f, 18f), S, BODY))
+                add(Plate(quad(0f, -416f, 196f, 0f, -388f, 214f, 12f), A, BODY))
+                add(Plate(quad(118f, -528f, 4f, 112f, -400f, 6f, 1f), S, BODY))
+            }
+            else -> { // a dish on a boom, and a folded wing
+                add(Plate(poly(-84f, -400f, -100f, -400f, -164f, -456f, -150f, -464f), S, BODY))
+                add(Plate(Path().apply { addOval(Rect(-226f, -530f, -112f, -422f)) }, P, BODY))
+                add(Plate(Path().apply { addOval(Rect(-190f, -496f, -148f, -456f)) }, A, BODY))
+                add(Plate(poly(70f, -404f, 214f, -508f, 232f, -470f, 150f, -330f, 96f, -340f), P, BODY))
+                add(Plate(poly(118f, -400f, 204f, -470f, 196f, -440f, 130f, -372f), A, BODY))
+            }
+        }
+    }
 
     private val out = Stroke(1.3f, join = StrokeJoin.Round)
     private val hair = Stroke(0.9f)
@@ -164,6 +205,11 @@ internal class Mech(val style: MechStyle) {
         if (amount <= 0.01f) return
         // The light the projection throws on the floor.
         drawOval(Brush.radialGradient(listOf(HOLO.copy(alpha = 0.22f * amount), HOLO.copy(alpha = 0f)), Offset(0f, 4f), 150f), Offset(-150f, -14f), Size(300f, 36f))
+        for (pl in gear) {
+            val c = color(pl.role)
+            drawPath(pl.path, lerp(c, HOLO, 0.25f).copy(alpha = 0.26f * amount))
+            drawPath(pl.path, lerp(c, Color.White, 0.45f).copy(alpha = 0.70f * amount), style = holo)
+        }
         for (pl in plates) {
             val c = color(pl.role)
             drawPath(pl.path, lerp(c, HOLO, 0.25f).copy(alpha = 0.34f * amount))
@@ -270,6 +316,11 @@ internal class Mech(val style: MechStyle) {
 
     /** Behind the body: radiator fins above the shoulders, the survey unit's nozzles, steam under acceleration. */
     private fun DrawScope.back(stage: Int, sp: Float, pose: Pose) {
+        // The gear goes on with the armour, in primer first, then in the unit's paint.
+        if (stage >= 2) {
+            val painted = stage > 3 || (stage == 3 && sp > 0.5f)
+            for (pl in gear) plate(pl.path, if (painted) color(pl.role) else if (pl.role == P) PRIMER else PRIMER_DARK, painted && pl.role == P)
+        }
         for (s in floatArrayOf(-1f, 1f)) {
             for (k in 0 until 5) {
                 val x = s * (56f + k * 6f)

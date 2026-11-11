@@ -65,7 +65,9 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
         bayNight(f.dw, f.dh, cx, sim.night)
 
         // The unit on order: its code and its colours on the wall, whatever the state of the build.
-        unitSign(cx - 318f, 214f, MechStyle.STEPS[f.model], signText(tx, f.model))
+        val unitStyle = MechStyle.STEPS[f.model]
+        for (side in floatArrayOf(-1f, 1f)) bayBanner(cx + side * 268f, unitStyle, sim.night)
+        unitSign(cx - 352f, 214f, unitStyle, signText(tx, f.model))
 
         // Workers for scale: one crosses the floor in front, one keeps to the catwalk, one waits by the tower.
         val walk = (t * (if (sim.parked) 0.035 else 0.02)).let { (it % 2.0).toFloat() }

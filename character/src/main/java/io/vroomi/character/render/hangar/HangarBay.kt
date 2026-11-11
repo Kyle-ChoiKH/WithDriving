@@ -291,3 +291,27 @@ internal fun DrawScope.unitSign(x: Float, y: Float, style: MechStyle, code: andr
     }
     for (s in floatArrayOf(-1f, 1f)) drawCircle(Color(0xFF6A727C), 2.2f, Offset(x + s * (w / 2 - 6f), y - h / 2 + 6f))
 }
+
+/**
+ * A long banner in the unit's paints, hung beside the gantry: the primary colour, a band and a chevron of the
+ * accent, the secondary colour at its foot. With the order board it dresses the whole bay for the chosen unit.
+ */
+internal fun DrawScope.bayBanner(x: Float, style: MechStyle, night: Float) {
+    val w = 46f; val top = 74f; val bot = 318f
+    val dim = 1f - 0.35f * night
+    fun Color.lit() = Color(red * dim, green * dim, blue * dim, 1f)
+    drawLine(Color(0xFF6A727C), Offset(x - w / 2 - 6f, top - 4f), Offset(x + w / 2 + 6f, top - 4f), 3f)
+    val cloth = Path().apply { moveTo(x - w / 2, top); lineTo(x + w / 2, top); lineTo(x + w / 2, bot); lineTo(x, bot - 22f); lineTo(x - w / 2, bot); close() }
+    drawPath(cloth, Color.Black.copy(alpha = 0.35f), style = Stroke(6f))
+    drawPath(cloth, style.primary.lit())
+    clipRect(x - w / 2, top, x + w / 2, bot) {
+        drawRect(style.accent.lit(), Offset(x - w / 2, top + 30f), Size(w, 26f))
+        drawRect(style.secondary.lit(), Offset(x - w / 2, bot - 76f), Size(w, 76f))
+        val chev = Path().apply { moveTo(x - w / 2, top + 96f); lineTo(x, top + 124f); lineTo(x + w / 2, top + 96f); lineTo(x + w / 2, top + 116f); lineTo(x, top + 144f); lineTo(x - w / 2, top + 116f); close() }
+        drawPath(chev, style.accent.lit())
+    }
+    // The hangar's light from the upper left, and the cloth's soft folds.
+    drawPath(cloth, Brush.horizontalGradient(0f to Color.White.copy(alpha = 0.16f), 0.5f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.28f), startX = x - w / 2, endX = x + w / 2))
+    for (k in 1..2) drawLine(Color.Black.copy(alpha = 0.10f), Offset(x - w / 2 + k * w / 3f, top), Offset(x - w / 2 + k * w / 3f, bot - 14f), 1.2f)
+    drawPath(cloth, Color.Black.copy(alpha = 0.55f), style = HAIR)
+}
