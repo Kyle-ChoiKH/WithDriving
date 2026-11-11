@@ -119,6 +119,11 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 - 주의: 에뮬레이터에서 `wm size`나 `am task resize`로 창을 바꾸면 Pleos 셸이 꼬인다(재부팅으로 복구). 실제 분할·세로 창은 에뮬레이터에서 확인하지 못했다.
 - 남은 약점: 세로 창의 아쿠아리움·유리병 정원은 아래쪽이 모래·풀로 길게 남는다. 탭 레일은 세로 창에서도 왼쪽 132dp를 차지한다(아래쪽 막대로 바꾸지 않음).
 
+**2026-11-12 밤: #23·#24 병합 후 보정**(`fix/upright-windows`). 사용자: "병합해서 고쳐줘".
+- 세로·정사각 창에서 아쿠아리움(`focusWidth` 700 → 480)과 유리병 정원(780 → 640)이 양옆을 더 잘라 크게 찬다.
+- **#23에서 놓친 것:** 창 모양 작업이 테마 세부 그림(`*_detail_*`, 정사각 캔버스에서 확대) 26장의 구도를 틀어 놓았는데 확인 없이 문서에 반영했다. `ThemeRuntime.wholeComposition`(확대 그림은 전체 구도 기준, `KitShots.script`가 zoom ≠ 1일 때 켬)으로 되돌렸고, 26장 모두 창 모양 작업 전 그림과 픽셀 단위로 같음을 비교했다. 교훈: 스냅샷 동기화에서 "changed"로 나온 파일은 손대지 않은 테마라도 목록을 보고 열어 볼 것.
+- 하지 않은 것: 세로 창의 탭 레일을 아래쪽 막대로 바꾸기(핵심 배치 코드 전반을 건드려 마감 직전에는 위험하다고 판단).
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 
