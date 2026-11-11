@@ -63,6 +63,27 @@ class MusicBoxSim : ThemeSim(), io.vroomi.character.theme.SoundSource {
     private var endBar = -1
     private var sixteenth = -1L
 
+    /**
+     * The upgrade step, 0..4 = Lv.1..5 (the painter sets it from the frame's options). It sets how many teeth the
+     * comb has ([combTeeth]) and, at the top step, lets the three bells ring. The music itself stays the composer's
+     * 18 notes: a larger comb gives every note several teeth, plucked in turn.
+     */
+    var model = 0
+        set(value) { field = value.coerceIn(0, COMB_TEETH.size - 1) }
+    val combTeeth: Int get() = COMB_TEETH[model]
+    /** How many teeth each of the 18 notes has on this comb (1, 1, 2, 2, 4; a 50-tooth comb leaves its rest idle). */
+    val teethPerNote: Int get() = combTeeth / MusicBoxComposer.TINES
+
+    /** The tooth a pin of note [tine] plucks: the note's group, and inside it one tooth chosen by the pin's place in the score. */
+    fun toothOf(tine: Int, bar: Int, slot: Int): Int = toothOf(combTeeth, tine, bar, slot)
+
+    /** The tooth each note plucked last (the painter swings that one). */
+    val lastTooth = IntArray(MusicBoxComposer.TINES)
+
+    /** Lv.5: the three bells. When each was last struck, and how many strikes there have been. */
+    val bellAt = DoubleArray(BELLS) { -100.0 }
+    var bellStrikes = 0; private set
+
     // Tines
     val amp = FloatArray(MusicBoxComposer.TINES)
     val pluckAt = DoubleArray(MusicBoxComposer.TINES) { -100.0 }
@@ -237,13 +258,27 @@ class MusicBoxSim : ThemeSim(), io.vroomi.character.theme.SoundSource {
             val b = Math.floorDiv(sixteenth, 16L).toInt()
             val slot = Math.floorMod(sixteenth, 16L).toInt()
             val pins = pinsOf(b) ?: continue
-            for (p in pins) if (p.slot == slot) pluck(p.tine, p.vel, KIND_TINE)
+            for (p in pins) if (p.slot == slot) pluck(p.tine, p.vel, KIND_TINE, b, slot)
+            // Lv.5: the bells mark the bar: the first on the downbeat, the second on the third beat, the third
+            // closes every other bar. (At most one strike per bell per bar, far slower than three a second.)
+            if (model == COMB_TEETH.size - 1 && boxMode != BoxMode.SPENT) when (slot) {
+                0 -> ring(0)
+                8 -> ring(1)
+                14 -> if (Math.floorMod(b, 2) == 1) ring(2)
+            }
         }
     }
 
-    private fun pluck(tine: Int, vel: Float, kind: Int) {
+    private fun ring(bell: Int) {
+        if (!flash.allow(REGION_BELLS + bell, time)) return
+        bellAt[bell] = decoTime
+        bellStrikes++
+    }
+
+    private fun pluck(tine: Int, vel: Float, kind: Int, bar: Int = 0, slot: Int = 0) {
         amp[tine] = max(amp[tine], vel)
         pluckAt[tine] = decoTime
+        lastTooth[tine] = toothOf(tine, bar, slot)
         if (!calm && flash.allow(REGION_TINES + tine / 3, time)) glintAt[tine] = decoTime
         event(60 + key + MusicBoxComposer.semitones(tine), vel, kind)
     }
@@ -349,5 +384,23 @@ class MusicBoxSim : ThemeSim(), io.vroomi.character.theme.SoundSource {
         const val KIND_PAWL = 1
         const val KIND_TICK = 2
         const val REGION_TINES = 8
+        const val REGION_BELLS = 4
+        const val BELLS = 3
+        /** Comb teeth of each upgrade step (spec 5.3). */
+        val COMB_TEETH = intArrayOf(18, 18, 36, 50, 72)
+
+        /** Teeth of step [model] (clamped). */
+        fun teethFor(model: Int): Int = COMB_TEETH[model.coerceIn(0, COMB_TEETH.size - 1)]
+
+        /** The lowest tooth of note [tine] on a comb of [teeth] teeth. A 50-tooth comb is two combs of 25: each half carries nine notes on its low teeth. */
+        fun firstTooth(teeth: Int, tine: Int): Int {
+            val per = teeth / MusicBoxComposer.TINES
+            val spare = teeth - MusicBoxComposer.TINES * per
+            return tine * per + if (tine >= MusicBoxComposer.TINES / 2) spare / 2 else 0
+        }
+
+        /** See [MusicBoxSim.toothOf]: for a comb of [teeth] teeth. */
+        fun toothOf(teeth: Int, tine: Int, bar: Int, slot: Int): Int =
+            firstTooth(teeth, tine) + Math.floorMod(bar * 7 + slot * 3 + tine, teeth / MusicBoxComposer.TINES)
     }
 }
