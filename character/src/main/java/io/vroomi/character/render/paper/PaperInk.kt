@@ -12,11 +12,26 @@ import androidx.compose.ui.graphics.PathFillType
  * pink + yellow = red-orange), and each ink plate sits slightly off register.
  */
 internal object PaperInk {
-    val PINK = Color(0xFFFF48B0)
+    /** The second ink of the current upgrade step ([use]): warm red, or the special edition's fluorescent pink. */
+    var PINK = Color(0xFFFF48B0)
+    val FLUO = Color(0xFFFF48B0)
+    val RED = Color(0xFFF2543D)
     /** Pink ink under the desk lamp at night. */
     val VIOLET = Color(0xFF6A2C9A)
     val BLUE = Color(0xFF0078BF)
-    val YELLOW = Color(0xFFFFE800)
+    /** The third ink ([use]): yellow from step 2; at step 1 (two inks) a pale tint of the red stands in its place. */
+    var YELLOW = Color(0xFFFFE800)
+    val YELLOW_INK = Color(0xFFFFE800)
+    val RED_TINT = Color(0xFFFAC3B4)
+    /** Gold foil (step 5). */
+    val GOLD = Color(0xFFCFA43A)
+    val GOLD_LIGHT = Color(0xFFF7E6A6)
+
+    /** Sets the inks of an upgrade step: 1 blue + red, 2..4 blue + red + yellow, 5 blue + fluorescent pink + yellow. */
+    fun use(model: Int) {
+        PINK = if (model >= 4) FLUO else RED
+        YELLOW = if (model >= 1) YELLOW_INK else RED_TINT
+    }
 
     val CARD = Color(0xFFF8F3E7)
     val CORE = Color(0xFFFFFFFF)
@@ -50,9 +65,9 @@ internal object PaperInk {
     val MAT_DARK = Color(0xFF3A1C5C)
 
     /** Each ink plate's fixed misregistration (design units). */
-    val REG_PINK = Offset(1.8f, -1.2f)
-    val REG_BLUE = Offset(-1.4f, 1.5f)
-    val REG_YELLOW = Offset(0.8f, 1.9f)
+    val REG_PINK = Offset(2.2f, -1.5f)
+    val REG_BLUE = Offset(-1.8f, 1.9f)
+    val REG_YELLOW = Offset(1.1f, 2.4f)
 
     fun pink(night: Float): Color = androidx.compose.ui.graphics.lerp(PINK, VIOLET, night.coerceIn(0f, 1f))
 }
