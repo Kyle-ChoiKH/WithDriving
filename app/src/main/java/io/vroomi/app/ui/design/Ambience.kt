@@ -65,7 +65,7 @@ object Ambience {
         a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.284f),  // fresh leaf, moonlit moss
         a(SceneTheme.AQUARIUM, 0xFF2F8FD8, 0xFF081622, 0.318f),   // open-water blue, the deep
         a(SceneTheme.ORBIT, 0xFF7FF0FF, 0xFF020405, 0.003f),      // phosphor cyan, the display's black
-        a(SceneTheme.TREASURE_MAP, 0xFFA8322D, 0xFF1E1812, 0.707f), // madder red, iron-gall ink
+        a(SceneTheme.TREASURE_MAP, 0xFFA8322D, 0xFF1E1812, 0.690f), // madder red, iron-gall ink
         a(SceneTheme.PIXEL, 0xFF9B6BE8, 0xFF120F1A, 0.305f),      // dusk violet, the night sky's ink
     )
 
