@@ -13,49 +13,66 @@ import kotlin.math.hypot
 import kotlin.math.sin
 
 /**
- * The ink of the service-manual sheet. Day prints graphite linework and flat colour-coded systems on off-white
- * paper; night is the inverse, light linework on a dark slate sheet. Each system has one colour: intake pale
- * blue, exhaust oxide red, oil amber, coolant teal-green, electrical violet. No fault reds.
+ * The colours of the cutaway studio. The room is graphite by day and by night; the metals are bright. Cut faces
+ * are signal red with fine hatching, the way a display engine is painted. Fluids keep one colour each (air blue,
+ * hot gas orange, oil amber, coolant teal-green); high-voltage parts are orange. No fault reds.
  */
-internal class ManualInk(
-    var paper: Color, var gridFine: Color, var gridMajor: Color, var line: Color, var lineSoft: Color,
-    var cut: Color, var hatch: Color, var cavity: Color, var metal: Color, var metalLight: Color, var metalDark: Color,
-    var intake: Color, var exhaust: Color, var oil: Color, var coolant: Color, var electric: Color, var electricLight: Color,
-    var electricDark: Color, var eco: Color, var sport: Color, var stamp: Color, var lamp: Color, var cell: Color, var cellLow: Color,
-    var fire: Color, var clean: Color, var magnetN: Color, var magnetS: Color, var belt: Color, var wash: Color,
+internal class EngineInk(
+    var paper: Color, var bgTop: Color, var bgBottom: Color, var line: Color, var lineSoft: Color, var text: Color, var textSoft: Color,
+    var cut: Color, var hatch: Color, var cavity: Color, var metal: Color, var metalLight: Color, var metalDark: Color, var cast: Color,
+    var iron: Color, var white: Color, var intake: Color, var gasHot: Color, var exhaust: Color, var oil: Color, var coolant: Color, var rubber: Color,
+    var electric: Color, var electricLight: Color, var electricDark: Color, var hv: Color, var eco: Color, var sport: Color, var stamp: Color,
+    var lamp: Color, var cell: Color, var cellLow: Color, var fire: Color, var clean: Color, var magnetN: Color, var magnetS: Color, var belt: Color,
+    var copper: Color, var gold: Color, var bronze: Color, var titanium: Color, var carbon: Color, var ceramic: Color, var panel: Color,
+    var panelLine: Color, var mist: Color,
 ) {
     /** This ink becomes [a] blended toward [b] by [t] (no allocation: colours are values). */
-    fun set(a: ManualInk, b: ManualInk, t: Float) {
-        paper = lerp(a.paper, b.paper, t); gridFine = lerp(a.gridFine, b.gridFine, t); gridMajor = lerp(a.gridMajor, b.gridMajor, t)
-        line = lerp(a.line, b.line, t); lineSoft = lerp(a.lineSoft, b.lineSoft, t); cut = lerp(a.cut, b.cut, t); hatch = lerp(a.hatch, b.hatch, t)
-        cavity = lerp(a.cavity, b.cavity, t); metal = lerp(a.metal, b.metal, t); metalLight = lerp(a.metalLight, b.metalLight, t)
-        metalDark = lerp(a.metalDark, b.metalDark, t); intake = lerp(a.intake, b.intake, t); exhaust = lerp(a.exhaust, b.exhaust, t)
-        oil = lerp(a.oil, b.oil, t); coolant = lerp(a.coolant, b.coolant, t); electric = lerp(a.electric, b.electric, t)
-        electricLight = lerp(a.electricLight, b.electricLight, t); electricDark = lerp(a.electricDark, b.electricDark, t)
-        eco = lerp(a.eco, b.eco, t); sport = lerp(a.sport, b.sport, t); stamp = lerp(a.stamp, b.stamp, t); lamp = lerp(a.lamp, b.lamp, t)
-        cell = lerp(a.cell, b.cell, t); cellLow = lerp(a.cellLow, b.cellLow, t); fire = lerp(a.fire, b.fire, t); clean = lerp(a.clean, b.clean, t)
-        magnetN = lerp(a.magnetN, b.magnetN, t); magnetS = lerp(a.magnetS, b.magnetS, t); belt = lerp(a.belt, b.belt, t); wash = lerp(a.wash, b.wash, t)
+    fun set(a: EngineInk, b: EngineInk, t: Float) {
+        paper = lerp(a.paper, b.paper, t); bgTop = lerp(a.bgTop, b.bgTop, t); bgBottom = lerp(a.bgBottom, b.bgBottom, t); line = lerp(a.line, b.line, t)
+        lineSoft = lerp(a.lineSoft, b.lineSoft, t); text = lerp(a.text, b.text, t); textSoft = lerp(a.textSoft, b.textSoft, t); cut = lerp(a.cut, b.cut, t)
+        hatch = lerp(a.hatch, b.hatch, t); cavity = lerp(a.cavity, b.cavity, t); metal = lerp(a.metal, b.metal, t); metalLight = lerp(a.metalLight, b.metalLight, t)
+        metalDark = lerp(a.metalDark, b.metalDark, t); cast = lerp(a.cast, b.cast, t); iron = lerp(a.iron, b.iron, t); white = lerp(a.white, b.white, t)
+        intake = lerp(a.intake, b.intake, t); gasHot = lerp(a.gasHot, b.gasHot, t); exhaust = lerp(a.exhaust, b.exhaust, t); oil = lerp(a.oil, b.oil, t)
+        coolant = lerp(a.coolant, b.coolant, t); rubber = lerp(a.rubber, b.rubber, t); electric = lerp(a.electric, b.electric, t); electricLight = lerp(a.electricLight, b.electricLight, t)
+        electricDark = lerp(a.electricDark, b.electricDark, t); hv = lerp(a.hv, b.hv, t); eco = lerp(a.eco, b.eco, t); sport = lerp(a.sport, b.sport, t)
+        stamp = lerp(a.stamp, b.stamp, t); lamp = lerp(a.lamp, b.lamp, t); cell = lerp(a.cell, b.cell, t); cellLow = lerp(a.cellLow, b.cellLow, t)
+        fire = lerp(a.fire, b.fire, t); clean = lerp(a.clean, b.clean, t); magnetN = lerp(a.magnetN, b.magnetN, t); magnetS = lerp(a.magnetS, b.magnetS, t)
+        belt = lerp(a.belt, b.belt, t); copper = lerp(a.copper, b.copper, t); gold = lerp(a.gold, b.gold, t); bronze = lerp(a.bronze, b.bronze, t)
+        titanium = lerp(a.titanium, b.titanium, t); carbon = lerp(a.carbon, b.carbon, t); ceramic = lerp(a.ceramic, b.ceramic, t); panel = lerp(a.panel, b.panel, t)
+        panelLine = lerp(a.panelLine, b.panelLine, t); mist = lerp(a.mist, b.mist, t)
     }
 
-    fun copy() = ManualInk(paper, gridFine, gridMajor, line, lineSoft, cut, hatch, cavity, metal, metalLight, metalDark, intake, exhaust, oil,
-        coolant, electric, electricLight, electricDark, eco, sport, stamp, lamp, cell, cellLow, fire, clean, magnetN, magnetS, belt, wash)
+    fun copy() = EngineInk(
+        paper, bgTop, bgBottom, line, lineSoft, text, textSoft, cut, hatch, cavity, metal, metalLight, metalDark, cast, iron, white, intake, gasHot,
+        exhaust, oil, coolant, rubber, electric, electricLight, electricDark, hv, eco, sport, stamp, lamp, cell, cellLow, fire, clean, magnetN,
+        magnetS, belt, copper, gold, bronze, titanium, carbon, ceramic, panel, panelLine, mist,
+    )
 
     companion object {
-        val DAY = ManualInk(
-            paper = Color(0xFFF4F2EB), gridFine = Color(0xFFDCE3E6), gridMajor = Color(0xFFC2CED4), line = Color(0xFF1B1D20), lineSoft = Color(0xFF5E666C),
-            cut = Color(0xFFFFFFFF), hatch = Color(0xFF2A2E33), cavity = Color(0xFFE6E9EA), metal = Color(0xFFC8CDD1), metalLight = Color(0xFFE4E7E9),
-            metalDark = Color(0xFF8E979E), intake = Color(0xFF9CCDE8), exhaust = Color(0xFFC2543B), oil = Color(0xFFE3A532), coolant = Color(0xFF34A58A),
-            electric = Color(0xFF8461C2), electricLight = Color(0xFFB79BE6), electricDark = Color(0xFF5B3E96), eco = Color(0xFF2E9C8A), sport = Color(0xFFE08A2E),
-            stamp = Color(0xFF248F4E), lamp = Color(0xFFFFD9A0), cell = Color(0xFF34A58A), cellLow = Color(0xFFE3A532), fire = Color(0xFFE8833E),
-            clean = Color(0xFF7FA9EA), magnetN = Color(0xFF6F98C9), magnetS = Color(0xFFC2543B), belt = Color(0xFF3A3F45), wash = Color(0xFFF4F2EB),
+        val DAY = EngineInk(
+            paper = Color(0xFF1C2024), bgTop = Color(0xFF262B30), bgBottom = Color(0xFF14171A), line = Color(0xFF0A0C0E), lineSoft = Color(0xFF3B4249),
+            text = Color(0xFFE8ECEF), textSoft = Color(0xFF95A0AA), cut = Color(0xFFC2281F), hatch = Color(0xFF7C1611), cavity = Color(0xFF111418),
+            metal = Color(0xFFAAB2B9), metalLight = Color(0xFFD8DDE1), metalDark = Color(0xFF6C757D), cast = Color(0xFF99A1A8),
+            iron = Color(0xFF565C62), white = Color(0xFFF3F5F6), intake = Color(0xFF72BCEA), gasHot = Color(0xFFE9743A), exhaust = Color(0xFF8C6A58),
+            oil = Color(0xFFE2A22C), coolant = Color(0xFF2FAE92), rubber = Color(0xFF23272B), electric = Color(0xFF9B78E4),
+            electricLight = Color(0xFFC0A8F2), electricDark = Color(0xFF6A4DB0), hv = Color(0xFFF08A24), eco = Color(0xFF37B9A2),
+            sport = Color(0xFFEB952F), stamp = Color(0xFF52C980), lamp = Color(0xFFFFD9A0), cell = Color(0xFF2FAE92), cellLow = Color(0xFFE2A22C),
+            fire = Color(0xFFFFA04E), clean = Color(0xFF94BBFF), magnetN = Color(0xFF5F92D0), magnetS = Color(0xFFC65A40), belt = Color(0xFF17191C),
+            copper = Color(0xFFC98048), gold = Color(0xFFD0A74C), bronze = Color(0xFFB28E58), titanium = Color(0xFFA59B90), carbon = Color(0xFF1D2024),
+            ceramic = Color(0xFFCDBB9E), panel = Color(0xFF0C0F12), panelLine = Color(0xFF2D343A), mist = Color(0xFFB9C5CD),
         )
-        val NIGHT = ManualInk(
-            paper = Color(0xFF131A21), gridFine = Color(0xFF19222A), gridMajor = Color(0xFF212C36), line = Color(0xFFAEBDC8), lineSoft = Color(0xFF6A7B88),
-            cut = Color(0xFF1A232B), hatch = Color(0xFF5F717E), cavity = Color(0xFF161E25), metal = Color(0xFF2E3943), metalLight = Color(0xFF3A4651),
-            metalDark = Color(0xFF232C35), intake = Color(0xFF4F8099), exhaust = Color(0xFF9A4C38), oil = Color(0xFFA27A2E), coolant = Color(0xFF2A7A68),
-            electric = Color(0xFF775CAE), electricLight = Color(0xFF8E78BE), electricDark = Color(0xFF45346F), eco = Color(0xFF3A9C88), sport = Color(0xFFC07D36),
-            stamp = Color(0xFF4FB874), lamp = Color(0xFFFFC98A), cell = Color(0xFF2A7A68), cellLow = Color(0xFFA27A2E), fire = Color(0xFFC6763A),
-            clean = Color(0xFF6F8FC4), magnetN = Color(0xFF4A6F95), magnetS = Color(0xFF944C38), belt = Color(0xFF6A7B88), wash = Color(0xFF131A21),
+        /** Night: the key light is lower, the room darker; the instruments and the fluids keep their colours. */
+        val NIGHT = EngineInk(
+            paper = Color(0xFF14171A), bgTop = Color(0xFF1B1F23), bgBottom = Color(0xFF0E1012), line = Color(0xFF0A0C0E), lineSoft = Color(0xFF2D3036),
+            text = Color(0xFFE8ECEF), textSoft = Color(0xFF95A0AA), cut = Color(0xFF911D16), hatch = Color(0xFF5D100C), cavity = Color(0xFF0C0E11),
+            metal = Color(0xFF7F8388), metalLight = Color(0xFFA1A3A6), metalDark = Color(0xFF51565C), cast = Color(0xFF73777C),
+            iron = Color(0xFF414448), white = Color(0xFFF3F5F6), intake = Color(0xFF72BCEA), gasHot = Color(0xFFE9743A), exhaust = Color(0xFF694E41),
+            oil = Color(0xFFA97720), coolant = Color(0xFF24806C), rubber = Color(0xFF1B1C1F), electric = Color(0xFF9B78E4),
+            electricLight = Color(0xFFC0A8F2), electricDark = Color(0xFF503882), hv = Color(0xFFF08A24), eco = Color(0xFF37B9A2),
+            sport = Color(0xFFEB952F), stamp = Color(0xFF52C980), lamp = Color(0xFFFFD9A0), cell = Color(0xFF24806C), cellLow = Color(0xFFA97720),
+            fire = Color(0xFFFFA04E), clean = Color(0xFF94BBFF), magnetN = Color(0xFF486C99), magnetS = Color(0xFF94422F), belt = Color(0xFF131214),
+            copper = Color(0xFF965E35), gold = Color(0xFF9B7B38), bronze = Color(0xFF856941), titanium = Color(0xFF7C726A), carbon = Color(0xFF17171A),
+            ceramic = Color(0xFF998A74), panel = Color(0xFF0C0F12), panelLine = Color(0xFF2D343A), mist = Color(0xFFB9C5CD),
         )
     }
 }
@@ -187,6 +204,28 @@ internal object EL {
     val HV_BAT_INV = floatArrayOf(1030f, BAT_T, 1030f, 130f, INV_R, 130f)
     val HV_INV_MOTOR = floatArrayOf(INV_L, 110f, 600f, 110f, 572f, 112f)
     val HV_COMP = floatArrayOf(ECOMP.x, BAT_T, ECOMP.x, ECOMP.y + ECOMP_R)
+
+    // ---------------------------------------------------------------- parts that arrive with an upgrade step
+    /** Air filter box of the naturally aspirated steps (Lv.1, 2). */
+    const val AIRBOX_L = 1016f
+    const val AIRBOX_R = 1150f
+    const val AIRBOX_T = 20f
+    const val AIRBOX_B = 72f
+    val INTAKE_PATH_NA = floatArrayOf(1010f, 46f, 985f, 46f, 930f, 46f, 380f, 46f)
+    /** Intercooler on the charge pipe and the blow-off valve beside it (Lv.3 and up). */
+    const val IC_L = 1048f
+    const val IC_R = 1112f
+    const val IC_T = 82f
+    const val IC_B = 152f
+    val BOV = Offset(1022f, 24f)
+    /** Dry-sump oil tank (Lv.5). */
+    const val TANK_L = 1188f
+    const val TANK_R = 1244f
+    const val TANK_T = 150f
+    const val TANK_B = 400f
+    /** The rear motor of the dual-motor steps (EV Lv.4, 5). */
+    val MOTOR2 = Offset(1140f, 452f)
+    const val MOTOR2_R = 84f
 
     /** Belt loop (outer tangents and arcs) sampled every few units, built once. */
     val BELT_POINTS: FloatArray by lazy { loop(BELT, 6f) }

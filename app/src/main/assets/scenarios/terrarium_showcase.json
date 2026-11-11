@@ -4,6 +4,7 @@
   "description": "달린 거리만큼 자라는 병 속 정원. 비, 밤, 깜빡이가 병 안에서 일어나요",
   "order": 5,
   "theme": "TERRARIUM",
+  "model": 4,
   "durationS": 92,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 64, "evCharging": false, "caption": "주차 중: 유리병 정원이 조용히 쉬어요" },

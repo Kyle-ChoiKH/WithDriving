@@ -63,7 +63,15 @@ class PassageCostTest {
     /** [release] drops the theme's caches and returns what is still held (the app also drops a kit theme's runtime). */
     private class Live(val theme: SceneTheme, val draw: (CanvasDrawScope, ImageBitmap) -> Unit, val caches: () -> Long, val release: () -> Long)
 
-    private fun live(theme: SceneTheme, tm: TextMeasurer, density: Density): Live = when (theme) {
+    private fun live(theme: SceneTheme, tm: TextMeasurer, density: Density, options: SceneOptions = this.options): Live = when (theme) {
+        SceneTheme.KART -> {
+            // The kart scene keeps no cached layers: it is drawn whole every frame.
+            val r = SceneRuntime(seed = 3)
+            val driving = CharacterTarget(sizeMode = SizeMode.FULL, kart = io.vroomi.character.KartState(driving = true))
+            for (i in 0 until 90) r.step(1f / 60f, driving, options, DEFAULT_NOW_MS + i * 16L)
+            val cache = TextCache()
+            Live(theme, { s, img -> s.draw(density, LayoutDirection.Ltr, Canvas(img), Size(w.toFloat(), h.toFloat())) { r.draw(this, driving, options, tm, cache) } }, { 0L }, { 0L })
+        }
         SceneTheme.CALIBRE -> {
             val r = CalibreRuntime()
             for (i in 0 until 90) r.step(1f / 60f, target, options, CalibreFinish.AUTO, DEFAULT_NOW_MS + i * 16L)
@@ -91,7 +99,7 @@ class PassageCostTest {
         val out = StringBuilder("passage cost at 1920 x 720 (JVM layoutlib on the build PC, not the car)\n")
         val snapshot = w.toLong() * h * 4
         val stills = 3L * 960 * 360 * 4
-        for ((a, b) in listOf(SceneTheme.CALIBRE to SceneTheme.ENGINE, SceneTheme.AQUARIUM to SceneTheme.MARBLE, SceneTheme.ORBIT to SceneTheme.PIXEL)) {
+        for ((a, b) in listOf(SceneTheme.CALIBRE to SceneTheme.ENGINE, SceneTheme.AQUARIUM to SceneTheme.HANGAR, SceneTheme.ORBIT to SceneTheme.PIXEL)) {
             releaseThemeLayers(null)
             val img = ImageBitmap(w, h)
             val s = CanvasDrawScope()
@@ -112,5 +120,37 @@ class PassageCostTest {
         File("build/reports").mkdirs()
         File("build/reports/passage_cost.txt").writeText(out.toString())
         println(out)
+    }
+
+    /**
+     * Step 5 (model 4) of all twelve themes: the cached layers stay within [LAYER_LIMIT] (the 48 MB layer budget), every layer is released, and a steady frame's time is written to
+     * build/reports/passage_cost_step5.txt (times are this PC's JVM, so they are recorded, not asserted).
+     */
+    @Test fun stepFiveOfEveryTheme() {
+        val density = Density(1f)
+        val tm = TextMeasurer(createFontFamilyResolver(paparazzi.context), density, LayoutDirection.Ltr)
+        val five = options.copy(model = 4)
+        val out = StringBuilder("step 5 cost at 1920 x 720 (JVM layoutlib on the build PC, not the car)\n")
+        for (theme in SceneTheme.entries) {
+            releaseThemeLayers(null)
+            val img = ImageBitmap(w, h)
+            val s = CanvasDrawScope()
+            val l = live(theme, tm, density, five)
+            l.draw(s, img)                              // warm: layers built
+            val t0 = System.nanoTime(); l.draw(s, img); val steady = (System.nanoTime() - t0) / 1e6
+            val bytes = l.caches()
+            val after = l.release()
+            out.append("%-13s layers %5.1f MB, steady frame %6.1f ms\n".format(theme, bytes / 1e6, steady))
+            assertTrue("$theme released its layers", after == 0L)
+            assertTrue("$theme step 5 layers ${bytes / 1e6} MB", bytes <= LAYER_LIMIT)
+        }
+        File("build/reports").mkdirs()
+        File("build/reports/passage_cost_step5.txt").writeText(out.toString())
+        println(out)
+    }
+
+    private companion object {
+        /** The shared budget of the static layer bitmaps (48 MB; the app holds one theme's layers at a time). */
+        const val LAYER_LIMIT = 48L * 1024 * 1024
     }
 }

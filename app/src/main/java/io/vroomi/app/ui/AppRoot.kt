@@ -52,6 +52,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -60,7 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.vroomi.app.BuildConfig
 import io.vroomi.app.R
-import io.vroomi.app.diary.Bond
+import io.vroomi.app.progress.Grade
+import io.vroomi.app.progress.SafetyGrade
+import io.vroomi.app.progress.ThemeAccess
 import io.vroomi.app.runtime.EngineSound
 import io.vroomi.app.runtime.MechanicalSound
 import io.vroomi.app.runtime.VroomiRuntime
@@ -112,6 +115,7 @@ import io.vroomi.character.render.theme.ThemeSceneState
 import io.vroomi.character.render.theme.isKitTheme
 import io.vroomi.character.render.theme.releaseThemeLayers
 import io.vroomi.character.render.theme.rememberThemeSceneState
+import io.vroomi.character.theme.ThemeModels
 import io.vroomi.core.voice.ListenState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -119,6 +123,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Calendar
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 private val CharacterSize.scale: Float get() = when (this) { CharacterSize.SMALL -> 0.85f; CharacterSize.NORMAL -> 1f; CharacterSize.LARGE -> 1.15f }
 
@@ -145,6 +150,7 @@ fun AppRoot(rt: VroomiRuntime) {
     val progress by rt.demoProgress.collectAsStateWithLifecycle()
     val demoTheme by rt.demoTheme.collectAsStateWithLifecycle()
     val demoPowertrain by rt.demoPowertrain.collectAsStateWithLifecycle()
+    val demoModel by rt.demoModel.collectAsStateWithLifecycle()
     val lastTrip by rt.lastTrip.collectAsStateWithLifecycle()
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
     val kart = rememberVroomiSceneState()
@@ -237,9 +243,19 @@ fun AppRoot(rt: VroomiRuntime) {
     ThemeKeeper(rt, kit, liveTheme)
     ThemeSoundKeeper(rt, kit, liveTheme) { stage.phase == PassagePhase.IDLE || stage.phase == PassagePhase.SETTLING }
 
+    // The upgrade step of the shown theme: a demo shows its own step, otherwise the user's choice for that theme.
+    val shownTheme = liveTheme ?: applied
+    // The grade shown (every grade in the developer preview) decides each theme's step; a locked step tapped in the
+    // model sheet is only previewed ([modelPreview], never saved) until the stage, the tab or the car moves on.
+    val grade = remember(trips, settings.gradeReached, settings.devAllGrades) { VroomiRuntime.shownGrade(trips, settings) }
+    val realGrade = remember(trips, settings.gradeReached) { SafetyGrade.current(trips, settings.gradeReached) }
+    var modelPreview by remember { mutableStateOf<Pair<SceneTheme, Int>?>(null) }
+    val modelOf: (SceneTheme) -> Int = { t -> modelPreview?.takeIf { it.first == t }?.second ?: ThemeAccess.effectiveModel(grade, settings.models[t]) }
+    val sceneModel = demoModel ?: modelOf(shownTheme)
+    stills.modelOf = modelOf
     val options = SceneOptions(
         calm = settings.calm, reducedMotion = systemReduced, bubbleColor = MaterialTheme.colorScheme.surface,
-        sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin,
+        sizeScale = settings.size.scale, hourOfDay = hour, season = season, skin = settings.skin, model = sceneModel,
     )
     var firstFrameSeen by remember { mutableStateOf(false) }
 
@@ -251,10 +267,19 @@ fun AppRoot(rt: VroomiRuntime) {
     var optionSheet by remember { mutableStateOf<ThemeOption?>(null) }
     var demoSheet by remember { mutableStateOf(false) }
     var sheetAmount by remember { mutableStateOf(0f) }
+    // A previewed (locked) step ends when the stage, the tab or the parked state changes.
+    LaunchedEffect(staged, tab, moving) { modelPreview = null }
+    /** The model sheet's pick: an open step is saved (the best open one is "follow the grade"), a locked one is previewed. */
+    fun pickModel(t: SceneTheme, m: Int) {
+        val realMax = ThemeAccess.maxModel(realGrade)
+        if ((BuildConfig.DEBUG && settings.devAllGrades) || m > realMax) { modelPreview = t to m; return }
+        modelPreview = null
+        rt.settingsStore.update { s -> s.copy(models = if (m >= realMax) s.models - t else s.models + (t to m)) }
+    }
     LaunchedEffect(moving) {
         if (moving) {
             parkedChrome = false
-            if (staged != null) { staged = null; if (demo && tab == Tab.FRIENDS) tab = Tab.HOME }
+            if (staged != null) { staged = null; if (demo && tab == Tab.THEMES) tab = Tab.HOME }
             optionSheet = null; demoSheet = false
             delay(prefs.ms(Motion.P8_SCENE_DELAY_MS)); sceneMoving = true
             delay(prefs.ms(Motion.P8_CONTROLS_DELAY_MS - Motion.P8_SCENE_DELAY_MS)); controlsShown = true
@@ -287,8 +312,10 @@ fun AppRoot(rt: VroomiRuntime) {
     LaunchedEffect(demo) {
         if (demo) { afterglow = true; return@LaunchedEffect }
         if (!afterglow) return@LaunchedEffect
-        snapshotFlow { rt.isMoving.value }.first { !it }
-        withTimeoutOrNull(prefs.ms(Motion.TRIP_RETURN_MS)) { snapshotFlow { rt.lastTrip.value }.first { it == null } }
+        // These are StateFlows, not Compose state: collected directly (a snapshotFlow over .value would see only the
+        // first value, and a demo ended mid-drive would keep its theme on screen for good).
+        rt.isMoving.first { !it }
+        withTimeoutOrNull(prefs.ms(Motion.TRIP_RETURN_MS)) { rt.lastTrip.first { it == null } }
         stage.hint = PassageHint(PassageStyle.ENTRANCE, intensity = 0.6f)
         afterglow = false; demoForced = null
     }
@@ -313,12 +340,12 @@ fun AppRoot(rt: VroomiRuntime) {
             val wide = maxWidth >= Dimens.wideBreak
             val railPx = with(density) { Dimens.railWidth.toPx() }
             val cardCorner = with(density) { Radius.r24.toPx() }
-            val panelTab = tab == Tab.DIARY || tab == Tab.WARDROBE || tab == Tab.SETTINGS
+            val panelTab = tab == Tab.DIARY || tab == Tab.GRADE || tab == Tab.SETTINGS
 
             val place = when {
                 sceneMoving -> Place.FULL
-                tab == Tab.FRIENDS && staged != null -> Place.STAGE
-                tab == Tab.FRIENDS -> Place.CARD
+                tab == Tab.THEMES && staged != null -> Place.STAGE
+                tab == Tab.THEMES -> Place.CARD
                 panelTab && wide -> Place.PANE
                 else -> Place.HOME
             }
@@ -516,10 +543,11 @@ fun AppRoot(rt: VroomiRuntime) {
             val blurBehind = blurOk && sheetAmount > 0.01f && !moving
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
-                    if (blurBehind) {
-                        val r = Dimens.sheetBlur.toPx() * sheetAmount
-                        renderEffect = BlurEffect(r, r, TileMode.Clamp)
-                    } else renderEffect = null
+                    // This block re-runs on a state change before the next composition, so [blurBehind] can be a frame
+                    // old while the amount is already 0 (a sheet that closes across a long frame). A blur of radius 0
+                    // has no native effect and throws, so the radius is checked here as well.
+                    val r = Dimens.sheetBlur.toPx() * sheetAmount
+                    renderEffect = if (blurBehind && r > 0.5f) BlurEffect(r, r, TileMode.Clamp) else null
                 },
             ) {
                 CompositionLocalProvider(LocalSceneBackdrop provides sceneBackdrop) {
@@ -530,16 +558,16 @@ fun AppRoot(rt: VroomiRuntime) {
                             .graphicsLayer { alpha = parkedAlpha.value },
                     ) {
                         val railShown = place != Place.STAGE && !sceneMoving
-                        RailSlot(railShown, chromeIn.value) { TabRail(tab) { t -> if (t == Tab.FRIENDS) scope.launch { gallery.list.scrollToItem(gallery.shelf(applied).indexOf(applied).coerceAtLeast(0)) }; tab = t } }
+                        RailSlot(railShown, chromeIn.value) { TabRail(tab) { t -> if (t == Tab.THEMES) scope.launch { gallery.list.scrollToItem(gallery.shelf(applied).indexOf(applied).coerceAtLeast(0)) }; tab = t } }
                         Box(
                             Modifier.weight(1f).fillMaxHeight().graphicsLayer {
                                 val a = stageAmount.value
-                                if (tab == Tab.FRIENDS && a > 0.001f && !prefs.reduced) {
+                                if (tab == Tab.THEMES && a > 0.001f && !prefs.reduced) {
                                     val s = 1f - 0.06f * a
                                     scaleX = s; scaleY = s
                                     if (blurOk) { val r = Dimens.recedeBlur.toPx() * a; renderEffect = if (r > 0.5f) BlurEffect(r, r, TileMode.Clamp) else null }
                                 } else renderEffect = null
-                            }.drawWithDim { val a = stageAmount.value; if (tab == Tab.FRIENDS) a * (if (blurOk) 0.30f else 0.45f) else 0f },
+                            }.drawWithDim { val a = stageAmount.value; if (tab == Tab.THEMES) a * (if (blurOk) 0.30f else 0.45f) else 0f },
                         ) {
                             AnimatedContent(
                                 targetState = tab,
@@ -556,12 +584,13 @@ fun AppRoot(rt: VroomiRuntime) {
                                 label = "tab",
                             ) { t ->
                                 when (t) {
-                                    Tab.FRIENDS -> Gallery(
+                                    Tab.THEMES -> Gallery(
                                         gallery, applied, stills,
-                                        chips = { ThemeOptionChips(applied, pickerContext(rt, settings)) { optionSheet = it } },
+                                        chips = { ThemeOptionChips(applied, pickerContext(rt, settings, grade, modelOf, ::pickModel)) { optionSheet = it } },
                                         onOpen = ::openCard,
+                                        stepTag = { t -> ThemeModels.tag(modelOf(t)) },
                                     )
-                                    Tab.DIARY, Tab.WARDROBE, Tab.SETTINGS -> if (wide) Row(Modifier.fillMaxSize()) {
+                                    Tab.DIARY, Tab.GRADE, Tab.SETTINGS -> if (wide) Row(Modifier.fillMaxSize()) {
                                         Spacer(Modifier.weight(io.vroomi.app.ui.design.Layout.SCENE_PANE).fillMaxHeight())
                                         Box(Modifier.weight(1f - io.vroomi.app.ui.design.Layout.SCENE_PANE).fillMaxHeight().background(MaterialTheme.colorScheme.background)) { PanelFor(t, rt, trips) }
                                     }
@@ -611,8 +640,16 @@ fun AppRoot(rt: VroomiRuntime) {
                             onNext = if (shownOnStage != null && ThemeRegistry.indexOf(shownOnStage) < ThemeRegistry.all.size - 1) ({ step(1) }) else null,
                             onApply = ::applyStaged,
                             onDemo = shownOnStage?.let { s -> ThemeRegistry.of(s).showcase?.let { id -> { startDemo(id, s) } } },
-                            chips = { ThemeOptionChips(shownOnStage ?: applied, pickerContext(rt, settings)) { optionSheet = it } },
+                            chips = { ThemeOptionChips(shownOnStage ?: applied, pickerContext(rt, settings, grade, modelOf, ::pickModel)) { optionSheet = it } },
                         )
+                        // The applied card's step tag: its picture is the live scene drawn above the gallery, so the
+                        // tag is drawn here, at the card's top right (the other cards draw their own).
+                        if (tab == Tab.THEMES && place == Place.CARD && sceneIn.value >= 1f) {
+                            StepTag(
+                                ThemeModels.tag(modelOf(applied)),
+                                Modifier.atTopEndOf({ cardRect(appliedRef.value) }, Space.s16).graphicsLayer { alpha = 1f - stageAmount.value },
+                            )
+                        }
                     }
 
                     // Moving: the chip, the demo captions and the two big toggles; they only fade.
@@ -644,7 +681,7 @@ fun AppRoot(rt: VroomiRuntime) {
             }
 
             // Overlays above the blur: sheets and the welcome card.
-            val ctx = pickerContext(rt, settings) { change -> stage.crossfade(prefs, change) }
+            val ctx = pickerContext(rt, settings, grade, modelOf, ::pickModel, previewing = { t -> modelPreview?.first == t }) { change -> stage.crossfade(prefs, change) }
             BottomSheet(optionSheet != null && !moving, onDismiss = { optionSheet = null }, progress = { sheetAmount = it }) {
                 optionSheet?.let { o -> OptionSheet(o, staged ?: applied, ctx) }
             }
@@ -717,27 +754,42 @@ private fun RailSlot(shown: Boolean, appear: Float, content: @Composable () -> U
 private fun PanelFor(tab: Tab, rt: VroomiRuntime, trips: List<io.vroomi.app.diary.TripRecord>) {
     when (tab) {
         Tab.DIARY -> DiaryPanel(trips)
-        Tab.WARDROBE -> WardrobePanel(rt, Bond.careKm(trips))
+        Tab.GRADE -> GradePanel(rt)
         Tab.SETTINGS -> SettingsPanel(rt)
         else -> Unit
     }
 }
 
 @Composable
-private fun pickerContext(rt: VroomiRuntime, s: io.vroomi.app.settings.Settings, crossfade: (() -> Unit) -> Unit = { it() }): PickerContext {
+private fun pickerContext(
+    rt: VroomiRuntime, s: io.vroomi.app.settings.Settings, grade: Grade, modelOf: (SceneTheme) -> Int, onModel: (SceneTheme, Int) -> Unit,
+    previewing: (SceneTheme) -> Boolean = { false }, crossfade: (() -> Unit) -> Unit = { it() },
+): PickerContext {
     val openedAt = remember { System.currentTimeMillis() }
     return PickerContext(
         s.skin, s.calibreFinish, s.enginePowertrain, stillAt = io.vroomi.character.render.calibre.DEFAULT_NOW_MS, openedAt = openedAt,
         onFinish = { f -> crossfade { rt.settingsStore.update { it.copy(calibreFinish = f) } } },
         onPowertrain = { p -> crossfade { rt.settingsStore.update { it.copy(enginePowertrain = p) } } },
-        // Another friend (or finish, or powertrain) crossfades into the live scene instead of cutting.
+        // Another friend (or finish, or powertrain, or step) crossfades into the live scene instead of cutting.
         onSkin = { skin -> if (skin != s.skin) crossfade { rt.settingsStore.update { it.copy(skin = skin) } } },
         themeSound = s.themeSound,
         onThemeSound = { on -> rt.settingsStore.update { it.copy(themeSound = on) } },
+        grade = grade, modelOf = modelOf, previewing = previewing,
+        onModel = { t, m -> if (m != modelOf(t)) crossfade { onModel(t, m) } else onModel(t, m) },
     )
 }
 
-/** Home's chrome over the scene: the bond badge, the speech bubble, the demo and talk buttons, the trip card. */
+/** Places a child at the top-right corner of [rect] (root px, read while placing), [inset] inside it; hidden without a rect. */
+private fun Modifier.atTopEndOf(rect: () -> Rect?, inset: androidx.compose.ui.unit.Dp): Modifier = layout { measurable, constraints ->
+    val p = measurable.measure(constraints.copy(minWidth = 0, minHeight = 0))
+    layout(p.width, p.height) {
+        val r = rect() ?: return@layout
+        val i = inset.toPx()
+        p.place((r.right - i - p.width).roundToInt(), (r.top + i).roundToInt())
+    }
+}
+
+/** Home's chrome over the scene: the grade badge, the speech bubble, the demo and talk buttons, the trip card. */
 @Composable
 private fun HomeChrome(
     rt: VroomiRuntime, trips: List<io.vroomi.app.diary.TripRecord>, lastLine: String?, demo: Boolean, caption: String?,
@@ -745,20 +797,11 @@ private fun HomeChrome(
 ) {
     val listen by rt.recognizer.state.collectAsStateWithLifecycle()
     val partial by rt.recognizer.partial.collectAsStateWithLifecycle()
-    val careKm = Bond.careKm(trips)
-    val level = Bond.level(careKm)
-    val toNext = Bond.kmToNext(careKm)
-    val progress = if (toNext == null) 1f else {
-        val span = careKm + toNext - prevLevelKm(level)
-        ((careKm - prevLevelKm(level)) / span).coerceIn(0f, 1f)
-    }
+    val settings by rt.settingsStore.settings.collectAsStateWithLifecycle()
+    val status = remember(trips, settings.gradeReached, settings.devAllGrades) { GradeStatus.of(trips, VroomiRuntime.shownGrade(trips, settings)) }
     // The chrome-zone contract: status top left, actions bottom right (io.vroomi.character.render.theme.ChromeZones).
     Box(Modifier.fillMaxSize().padding(Space.parked)) {
-        BondBadge(
-            level, Bond.totalStars(trips), progress,
-            if (toNext == null) stringResource(R.string.care_km, careKm) else stringResource(R.string.next_level, toNext),
-            Modifier.align(Alignment.TopStart),
-        )
+        GradeBadge(status.grade, status.stars, status.progress, status.badgeDetail(), Modifier.align(Alignment.TopStart))
         val bubble = when {
             demo && !caption.isNullOrBlank() -> caption
             listen == ListenState.LISTENING -> partial.ifBlank { stringResource(R.string.listening) }
@@ -871,6 +914,11 @@ private fun ThemeSoundKeeper(rt: VroomiRuntime, kit: ThemeSceneState?, theme: Sc
 private fun ThemeKeeper(rt: VroomiRuntime, kit: ThemeSceneState?, theme: SceneTheme?) {
     LaunchedEffect(theme) { releaseThemeLayers(if (theme != null && isKitTheme(theme)) theme else null) }
     if (kit == null) return
+    // The hangar's robot is built by real distance only: a demo shows its own build, and the saved one stands still.
+    val demo by rt.demo.collectAsStateWithLifecycle()
+    LaunchedEffect(kit, demo) {
+        (kit.sim as? io.vroomi.character.hangar.HangarSim)?.let { if (demo) it.startDemo() else it.demo = false }
+    }
     LaunchedEffect(kit) {
         while (true) {
             delay(30_000)
@@ -939,5 +987,3 @@ private fun CalibreKeeper(rt: VroomiRuntime, calibre: CalibreSceneState, theme: 
     }
     DisposableEffect(calibre) { onDispose { if (currentTheme == SceneTheme.CALIBRE) rt.settingsStore.saveReserve(calibre.reserveHours, System.currentTimeMillis()) } }
 }
-
-private fun prevLevelKm(level: Int): Float = when (level) { 1 -> 0f; 2 -> 10f; 3 -> 30f; 4 -> 60f; else -> 100f }

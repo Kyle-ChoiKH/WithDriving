@@ -21,6 +21,7 @@ import io.vroomi.character.calibre.CalibreTone
 import io.vroomi.character.calibre.CalibreView
 import io.vroomi.character.render.SceneOptions
 import io.vroomi.character.render.Spring
+import io.vroomi.character.theme.ThemeModels
 import kotlin.math.min
 import kotlin.math.roundToInt
 
@@ -73,9 +74,13 @@ internal class CalibreRuntime(initialReserveH: Float = 41f) {
     val cy = Spring(0.5f, 30f, 11f)
     val scale = Spring(1f, 40f, 12f)
     val info = Spring(0f, 20f, 9f)
+    /** Braking (pedal or a clear deceleration while moving), eased: the watch tips a little toward the light. */
+    val brake = Spring(0f, 30f, 11f)
     var moving = false; private set
     var finish = CalibreFinish.AUTO; private set
     var lastOptions = SceneOptions(); private set
+    /** The upgrade step the painter draws, 0..4 = Lv.1..5 ([SceneOptions.model] of the last step, clamped). */
+    val model: Int get() = lastOptions.model.coerceIn(0, ThemeModels.COUNT - 1)
 
     // Reused paths (no per-frame allocation)
     val hairspring = Path()
@@ -85,7 +90,7 @@ internal class CalibreRuntime(initialReserveH: Float = 41f) {
     private var lastKey = Long.MIN_VALUE
     private var lastLayers: CalibreLayers? = null
 
-    /** The studio: velvet pile texture, light and vignette brushes and the caption texts (built once per size). */
+    /** The studio: the bench and its props, the lamp and light brushes and the caption texts (built once per size). */
     val studio = CalibreStudio()
 
     fun requestFlip() {
@@ -117,18 +122,21 @@ internal class CalibreRuntime(initialReserveH: Float = 41f) {
         cy.step(if (corner) 0.30f else 0.455f, dt)
         scale.step(if (corner) 0.30f else 1f, dt)
         info.step(if (moving && !corner) 1f else 0f, dt)
+        val c = t.car
+        val braking = moving && (c.brakePressed == true || (c.accelMps2 ?: 0f) < -1.5f) && c.safetyWarningActive != true
+        brake.step(if (braking && !o.calm) 1f else 0f, dt)
     }
 
     /** Movement radius in px at full size for a canvas, and its cache size (quantized). */
     fun fullRadius(w: Float, h: Float): Float = min(h * 0.292f, w * 0.29f) * min(1f, lastOptions.sizeScale.coerceAtLeast(0.85f))
 
-    /** The finish layers at movement radius [u] (quantized); the studio key light never moves. */
-    fun layers(u: Float, tone: CalibreTone, density: Density, tm: TextMeasurer): CalibreLayers {
+    /** The finish layers at movement radius [u] (quantized) for upgrade step [model]; the studio key light never moves. */
+    fun layers(u: Float, tone: CalibreTone, model: Int, density: Density, tm: TextMeasurer): CalibreLayers {
         val uq = ((u / 4f).roundToInt() * 4).coerceAtLeast(24).toFloat()
-        val key = uq.toBits().toLong() * 8 + tone.ordinal
+        val key = (uq.toBits().toLong() * 8 + tone.ordinal) * 8 + model.coerceIn(0, ThemeModels.COUNT - 1)
         if (key == lastKey) lastLayers?.let { return it }
         // A value copy of the density: the dial layer and engravings are measured lazily, after this draw.
-        val l = layerCache[key] ?: CalibreLayers(uq, tone, Density(density.density, density.fontScale), tm).also {
+        val l = layerCache[key] ?: CalibreLayers(uq, tone, model, Density(density.density, density.fontScale), tm).also {
             layerCache[key] = it
             while (layerCache.size > 3) layerCache.remove(layerCache.keys.first())
         }

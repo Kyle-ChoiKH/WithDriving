@@ -1,13 +1,12 @@
 package io.vroomi.app
 
-import io.vroomi.app.diary.Bond
 import io.vroomi.app.diary.DiaryStore
 import io.vroomi.app.diary.SmoothnessScore
 import io.vroomi.app.diary.Sticker
 import io.vroomi.app.diary.TripRecord
 import io.vroomi.app.diary.TripRecorder
+import io.vroomi.app.progress.SafetyGrade
 import io.vroomi.app.runtime.MovingDetector
-import io.vroomi.character.Accessory
 import io.vroomi.core.vehicle.model.GearState
 import io.vroomi.core.vehicle.model.VehicleSnapshot
 import io.vroomi.core.vehicle.signal.DrivingEvent
@@ -30,25 +29,6 @@ class SmoothnessScoreTest {
         assertEquals(Sticker.STAR, Sticker.forScore(95))
         assertEquals(Sticker.BREEZE, Sticker.forScore(70))
         assertEquals(Sticker.SPROUT, Sticker.forScore(69))
-    }
-}
-
-class BondTest {
-    private fun trip(km: Float, score: Int) = TripRecord(km.toLong(), 0, 60_000, km, 0, 0, 0, 0, 0, 0, score)
-
-    @Test fun onlySmoothTripsCount() {
-        val care = Bond.careKm(listOf(trip(12f, 90), trip(50f, 40)))
-        assertEquals(12f, care, 0.001f)
-        assertEquals(2, Bond.level(care))
-        assertEquals(18f, Bond.kmToNext(care)!!, 0.001f)
-    }
-
-    @Test fun levelsAndUnlocks() {
-        assertEquals(1, Bond.level(0f))
-        assertEquals(5, Bond.level(150f))
-        assertNull(Bond.kmToNext(150f))
-        assertEquals(setOf(Accessory.SCARF), Bond.unlocked(1))
-        assertTrue(Accessory.CABLE_LASSO in Bond.unlocked(5))
     }
 }
 
@@ -141,10 +121,10 @@ class DiaryStoreCodecTest {
         assertEquals(0, t.stars); assertEquals(1, t.biomes); assertEquals(false, t.demo)
     }
 
-    @Test fun demoTripsNeverCountForTheBond() {
+    @Test fun demoTripsNeverCountForTheGrade() {
         val real = TripRecord(1, 0, 1, 20f, 0, 0, 0, 0, 0, 0, 95, stars = 80)
         val demo = real.copy(id = 2, demo = true)
-        assertEquals(20f, Bond.careKm(listOf(real, demo)), 0.001f)
-        assertEquals(80, Bond.totalStars(listOf(real, demo)))
+        assertEquals(20f, SafetyGrade.safeKm(listOf(real, demo)), 0.001f)
+        assertEquals(80, SafetyGrade.totalStars(listOf(real, demo)))
     }
 }

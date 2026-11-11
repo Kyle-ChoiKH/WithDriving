@@ -26,7 +26,10 @@ import io.vroomi.character.pixel.PixelModels
 import io.vroomi.character.pixel.PixelPalette
 import io.vroomi.character.pixel.sprites.GemSprite
 import io.vroomi.character.pixel.sprites.PilotSprites
+import io.vroomi.character.pixel.sprites.HoverPadSprite
 import io.vroomi.character.pixel.sprites.RoverSprite
+import io.vroomi.character.pixel.sprites.ShipSprite
+import io.vroomi.character.pixel.sprites.TrailerSprite
 
 /** The one reused 480 × 180 offscreen screen (anti-alias and bitmap filtering off). */
 internal class PixelBuffer {
@@ -76,6 +79,9 @@ internal class PixelSpriteCache {
     private val legs = HashMap<Int, Bitmap>()
     private val rovers = HashMap<PixelPalette, Bitmap>()
     private val wheels = HashMap<Int, Bitmap>()
+    private val ships = HashMap<PixelPalette, Bitmap>()
+    private val trailers = HashMap<PixelPalette, Bitmap>()
+    private val pads = HashMap<Int, Bitmap>()
     private val gems = HashMap<Int, Bitmap>()
     private val skies = HashMap<PixelPalette, Bitmap>()
     private val walls = HashMap<PixelPalette, Bitmap>()
@@ -107,6 +113,34 @@ internal class PixelSpriteCache {
                 'y' -> p.color(SAND); 'd' -> p.color(DUSK); 'r' -> p.color(PINK); 'l' -> p.color(CREAM)
                 else -> 0
             }
+        }
+    }
+
+    /** The survey ship of step 5: the rover's colours on a new hull. */
+    fun ship(p: PixelPalette): Bitmap = ships.getOrPut(p) {
+        decode(ShipSprite.BODY) { ch ->
+            when (ch) {
+                'o' -> p.color(INK); 'c' -> p.color(LAVENDER); 'b' -> p.color(MAGENTA); 'h' -> p.color(PINK)
+                'y' -> p.color(SAND); 'd' -> p.color(DUSK); 'r' -> p.color(PINK); 'l' -> p.color(CREAM); 'm' -> p.color(MIST)
+                else -> 0
+            }
+        }
+    }
+
+    /** The cargo trailer of step 2. */
+    fun trailer(p: PixelPalette): Bitmap = trailers.getOrPut(p) {
+        decode(TrailerSprite.BODY) { ch ->
+            when (ch) {
+                'o' -> p.color(INK); 'b' -> p.color(SLATE); 'y' -> p.color(SAND); 'k' -> p.color(OCHRE); 'j' -> p.color(JADE); 'w' -> p.color(CREAM)
+                else -> 0
+            }
+        }
+    }
+
+    /** A hover pad (steps 3 and 4), two glow frames; the glow keeps its lit colour at night. */
+    fun pad(frame: Int, p: PixelPalette): Bitmap = pads.getOrPut((frame and 1) * 8 + p.ordinal) {
+        decode(HoverPadSprite.FRAMES[frame and 1]) { ch ->
+            when (ch) { 'o' -> p.color(INK); 'd' -> p.color(DUSK); 'm' -> p.color(MIST); 'g' -> p.lit(LIME); else -> 0 }
         }
     }
 

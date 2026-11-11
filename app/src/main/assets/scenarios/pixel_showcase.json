@@ -4,6 +4,7 @@
   "description": "고른 친구가 도트 꼬마차로 달리는 오리지널 8비트 길. 점수·목숨·게임오버는 없어요",
   "order": 11,
   "theme": "PIXEL",
+  "model": 4,
   "durationS": 104,
   "keyframes": [
     { "t": 0,   "gear": "P", "speed": 0, "door": false, "fan": 2, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 70, "evCharging": false, "caption": "주차 중: 네온 오락실 거리. 주차 중에는 탐사차를 누르면 깡충 뛰고 조종사가 손을 흔들어요" },

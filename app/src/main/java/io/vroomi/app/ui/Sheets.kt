@@ -37,17 +37,38 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Text
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import io.vroomi.app.R
+import io.vroomi.app.progress.Grade
+import io.vroomi.app.progress.ThemeAccess
 import io.vroomi.app.ui.design.Dimens
 import io.vroomi.app.ui.design.LocalChrome
 import io.vroomi.app.ui.design.LocalDark
 import io.vroomi.app.ui.design.MaterialToken
+import io.vroomi.app.ui.design.RowDivider
 import io.vroomi.app.ui.design.Shapes
 import io.vroomi.app.ui.design.Space
+import io.vroomi.app.ui.design.Tag
+import io.vroomi.app.ui.design.VIcons
+import io.vroomi.app.ui.design.VType
+import io.vroomi.app.ui.design.grouped
 import io.vroomi.app.ui.design.lifted
 import io.vroomi.app.ui.design.material
 import io.vroomi.app.ui.motion.LocalMotion
 import io.vroomi.app.ui.motion.Motion
+import io.vroomi.app.ui.motion.pressFeedback
+import io.vroomi.character.calibre.SceneTheme
+import io.vroomi.character.theme.ThemeModels
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -160,6 +181,64 @@ internal fun BottomSheet(
                     .drawBehind { drawRoundRect(grab, cornerRadius = CornerRadius(size.height / 2f, size.height / 2f)) },
             )
             Box(Modifier.padding(top = Space.s24)) { Column { content() } }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- the upgrade step (model) sheet
+
+/**
+ * The upgrade-step sheet of [theme] (chip "업그레이드 · Lv.3 VR-01 쿠션"): five rows, each with its "Lv.n" tag, the
+ * step's name and the grade that opens it. An open step is chosen (and saved). A locked one ("플래티넘 등급에
+ * 열려요") can be tapped to preview it on the stage, but it is never saved or applied.
+ */
+@Composable
+internal fun ModelOptions(theme: SceneTheme, ctx: PickerContext) {
+    SheetHeader(stringResource(R.string.model_title), stringResource(R.string.model_hint))
+    val shown = ctx.modelOf(theme)
+    val max = ThemeAccess.maxModel(ctx.grade)
+    Column(Modifier.fillMaxWidth().grouped(Shapes.card)) {
+        for (m in 0 until ThemeAccess.STEPS) {
+            if (m > 0) RowDivider()
+            ModelRow(
+                tag = ThemeModels.tag(m), title = ThemeModels.title(theme, m), unlock = ThemeAccess.modelUnlockGrade(m),
+                open = m <= max, chosen = m == shown, previewing = m == shown && ctx.previewing(theme),
+            ) { ctx.onModel(theme, m) }
+        }
+    }
+}
+
+@Composable
+private fun ModelRow(tag: String, title: String, unlock: Grade, open: Boolean, chosen: Boolean, previewing: Boolean, onClick: () -> Unit) {
+    val chrome = LocalChrome.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.listRow)
+            .pressFeedback(Shapes.card, large = true)
+            .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.RadioButton, onClick = onClick)
+            .semantics { selected = chosen }
+            .padding(start = Space.s24, end = Space.s24, top = Space.s12, bottom = Space.s12),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Tag(tag, accent = chosen)
+        Spacer(Modifier.width(Space.s16))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = VType.headline, color = if (open) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(Space.s4))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Medal(unlock, 20.dp, number = false)
+                Spacer(Modifier.width(Space.s8))
+                Text(
+                    stringResource(if (open) R.string.grade_badge else R.string.locked_grade, unlock.label),
+                    style = VType.callout, color = Ink.secondary, maxLines = 1,
+                )
+            }
+        }
+        Spacer(Modifier.width(Space.s16))
+        when {
+            previewing -> Tag(stringResource(R.string.model_previewing), accent = false)
+            chosen -> Image(VIcons.Check, null, Modifier.size(Dimens.icon), colorFilter = ColorFilter.tint(chrome.tint))
         }
     }
 }

@@ -32,6 +32,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import io.vroomi.app.R
+import io.vroomi.app.progress.Grade
+import io.vroomi.app.progress.ThemeAccess
 import io.vroomi.app.ui.design.Dimens
 import io.vroomi.app.ui.design.LocalChrome
 import io.vroomi.app.ui.design.MaterialToken
@@ -51,6 +53,7 @@ import io.vroomi.character.render.VroomiPortrait
 import io.vroomi.character.render.calibre.CalibreMiniature
 import io.vroomi.character.render.engine.EngineMiniature
 import io.vroomi.character.render.rememberSceneStillRenderer
+import io.vroomi.character.theme.ThemeModels
 
 /**
  * A still gallery focused on [theme] with its option chips (previews and snapshot tests; the live app uses
@@ -69,6 +72,8 @@ internal fun FriendsPicker(
     onFinish: (CalibreFinish) -> Unit = {},
     onPowertrain: (EnginePowertrain) -> Unit = {},
     @Suppress("UNUSED_PARAMETER") initialScroll: Int = 0,
+    grade: Grade = Grade.BRONZE,
+    models: Map<SceneTheme, Int> = emptyMap(),
     onSelect: (CharacterSkin) -> Unit,
 ) {
     val current = ThemeRegistry.resolve(theme)
@@ -77,19 +82,22 @@ internal fun FriendsPicker(
     val stills = remember { HeroStills(renderer, scope, synchronous = true) }
     val state = remember(current) { GalleryState(current) }
     val spec = StillSpec(skin = selected, finish = finish, powertrain = powertrain)
-    val statics = remember(current, spec) {
+    val modelOf: (SceneTheme) -> Int = { t -> ThemeAccess.effectiveModel(grade, models[t]) }
+    val statics = remember(current, spec, grade, models) {
         val i = ThemeRegistry.indexOf(current)
         (i - 2..i + 2).filter { it in ThemeRegistry.all.indices }.associate { idx ->
             val t = ThemeRegistry.all[idx].theme
-            t to renderer.render(t, HeroStills.W, HeroStills.H, spec)
+            t to renderer.render(t, HeroStills.W, HeroStills.H, spec.copy(model = modelOf(t)))
         }
     }
-    val ctx = PickerContext(selected, finish, powertrain, io.vroomi.character.render.calibre.DEFAULT_NOW_MS, 0L, onFinish, onPowertrain, onSelect, themeSound, onThemeSound)
+    val ctx = PickerContext(selected, finish, powertrain, io.vroomi.character.render.calibre.DEFAULT_NOW_MS, 0L, onFinish, onPowertrain, onSelect, themeSound, onThemeSound,
+        grade = grade, modelOf = modelOf)
     // A preview carries the shown theme's own chrome colours.
     val dark = io.vroomi.app.ui.design.LocalDark.current
     val chrome = remember(current, dark) { io.vroomi.app.ui.design.ChromeColors(io.vroomi.app.ui.design.Ambience.of(current), dark) }
     androidx.compose.runtime.CompositionLocalProvider(io.vroomi.app.ui.design.LocalChrome provides chrome) {
-        Gallery(state, current, stills, chips = { ThemeOptionChips(current, ctx) {} }, onOpen = onTheme, staticStills = statics)
+        Gallery(state, current, stills, chips = { ThemeOptionChips(current, ctx) {} }, onOpen = onTheme, staticStills = statics,
+            stepTag = { t -> ThemeModels.tag(modelOf(t)) })
     }
 }
 
@@ -99,6 +107,7 @@ internal fun RowScope.ThemeOptionChips(theme: SceneTheme, ctx: PickerContext, on
     val spec = ThemeRegistry.of(theme)
     spec.options.forEach { o ->
         val label = when (o) {
+            ThemeOption.MODEL -> ctx.modelOf(theme).let { m -> stringResource(R.string.chip_model, ThemeModels.tag(m), ThemeModels.title(theme, m)) }
             ThemeOption.FRIEND -> stringResource(R.string.chip_friend, ctx.skin.label)
             ThemeOption.FINISH -> stringResource(R.string.chip_finish, ctx.finish.label)
             ThemeOption.POWERTRAIN -> stringResource(R.string.chip_powertrain, ctx.powertrain.label)
@@ -114,6 +123,7 @@ internal fun OptionSheet(option: ThemeOption, theme: SceneTheme, ctx: PickerCont
     val spec = ThemeRegistry.of(theme)
     Column(Modifier.heightIn(max = Dimens.sheetMax).verticalScroll(rememberScrollState())) {
         when (option) {
+            ThemeOption.MODEL -> ModelOptions(theme, ctx)
             ThemeOption.FRIEND -> FriendOptions(ctx)
             ThemeOption.FINISH -> CalibreOptions(ctx)
             ThemeOption.POWERTRAIN -> EngineOptions(ctx)

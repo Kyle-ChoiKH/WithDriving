@@ -66,7 +66,7 @@ import kotlin.math.max
 
 /**
  * The passage reel (docs/media/theme_passage.gif), rendered only with VROOMI_REEL=1: launch, home, the gallery,
- * three themes entered, an arrow through all eleven, apply, a demo start, moving, parked, the trip card and the
+ * three themes entered, an arrow through all twelve, apply, a demo start, moving, parked, the trip card and the
  * user's own theme returning. Every theme change runs through the real [StageController]; the live worlds are
  * simulated stills that advance with the reel's clock.
  */
@@ -204,7 +204,7 @@ class PassageReelTest {
                 }
                 // Chrome over the scene.
                 Box(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked).graphicsLayer { alpha = s.homeAlpha * s.chrome; translationY = (1 - s.chrome) * 12.dp.toPx() }) {
-                    BondBadge(3, 128, 0.62f, "다음 레벨까지 7.4 km", Modifier.align(Alignment.TopStart))
+                    GradeBadge(io.vroomi.app.progress.Grade.GOLD, 128, 0.62f, "다음 등급까지 7.4 km", Modifier.align(Alignment.TopStart))
                     s.bubble?.let { SpeechBubble(it, Modifier.align(Alignment.TopCenter)) }
                     HomeActions(demo = false, listening = false, canTalk = true, modifier = Modifier.align(Alignment.BottomEnd), onDemo = {}, onTalk = {})
                     if (s.trip > 0.001f) Box(Modifier.align(Alignment.TopEnd).graphicsLayer { alpha = s.trip; translationX = (1 - s.trip) * 32.dp.toPx() }) { TripSummaryCard(trip) {} }
@@ -281,7 +281,7 @@ class PassageReelTest {
         s.layout = IntSize(w.toInt(), h.toInt())
         stage.coverForTest(liveImage(SceneTheme.KART), 1f)
         seg(9) { t ->
-            s.tab = Tab.FRIENDS; s.railFrom = 0f; s.railAt = spring(Motion.Snappy, t)
+            s.tab = Tab.THEMES; s.railFrom = 0f; s.railAt = spring(Motion.Snappy, t)
             s.homeAlpha = 1f - fade(t, Motion.FADE_FAST_MS.toFloat())
             s.galleryAlpha = fade(t - Motion.CONTENT_DELAY_MS, Motion.FADE_IN_MS.toFloat())
             val k = spring(Motion.Passage, t)
@@ -298,7 +298,7 @@ class PassageReelTest {
         for (t in listOf(SceneTheme.CALIBRE, SceneTheme.ENGINE)) enterAndClose(t)
         enter(SceneTheme.KART)
 
-        // 4. The arrows through all eleven, each with its own entrance.
+        // 4. The arrows through all twelve, each with its own entrance.
         for (i in 1 until ThemeRegistry.all.size) {
             val next = ThemeRegistry.all[i].theme
             stage.hint = PassageHint(PassageStyle.ENTRANCE, interrupt = true)

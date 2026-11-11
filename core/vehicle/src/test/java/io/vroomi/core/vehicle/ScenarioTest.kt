@@ -37,6 +37,12 @@ class ScenarioTest {
         assertNull(plain.theme); assertNull(plain.powertrain)
     }
 
+    @Test fun modelFieldParsed() {
+        assertEquals(4, ScenarioParser.parse("""{"id":"x","title":"t","durationS":1,"model":4,"keyframes":[]}""").model)
+        assertEquals(0, ScenarioParser.parse("""{"id":"x","title":"t","durationS":1,"model":0,"keyframes":[]}""").model)
+        assertNull(ScenarioParser.parse(json).model)
+    }
+
     @Test fun parsesAndSorts() {
         val s = ScenarioParser.parse(json)
         assertEquals("t", s.id)

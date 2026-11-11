@@ -25,7 +25,8 @@ object Entrances {
         SceneTheme.CALIBRE -> 850f
         SceneTheme.ENGINE -> 750f
         SceneTheme.MUSIC_BOX -> 750f
-        SceneTheme.MARBLE -> 800f
+        SceneTheme.PLASMA -> 800f
+        SceneTheme.HANGAR -> 800f
         SceneTheme.TERRARIUM -> 900f
         SceneTheme.AQUARIUM -> 850f
         SceneTheme.ORBIT -> 800f
@@ -92,8 +93,11 @@ object Entrances {
         return p * far * 1.02f
     }
 
-    /** MARBLE: the sweep line x + y = s (px) runs from the back (top left) to the front (bottom right). */
-    fun sweep(p: Float, w: Float, h: Float): Float = p * (w + h)
+    /** PLASMA: the iris opens from the centre of the canvas (where the globe stands) to the farthest corner (px). */
+    fun plasmaRadius(p: Float, w: Float, h: Float): Float = p * hypot(w / 2f, h / 2f) * 1.02f
+
+    /** HANGAR: the shutter's edge (px from the top): the incoming hangar is uncovered from the top down. */
+    fun shutter(p: Float, h: Float): Float = p * h
 
     /** TERRARIUM: the mist (alpha 0..0.35, rising over the time fraction [f]) and its clearing front (share of height, on the spring). */
     fun mistUp(f: Float, intensity: Float): Float = 0.35f * intensity * smoothstep(0f, 0.35f, f)
@@ -112,10 +116,10 @@ object Entrances {
     /** Share of the canvas the incoming world covers at p. */
     fun coverage(t: SceneTheme, p: Float, intensity: Float = 1f, w: Float = 1920f, h: Float = 720f): Float = when (t) {
         SceneTheme.PAPER -> cos(foldDeg(p, intensity) * PI.toFloat() / 180f)
-        SceneTheme.ENGINE, SceneTheme.AQUARIUM, SceneTheme.TREASURE_MAP -> p
+        SceneTheme.ENGINE, SceneTheme.AQUARIUM, SceneTheme.TREASURE_MAP, SceneTheme.HANGAR -> p
         SceneTheme.MUSIC_BOX -> hingeScale(p, intensity)
-        SceneTheme.MARBLE -> sweptArea(sweep(p, w, h), w, h)
-        SceneTheme.ORBIT -> irisArea(irisRadius(p, w, h), w, h)
+        SceneTheme.PLASMA -> discArea(0.5f, 0.5f, plasmaRadius(p, w, h), w, h)
+        SceneTheme.ORBIT -> irisCenter(w, h).let { (cx, cy) -> discArea(cx, cy, irisRadius(p, w, h), w, h) }
         SceneTheme.PIXEL -> p
         else -> 1f
     }
@@ -166,18 +170,8 @@ object Entrances {
         return up * remaining.coerceIn(0f, 1f)
     }
 
-    private fun sweptArea(s: Float, w: Float, h: Float): Float {
-        var a = 0f
-        val n = 240
-        for (i in 0 until n) {
-            val x = (i + 0.5f) / n * w
-            a += (s - x).coerceIn(0f, h)
-        }
-        return (a / n / h).coerceIn(0f, 1f)
-    }
-
-    private fun irisArea(r: Float, w: Float, h: Float): Float {
-        val (cx, cy) = irisCenter(w, h)
+    /** Share of a w x h canvas inside the disc of radius [r] (px) centred at ([cx], [cy]) (shares of width, height). */
+    private fun discArea(cx: Float, cy: Float, r: Float, w: Float, h: Float): Float {
         val x0 = cx * w; val y0 = cy * h
         var inside = 0
         val nx = 160; val ny = 60

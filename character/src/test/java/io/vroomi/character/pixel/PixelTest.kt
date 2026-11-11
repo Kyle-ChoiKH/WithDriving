@@ -8,7 +8,11 @@ import io.vroomi.character.KartState
 import io.vroomi.character.pixel.sprites.GemSprite
 import io.vroomi.character.pixel.sprites.PilotSprites
 import io.vroomi.character.pixel.sprites.PixelFont
+import io.vroomi.character.pixel.sprites.HoverPadSprite
+import io.vroomi.character.pixel.sprites.PixelVehicle
 import io.vroomi.character.pixel.sprites.RoverSprite
+import io.vroomi.character.pixel.sprites.ShipSprite
+import io.vroomi.character.pixel.sprites.TrailerSprite
 import io.vroomi.core.vehicle.model.GearState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -111,6 +115,9 @@ class PixelTest {
             }
         }
         PilotSprites.LEGS.forEach { l -> assertEquals(PilotSprites.LEGS_H, l.size); l.forEach { assertEquals(PilotSprites.W, it.length) } }
+        ShipSprite.BODY.also { assertEquals(ShipSprite.H, it.size) }.forEach { row -> assertEquals(ShipSprite.W, row.length); row.forEach { assertTrue(it in ShipSprite.CODES) } }
+        TrailerSprite.BODY.also { assertEquals(TrailerSprite.H, it.size) }.forEach { row -> assertEquals(TrailerSprite.W, row.length); row.forEach { assertTrue(it in TrailerSprite.CODES) } }
+        HoverPadSprite.FRAMES.forEach { f -> assertEquals(HoverPadSprite.H, f.size); f.forEach { row -> assertEquals(HoverPadSprite.W, row.length); row.forEach { assertTrue(it in HoverPadSprite.CODES) } } }
         RoverSprite.BODY.forEach { row -> assertEquals(RoverSprite.W, row.length); row.forEach { assertTrue(it in RoverSprite.CODES) } }
         RoverSprite.WHEELS.forEach { w -> assertEquals(RoverSprite.WHEEL, w.size); w.forEach { row -> assertEquals(RoverSprite.WHEEL, row.length); row.forEach { assertTrue(it in RoverSprite.WHEEL_CODES) } } }
         GemSprite.FRAMES.forEach { g -> assertEquals(GemSprite.SIZE, g.size); g.forEach { row -> assertEquals(GemSprite.SIZE, row.length); row.forEach { assertTrue(it in GemSprite.CODES) } } }
@@ -197,5 +204,16 @@ class PixelTest {
         d.run(2f, 60f, block = { it.copy(safetyWarningActive = true) })
         assertTrue("frozen: ${d.sim.camera - cam}", abs(d.sim.camera - cam) < 1.0)
         assertEquals(null, d.sim.chip)
+    }
+
+    /** The ladder: the vehicle follows the upgrade step; only the first two roll on wheels. */
+    @Test fun vehicleFollowsStep() {
+        assertEquals(listOf(PixelVehicle.ROVER, PixelVehicle.CARGO, PixelVehicle.HOVER, PixelVehicle.JET, PixelVehicle.SHIP), (0 until 5).map { PixelVehicle.of(it) })
+        assertEquals(PixelVehicle.SHIP, PixelVehicle.of(9))
+        assertEquals(listOf(true, true, false, false, false), PixelVehicle.entries.map { it.wheels })
+        // The hover's glow row ends one pixel above its shadow on the road; the ship's pods end four above the ground.
+        val roverY = PixelModels.ROVER_Y
+        assertEquals(PixelModels.ROAD_Y - 2, roverY + PixelVehicle.HOVER.dy + HoverPadSprite.Y + HoverPadSprite.H - 1)
+        assertEquals(PixelModels.ROAD_Y - 5, roverY + PixelVehicle.SHIP.dy + RoverSprite.BODY_DY + ShipSprite.H - 2)
     }
 }

@@ -290,7 +290,7 @@ interface SoundSource {
     fun takeEvent(): Int
     fun eventMidi(i: Int): Int
     fun eventVel(i: Int): Float
-    /** 0 tone, 1 soft tick (ratchet, marble click), 2 blinker tick. */
+    /** 0 tone, 1 soft tick (ratchet, governor click), 2 blinker tick. */
     fun eventKind(i: Int): Int
 }
 

@@ -123,7 +123,7 @@ class PassageSnapshotTest {
             GalleryState(applied).also { s -> if (peek != null) { s.peek = peek; runBlocking { s.peekAnim.snapTo(1f) } } }
         }
         Row(Modifier.fillMaxSize()) {
-            TabRail(Tab.FRIENDS) {}
+            TabRail(Tab.THEMES) {}
             Box(Modifier.weight(1f).fillMaxHeight()) {
                 Gallery(state, applied, stills, chips = { ThemeOptionChips(applied, ctx()) {} }, onOpen = {}, staticStills = shown.associateWith { still(it) })
             }
@@ -150,7 +150,8 @@ class PassageSnapshotTest {
     @Test fun ui_stage_calibre() = stageShot(SceneTheme.CALIBRE)
     @Test fun ui_stage_engine() = stageShot(SceneTheme.ENGINE)
     @Test fun ui_stage_music_box() = stageShot(SceneTheme.MUSIC_BOX)
-    @Test fun ui_stage_marble() = stageShot(SceneTheme.MARBLE)
+    @Test fun ui_stage_plasma() = stageShot(SceneTheme.PLASMA)
+    @Test fun ui_stage_hangar() = stageShot(SceneTheme.HANGAR)
     @Test fun ui_stage_terrarium() = stageShot(SceneTheme.TERRARIUM)
     @Test fun ui_stage_aquarium() = stageShot(SceneTheme.AQUARIUM)
     @Test fun ui_stage_orbit() = stageShot(SceneTheme.ORBIT)
@@ -182,7 +183,8 @@ class PassageSnapshotTest {
     @Test fun ui_entrance_calibre_50() = passageShot(prev(SceneTheme.CALIBRE), SceneTheme.CALIBRE, 0.5f)
     @Test fun ui_entrance_engine_50() = passageShot(prev(SceneTheme.ENGINE), SceneTheme.ENGINE, 0.5f)
     @Test fun ui_entrance_music_box_50() = passageShot(prev(SceneTheme.MUSIC_BOX), SceneTheme.MUSIC_BOX, 0.5f)
-    @Test fun ui_entrance_marble_50() = passageShot(prev(SceneTheme.MARBLE), SceneTheme.MARBLE, 0.5f)
+    @Test fun ui_entrance_plasma_50() = passageShot(prev(SceneTheme.PLASMA), SceneTheme.PLASMA, 0.5f)
+    @Test fun ui_entrance_hangar_50() = passageShot(prev(SceneTheme.HANGAR), SceneTheme.HANGAR, 0.5f)
     @Test fun ui_entrance_terrarium_50() = passageShot(prev(SceneTheme.TERRARIUM), SceneTheme.TERRARIUM, 0.5f)
     @Test fun ui_entrance_aquarium_50() = passageShot(prev(SceneTheme.AQUARIUM), SceneTheme.AQUARIUM, 0.5f)
     @Test fun ui_entrance_orbit_50() = passageShot(prev(SceneTheme.ORBIT), SceneTheme.ORBIT, 0.5f)
@@ -215,7 +217,7 @@ class PassageSnapshotTest {
         Row(Modifier.fillMaxSize().graphicsLayer { alpha = chromeAlpha }) { TabRail(Tab.HOME) {} }
         Stage(stage, stills, sceneRect, IntSize(sceneRect.width.toInt(), sceneRect.height.toInt()), skin = skin)
         Box(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked).graphicsLayer { alpha = chromeAlpha }) {
-            BondBadge(3, 128, 0.62f, "다음 레벨까지 7.4 km", Modifier.align(Alignment.TopStart))
+            GradeBadge(io.vroomi.app.progress.Grade.GOLD, 128, 0.62f, "다음 등급까지 7.4 km", Modifier.align(Alignment.TopStart))
             if (bubble != null) SpeechBubble(bubble, Modifier.align(Alignment.TopCenter))
             HomeActions(demo = false, listening = false, canTalk = true, modifier = Modifier.align(Alignment.BottomEnd), onDemo = {}, onTalk = {})
         }
@@ -376,7 +378,10 @@ class PassageSnapshotTest {
         PaneLayer(SceneTheme.KART, Tab.DIARY) { DiaryPanel(listOf(trip.copy(sketch = sketch()), trip.copy(id = 2, startMs = 86_400_000, endMs = 86_400_000 + 1_500_000, score = 81, demo = true), trip.copy(id = 3, startMs = 2 * 86_400_000, endMs = 2 * 86_400_000 + 900_000, score = 64))) }
     }
 
-    @Test fun ui_wardrobe_dark() = shot(SceneTheme.AQUARIUM, dark = true) {
-        PaneLayer(SceneTheme.AQUARIUM, Tab.WARDROBE) { WardrobeContent(3, setOf(io.vroomi.character.Accessory.SCARF)) { _, _ -> } }
+    @Test fun ui_grade_dark() = shot(SceneTheme.AQUARIUM, dark = true) {
+        PaneLayer(SceneTheme.AQUARIUM, Tab.GRADE) {
+            GradeContent(io.vroomi.app.progress.Grade.GOLD, 86, 41.2f, 18.8f, SceneTheme.AQUARIUM, nextPreview = { m -> LiveStill(SceneTheme.AQUARIUM, m) },
+                worn = setOf(io.vroomi.character.Accessory.SCARF)) { _, _ -> }
+        }
     }
 }

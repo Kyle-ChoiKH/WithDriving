@@ -25,6 +25,7 @@ class TripRecorder {
     private var climate = 0
     private var rain = 0
     private var prev: VehicleSnapshot? = null
+    private var sawDemo = false
 
     val isActive: Boolean get() = active
 
@@ -37,15 +38,20 @@ class TripRecorder {
         }
     }
 
-    /** @return the finished trip when one just ended, else null. */
-    fun onSnapshot(s: VehicleSnapshot, nowMs: Long): TripRecord? {
+    /**
+     * @param demo true while the snapshot comes from a demo drive. A trip that had any demo driving in it is stored as a
+     * demo trip, even when the demo was stopped before the trip ended (so it never counts toward the safety grade).
+     * @return the finished trip when one just ended, else null.
+     */
+    fun onSnapshot(s: VehicleSnapshot, nowMs: Long, demo: Boolean = false): TripRecord? {
         val speed = s.speedKmh ?: 0f
         val p = prev
         prev = s
         if (!active) {
-            if (speed >= Thresholds.TRIP_START_KMH) start(s, nowMs)
+            if (speed >= Thresholds.TRIP_START_KMH) { start(s, nowMs); sawDemo = demo }
             return null
         }
+        if (demo) sawDemo = true
         val dt = (nowMs - lastMs).coerceIn(0L, 2_000L)
         lastMs = nowMs
         integratedKm += speed * dt / 3_600_000.0
@@ -97,6 +103,7 @@ class TripRecorder {
             climateMoments = climate,
             rainMoments = rain,
             score = SmoothnessScore.compute(harshAccel, harshBrakes, overspeedMs),
+            demo = sawDemo,
         )
     }
 }

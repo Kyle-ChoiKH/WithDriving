@@ -3,6 +3,7 @@
   "title": "브루미 하이라이트 (3분)",
   "description": "출발부터 도착까지, 브루미가 반응하는 모든 순간을 한 번에",
   "order": 0,
+  "model": 4,
   "durationS": 172,
   "keyframes": [
     { "t": 0,    "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 23, "ac": false, "lights": false, "wiper": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "caption": "주차 중: 브루미가 꼬마차 옆에서 기다려요" },

@@ -4,6 +4,7 @@
   "description": "작은 우주선 VR-1이 행성을 돌아요. 1km를 달리면 한 바퀴, 별은 작은 위성이 돼요",
   "order": 8,
   "theme": "ORBIT",
+  "model": 4,
   "durationS": 94,
   "keyframes": [
     { "t": 0,  "gear": "P", "speed": 0, "door": false, "fan": 1, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "battery": 70, "evCharging": false, "caption": "주차 중: VR-1이 고리 정거장에 도킹해 있어요" },

@@ -73,6 +73,23 @@ class SceneSnapshotTest {
         }
     }
 
+    // ---- the upgrade ladder (spec 5.6): the new roads and the parade roadster
+    private fun day(model: Int, hour: Float = 14f) = SceneOptions(hourOfDay = hour, season = Season.SUMMER, model = model)
+    @Test fun kartLv1Day() = shot("kart_lv1_day", o = day(0), at = { drive(biome = Biome.PARK) })
+    @Test fun kartBlossom() = shot("kart_blossom", o = day(1), at = { drive(biome = Biome.PARK) })
+    @Test fun kartLv2Day() = shot("kart_lv2_day", o = day(1), at = { drive(biome = Biome.PARK) })
+    @Test fun kartNeonNight() = shot("kart_neon_night", o = day(2, 21f), at = { drive(biome = Biome.CITY, kart = KartState(driving = true, headlights = true)) })
+    @Test fun kartLv3Day() = shot("kart_lv3_day", o = day(2), at = { drive(biome = Biome.CITY) })
+    @Test fun kartAurora() = shot("kart_aurora", o = day(3, 21f), at = { drive(biome = Biome.MOUNTAIN, kart = KartState(driving = true, headlights = true)) })
+    @Test fun kartLv4Day() = shot("kart_lv4_day", o = day(3), at = { drive(biome = Biome.MOUNTAIN) })
+    @Test fun kartLv5Roadster() = shot("kart_lv5_roadster", o = day(4), at = { drive(biome = Biome.SEASIDE) })
+    @Test fun kartLv5Day() = shot("kart_lv5_day", o = day(4), at = { drive(biome = Biome.PARK) })
+    @Test fun kartLv5Night() = shot("kart_lv5_night", o = day(4, 21f), at = { drive(biome = Biome.CITY, kart = KartState(driving = true, headlights = true)) })
+    @Test fun kartLv3BlinkerLeft() = shot("kart_lv3_blinker_left", o = day(2), at = { drive(biome = Biome.CITY, kart = KartState(driving = true, blinker = io.vroomi.character.Blinker.LEFT)) })
+    @Test fun kartLv3Brake() = shot("kart_lv3_brake", o = day(2), at = { drive(biome = Biome.CITY, kart = KartState(driving = true, brake = true)) })
+    /** The second lap brings the classic road back: step 4 on the mountain road, one whole rotation later. */
+    @Test fun kartLv4SecondLapClassic() = shot("kart_lv4_second_lap_classic", o = day(3), at = { drive(biome = Biome.MOUNTAIN, journey = Journey(stars = 3, starSeq = 3, combo = 3, tripKm = 7.4f)) })
+
     @Test fun parkedHello() = shot("01_parked_hello", at = {
         CharacterTarget(action = Action.WAVE_HELLO, actionStartedMs = t0, sizeMode = SizeMode.FULL)
     })
@@ -155,4 +172,26 @@ class SceneSnapshotTest {
         val j = if (ts < 1.2f) Journey(milestoneKm = 2) else Journey(milestoneKm = 3, tripKm = 3f)
         drive(kmh = 60f, gait = Gait.RUN, journey = j, action = Action.DEFROST_WIPE, actionAt = t0 + 1200, kart = KartState(driving = true, defrost = true))
     })
+}
+
+/** The ladder's rules: each step adds one road, and the new faces take every other lap. */
+class KartStepTest {
+    @org.junit.Test fun biomeCycleFollowsStep() {
+        org.junit.Assert.assertEquals(listOf(5, 6, 7, 8, 8), (0 until 5).map { KartStep.roads(it) })
+        org.junit.Assert.assertEquals(listOf(false, false, false, false, true), (0 until 5).map { KartStep.roadster(it) })
+    }
+
+    @org.junit.Test fun newFacesTakeEveryOtherLap() {
+        // Step 1 never shows a new face.
+        for (b in Biome.entries) org.junit.Assert.assertFalse(KartStep.variant(0, b, 0.5f))
+        // Step 4: the tree-lined road, the city and the mountain road show theirs on the first lap (4 km), not on the second.
+        for (b in listOf(Biome.PARK, Biome.CITY, Biome.MOUNTAIN)) {
+            org.junit.Assert.assertTrue(KartStep.variant(3, b, 1.0f))
+            org.junit.Assert.assertFalse(KartStep.variant(3, b, 5.0f))
+            org.junit.Assert.assertTrue(KartStep.variant(3, b, 9.0f))
+        }
+        org.junit.Assert.assertFalse(KartStep.variant(4, Biome.FIELD, 1.0f)); org.junit.Assert.assertFalse(KartStep.variant(4, Biome.SEASIDE, 1.0f))
+        // Step 2 has the blossom road only.
+        org.junit.Assert.assertTrue(KartStep.variant(1, Biome.PARK, 1.0f)); org.junit.Assert.assertFalse(KartStep.variant(1, Biome.CITY, 0.1f))
+    }
 }

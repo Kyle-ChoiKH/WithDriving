@@ -56,15 +56,16 @@ object Ambience {
 
     val all: List<ThemeAmbience> = listOf(
         a(SceneTheme.KART, 0xFF3CC8B4, 0xFF15262A, 0.52f),        // brand teal over a dusk-teal letterbox
-        a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.439f),      // fluorescent pink ink, the night mat's violet
-        a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF0A0B0D, 0.059f),    // brushed steel, black velvet
-        a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF131A21, 0.687f),     // oil amber, the night drafting slate
-        a(SceneTheme.MUSIC_BOX, 0xFF6CC3A0, 0xFF2A2522, 0.787f),   // mint enamel, the lamp-lit warm grey
-        a(SceneTheme.MARBLE, 0xFFE03A2F, 0xFF14213D, 0.741f),     // signal red, the night pegboard's navy
-        a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.284f),  // fresh leaf, moonlit moss
-        a(SceneTheme.AQUARIUM, 0xFF2F8FD8, 0xFF081622, 0.318f),   // open-water blue, the deep
+        a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.433f),      // fluorescent pink ink, the night mat's violet
+        a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF2B2520, 0.677f),    // brushed steel, the bench's warm shadow
+        a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF14171A, 0.062f),     // oil amber, the graphite studio
+        a(SceneTheme.MUSIC_BOX, 0xFF8E2F45, 0xFF241A14, 0.097f),   // burgundy velvet, the lamp-lit brown room
+        a(SceneTheme.PLASMA, 0xFFB45CFF, 0xFF0E1016, 0.013f),     // plasma violet, the dark lab's blue-black
+        a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.054f),     // signal orange, the hangar's graphite
+        a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.286f),  // fresh leaf, moonlit moss
+        a(SceneTheme.AQUARIUM, 0xFF2F8FD8, 0xFF081622, 0.320f),   // open-water blue, the deep
         a(SceneTheme.ORBIT, 0xFF7FF0FF, 0xFF020405, 0.003f),      // phosphor cyan, the display's black
-        a(SceneTheme.TREASURE_MAP, 0xFFA8322D, 0xFF1E1812, 0.707f), // madder red, iron-gall ink
+        a(SceneTheme.TREASURE_MAP, 0xFFA8322D, 0xFF1E1812, 0.690f), // madder red, iron-gall ink
         a(SceneTheme.PIXEL, 0xFF9B6BE8, 0xFF120F1A, 0.305f),      // dusk violet, the night sky's ink
     )
 

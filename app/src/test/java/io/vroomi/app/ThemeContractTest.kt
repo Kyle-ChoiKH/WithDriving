@@ -2,6 +2,8 @@ package io.vroomi.app
 
 import io.vroomi.app.runtime.MovingDetector
 import io.vroomi.app.runtime.VroomiRuntime
+import io.vroomi.app.settings.parseTheme
+import io.vroomi.app.ui.ThemeOption
 import io.vroomi.app.ui.ThemeRegistry
 import io.vroomi.character.CharacterDirector
 import io.vroomi.character.CharacterTarget
@@ -20,6 +22,7 @@ import io.vroomi.core.vehicle.sim.ScenarioSampler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -133,6 +136,30 @@ class ThemeContractTest {
             assertTrue("${theme.name} rests when nothing is known", !sim.moving && sim.kmh == 0f && !sim.speedKnown)
             sim.chip?.let { c -> assertTrue(c.length <= 12) }
         }
+    }
+
+    @Test fun twelveThemesWithoutMarble() {
+        assertEquals(12, ThemeRegistry.all.size)
+        assertFalse(SceneTheme.entries.any { it.name == "MARBLE" })
+        assertTrue(ThemeRegistry.has(SceneTheme.PLASMA) && ThemeRegistry.has(SceneTheme.HANGAR))
+        assertEquals(SceneTheme.entries.toSet(), ThemeRegistry.all.map { it.theme }.toSet())
+    }
+
+    @Test fun everyThemeOffersModelChip() { ThemeRegistry.all.forEach { assertEquals(ThemeOption.MODEL, it.options.first()) } }
+
+    @Test fun parseThemeFallsBackToKart() {
+        assertEquals(SceneTheme.KART, parseTheme("MARBLE")); assertEquals(SceneTheme.KART, parseTheme(null))
+        assertEquals(SceneTheme.HANGAR, parseTheme("HANGAR"))
+    }
+
+    @Test fun demosShowTheirOwnStep() {
+        File("src/main/assets/scenarios").listFiles { f -> f.name.endsWith("_showcase.json") }!!.forEach { f ->
+            assertEquals("${f.name} shows the top step", 4, ScenarioParser.parse(f.readText()).model)
+        }
+        val plain = ScenarioParser.parse(File("src/main/assets/scenarios/commute.json").readText())
+        assertEquals(4, VroomiRuntime.demoModelOf(plain))
+        assertEquals(1, VroomiRuntime.demoModelOf(plain.copy(model = 1)))
+        assertEquals(4, VroomiRuntime.demoModelOf(plain.copy(model = 9)))
     }
 
     @Test fun registryCatalogAndSimsAgree() {

@@ -18,3 +18,6 @@ signing/*.keystore
 
 # Brainstorm companion files
 .superpowers/
+
+# Local agent worktrees
+.claude/

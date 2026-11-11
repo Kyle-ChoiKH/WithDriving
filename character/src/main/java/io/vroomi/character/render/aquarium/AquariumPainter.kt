@@ -93,6 +93,8 @@ private class AGeo(val dw: Float) {
     val sandY = ty(AquariumSim.SAND_Y)
     /** Where the seafloor disappears into the blue. */
     val horizon = 430f
+    /** The same geometry for the upgrade steps' additions (AquariumSteps.kt). */
+    val step = StepGeo(cx, sx, sandY, surface, dw)
 
     val ray = Array(5) { k ->
         val x0 = cx - 700f + k * 330f + hash01(k, 3) * 80f
@@ -166,16 +168,20 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
     override fun drawPx(s: DrawScope, sim: AquariumSim, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
         val g = geo(f.dw)
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
-        val bmp = base.get((w.toLong() shl 20) xor h.toLong(), w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { staticLayer(g, f) } }
+        val bmp = base.get(((w.toLong() shl 20) xor h.toLong()) * 8L + f.model, w, h, f.density) { withTransform({ scale(k, k, Offset.Zero) }) { staticLayer(g, f) } }
         s.drawImage(bmp, dstOffset = IntOffset(left.roundToInt(), top.roundToInt()), dstSize = IntSize(bmp.width, bmp.height))
     }
 
     override fun draw(s: DrawScope, sim: AquariumSim, f: ThemeFrame, tx: ThemeTexts) = with(s) {
         val g = geo(f.dw)
         clipRect(0f, 0f, f.dw, f.dh) {
-            kelp(g, sim)
+            val model = f.model
+            val st = if (sim.reducedMotion) 0f else sim.decoTime.toFloat() * (if (sim.calm) 0.5f else 1f)
+            val sway = if (sim.reducedMotion) 0f else (3f + 5f * sim.fan) * (if (sim.calm) 0.5f else 1f)
+            if (AquaStep.garden(model)) kelp(g, sim)
+            stepBehind(g.step, model, st, sim.plantPhase.toFloat(), sway)
             dimRays(g, sim, f)
-            grass(g, sim, far = true)
+            grass(g, sim, far = true, model)
             clam(g, sim)
             decor(g, sim)
             val intro = f.options.intro
@@ -183,7 +189,8 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
                 val i = order[j]
                 if (intro < 1f) enterFish(g, sim, f, i, intro) else fish(g, sim, i)
             }
-            grass(g, sim, far = false)
+            grass(g, sim, far = false, model)
+            stepFront(g.step, model, st, sim.plantPhase.toFloat(), sway)
             bubbles(g, sim)
             snow(g, sim, f)
             surface(g, sim, f)
@@ -272,11 +279,13 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
                 drawCircle(lerp(Color(0xFF6F9A63), Color(0xFFB7C982), hash01(k, 52)).copy(alpha = 0.7f), 1.6f + hash01(k, 53) * 3f, Offset(cx + cos(a) * d, by - rw * 0.08f - sin(a) * d * 0.55f))
             }
         }
+        // The upgrade steps' still things: the wreck (step 4) and the coral colony (step 3).
+        stepStatic(g.step, f.model)
         // God rays from the surface, slanting with the sun.
         for (k in g.ray.indices) drawPath(g.ray[k], g.rayBrush, alpha = 0.75f + 0.25f * hash01(k, 9))
         // Sunlit sand: the caustic net the surface focuses onto the seafloor.
         withTransform({ translate(-60f, g.sandY - 30f) }) { causticPattern(f.dw + 120f, f.dh - g.sandY + 30f) }
-        fronds(f)
+        if (AquaStep.garden(f.model)) fronds(f)
     }
 
     /**
@@ -336,10 +345,10 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
 
     // ------------------------------------------------------------------ moving
 
-    private fun DrawScope.grass(g: AGeo, sim: AquariumSim, far: Boolean) {
+    private fun DrawScope.grass(g: AGeo, sim: AquariumSim, far: Boolean, model: Int) {
         val lean = -sim.tilt * 2.2f
         val amp = if (sim.reducedMotion) 0f else (4f + 9f * sim.fan) * (if (sim.calm) 0.5f else 1f)
-        for (i in g.grassX.indices) {
+        for (i in 0 until AquaStep.grassClumps(model)) {
             val z = g.grassZ[i]
             if ((z < 0.55f) != far) continue
             val fogK = (1f - z) * 0.6f

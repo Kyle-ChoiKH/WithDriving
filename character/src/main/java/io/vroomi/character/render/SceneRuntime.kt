@@ -83,6 +83,9 @@ internal class SceneRuntime(seed: Int = 7) {
 
     // Scenery slots: new scenery scrolls in from the right instead of popping.
     var biomeCur = Biome.CITY; var biomePrev = Biome.CITY
+    /** The road's new face ([KartStep.variant]) for the current and the previous scenery, and the upgrade step. */
+    var variantCur = false; var variantPrev = false
+    var model = 0
     var farBoundary = Int.MIN_VALUE; var midBoundary = Int.MIN_VALUE
     var biomeInit = false
 
@@ -206,8 +209,11 @@ internal class SceneRuntime(seed: Int = 7) {
         scrollNear += dx; scrollMid += dx * 0.35; scrollFar += dx * 0.06
 
         // ---- scenery
-        syncBiome(t.journey.biome)
-        groundCol = lerp(groundCol, groundColor(biomeAt(scrollMid + 0.33, MID_SLOT, midBoundary), o.season), 1f - exp(-dt * 1.5f))
+        model = o.model.coerceIn(0, 4)
+        syncBiome(t.journey.biome, KartStep.variant(model, t.journey.biome, t.journey.tripKm))
+        val groundBiome = biomeAt(scrollMid + 0.33, MID_SLOT, midBoundary)
+        val groundTarget = if (variantAt(scrollMid + 0.33, MID_SLOT, midBoundary)) KartStep.ground(groundBiome) else groundColor(groundBiome, o.season)
+        groundCol = lerp(groundCol, groundTarget, 1f - exp(-dt * 1.5f))
 
         // ---- journey: stars, km signs, finish arch
         syncJourney(t, o, driving)
@@ -258,11 +264,11 @@ internal class SceneRuntime(seed: Int = 7) {
 
     // ------------------------------------------------------------------ scenery
 
-    fun syncBiome(b: Biome) {
-        if (!biomeInit) { biomeCur = b; biomePrev = b; biomeInit = true; return }
-        if (b == biomeCur) return
-        biomePrev = biomeCur
-        biomeCur = b
+    fun syncBiome(b: Biome, variant: Boolean = false) {
+        if (!biomeInit) { biomeCur = b; biomePrev = b; variantCur = variant; variantPrev = variant; biomeInit = true; return }
+        if (b == biomeCur && variant == variantCur) return
+        biomePrev = biomeCur; variantPrev = variantCur
+        biomeCur = b; variantCur = variant
         // Everything already on screen keeps the old scenery; new slots arrive from the right edge.
         farBoundary = floorDiv(scrollFar + 1.05, FAR_SLOT) + 1
         midBoundary = floorDiv(scrollMid + 1.05, MID_SLOT) + 1
@@ -270,6 +276,9 @@ internal class SceneRuntime(seed: Int = 7) {
 
     fun biomeAt(pos: Double, slot: Double, boundary: Int): Biome =
         if (floorDiv(pos, slot) >= boundary) biomeCur else biomePrev
+
+    fun variantAt(pos: Double, slot: Double, boundary: Int): Boolean =
+        if (floorDiv(pos, slot) >= boundary) variantCur else variantPrev
 
     // ------------------------------------------------------------------ journey sync
 

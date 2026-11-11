@@ -2,11 +2,15 @@ package io.vroomi.character.calibre
 
 import io.vroomi.core.vehicle.model.DriveModeState
 
-/** Scene themes. [hasCharacter]: a friend is on screen (KART only; every other theme is its own world), so voice lines follow the KART rules. New themes are appended (persisted by name). */
+/**
+ * Scene themes. [hasCharacter]: a friend is on screen (KART only; every other theme is its own world), so voice lines
+ * follow the KART rules. New themes are appended. Persisted by name: a stored name that is no longer here falls back
+ * to KART (the app's `parseTheme`).
+ */
 enum class SceneTheme(val hasCharacter: Boolean) {
     KART(true), CALIBRE(false), ENGINE(false),
-    MUSIC_BOX(false), TERRARIUM(false), TREASURE_MAP(false), AQUARIUM(false), ORBIT(false), MARBLE(false), PAPER(false),
-    PIXEL(false),
+    MUSIC_BOX(false), TERRARIUM(false), TREASURE_MAP(false), AQUARIUM(false), ORBIT(false), PAPER(false),
+    PIXEL(false), PLASMA(false), HANGAR(false),
 }
 
 /** Which side of the watch faces the driver. CASEBACK is the default while driving. */

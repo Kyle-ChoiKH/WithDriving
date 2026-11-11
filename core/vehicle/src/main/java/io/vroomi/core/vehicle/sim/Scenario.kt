@@ -27,6 +27,8 @@ data class Scenario(
     val powertrain: String? = null,
     /** Optional scripted route for the TREASURE_MAP demo: metres (east, north) pairs from the start. */
     val route: FloatArray? = null,
+    /** Optional theme upgrade step shown during this demo (0..4 = Lv.1..5, whatever the grade); null = the app's default. */
+    val model: Int? = null,
 )
 
 data class Keyframe(val t: Float, val values: Map<String, Any>)
@@ -60,6 +62,7 @@ object ScenarioParser {
             route = o.optJSONArray("route")?.let { r ->
                 FloatArray(r.length() * 2) { i -> r.getJSONArray(i / 2).getDouble(i % 2).toFloat() }
             },
+            model = if (o.has("model") && !o.isNull("model")) o.getInt("model") else null,
         )
     }
 }

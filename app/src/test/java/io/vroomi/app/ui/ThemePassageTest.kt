@@ -117,7 +117,7 @@ class ThemePassageTest {
 
     @Test fun safetyFinishesWithin150msOpacityOnly() {
         val s = PassageSim(flat, SceneTheme.KART)
-        s.request(PassageRequest(SceneTheme.MARBLE))
+        s.request(PassageRequest(SceneTheme.PLASMA))
         while (s.p.phaseNow != PassagePhase.REVEALING) s.step()
         s.run(200f)
         val scale = s.p.out.snapshotScale; val reveal = s.p.out.reveal; val dim = s.p.out.snapshotDim
@@ -132,12 +132,12 @@ class ThemePassageTest {
             }
             assertTrue("finished in $t ms", t <= Motion.SAFETY_FINISH_MS + s.dt)
         }
-        assertEquals(SceneTheme.MARBLE, s.p.out.live)
+        assertEquals(SceneTheme.PLASMA, s.p.out.live)
         // While the warning lasts, a new request does not start any animation.
         s.request(PassageRequest(SceneTheme.ORBIT))
         s.run(300f)
         assertTrue(s.p.isIdle)
-        assertEquals(SceneTheme.MARBLE, s.p.out.live)
+        assertEquals(SceneTheme.PLASMA, s.p.out.live)
         s.p.safety(false)
         s.runUntilIdle()
         assertEquals(SceneTheme.ORBIT, s.p.out.live)

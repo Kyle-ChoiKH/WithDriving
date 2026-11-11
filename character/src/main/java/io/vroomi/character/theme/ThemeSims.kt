@@ -11,9 +11,10 @@ object ThemeSims {
         SceneTheme.TREASURE_MAP -> io.vroomi.character.treasuremap.TreasureMapSim()
         SceneTheme.AQUARIUM -> io.vroomi.character.aquarium.AquariumSim()
         SceneTheme.ORBIT -> io.vroomi.character.orbit.OrbitSim()
-        SceneTheme.MARBLE -> io.vroomi.character.marble.MarbleSim()
         SceneTheme.PAPER -> io.vroomi.character.paper.PaperSim()
         SceneTheme.PIXEL -> io.vroomi.character.pixel.PixelMechanics()
+        SceneTheme.PLASMA -> io.vroomi.character.plasma.PlasmaSim()
+        SceneTheme.HANGAR -> io.vroomi.character.hangar.HangarSim()
         else -> null
     }
 }

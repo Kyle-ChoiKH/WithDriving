@@ -4,6 +4,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -140,21 +141,22 @@ internal class MovingParts(private val L: CalibreLayers) {
 // ------------------------------------------------------------------ the whole scene
 
 /**
- * A macro product photograph: the watch floats over black velvet under one soft key light from the upper left,
- * falls off into black, and carries a slim engraved caption line underneath like a catalogue plate.
+ * A close-up taken on a watchmaker's bench: the watch lies on a bright matte surface under one soft light from the
+ * upper left, casts a soft contact shadow, and carries a slim caption line underneath like a catalogue plate. The
+ * upgrade step ([CalibreRuntime.model], see [CalStep]) decides the case, the finishing and the complications.
  */
 internal fun CalibreRuntime.draw(ds: DrawScope, tm: TextMeasurer, text: CalibreText, nowMs: Long, zone: ZoneId, debugMs: Float? = null): Unit = with(ds) {
     val w = size.width; val h = size.height
     val o = lastOptions
     val m = mech
     val full = fullRadius(w, h)
-    val cur = layers(full, m.tone, this, tm)
+    val cur = layers(full, m.tone, model, this, tm)
     val wx = cx.value * w; val wy = cy.value * h
     val r = full * scale.value
     val k = full / cur.u * scale.value
-    studio.ensure(w, h, r, this)
+    studio.ensure(w, h, r, w * 0.5f, h * 0.455f, full, this)
 
-    drawVelvet(ds, wx, wy, r)
+    drawBench(ds)
 
     // Entrance accent: the hands glide to the real time from 10 s behind (a mechanical catch-up).
     val hands = if (o.intro < 1f) CalibreTime.hands(nowMs - ((1f - Intro.out(o.intro)) * 10_000f).toLong(), zone)
@@ -171,14 +173,16 @@ internal fun CalibreRuntime.draw(ds: DrawScope, tm: TextMeasurer, text: CalibreT
             scale(k * flipX.coerceAtLeast(0.02f), k, Offset.Zero)
             translate(-L.half, -L.half)
         }) {
+            // The watch's soft shadow on the bench (wide and faint) and its tight contact shadow.
+            drawImage(L.shadow, Offset(L.half - L.shadowHalf, L.half - L.shadowHalf))
             if (view == CalibreView.CASEBACK) drawCaseback(L, this@draw, hands, nowMs, px, py)
-            else drawDial(L, this@draw, hands, text, px, py)
-            if (flip < 1f) drawCircle(Color.Black.a(0.6f * (1f - flipX)), CW.HALF * L.u, L.c)
+            else drawDial(L, this@draw, hands, text, px, py, nowMs)
+            if (flip < 1f) drawPath(L.silhouette, Color.Black.a(0.5f * (1f - flipX)))
         }
     }
 
     if (m.toneBlend < 1f && m.prevTone != m.tone) {
-        watch(layers(full, m.prevTone, this, tm))
+        watch(layers(full, m.prevTone, model, this, tm))
         drawIntoCanvas { it.saveLayer(Rect(0f, 0f, w, h), Paint().apply { alpha = m.toneBlend }) }
         watch(cur)
         drawIntoCanvas { it.restore() }
@@ -196,33 +200,34 @@ internal fun CalibreRuntime.draw(ds: DrawScope, tm: TextMeasurer, text: CalibreT
     val combo = (m.decoTime - m.trainGlintStart).toFloat()
     if (!o.calm && combo in 0f..1.25f) bevelSweep(this@draw, wx, wy, r, combo)
 
-    // Night: the studio light goes out; only the lume glows, green-blue.
+    // Night: a warm desk lamp lights the bench (its pool on the watch, a medium warm dusk round it, never black);
+    // the lume glows softly green-blue.
     if (m.night > 0.01f) {
-        drawRect(Color.Black.a(0.88f * m.night))
+        drawRect(studio.lamp, alpha = m.night, blendMode = BlendMode.Multiply)
         withTransform({ translate(wx, wy); rotate(winderDeg, Offset.Zero); scale(k * flipX.coerceAtLeast(0.02f), k, Offset.Zero); translate(-cur.half, -cur.half) }) {
             if (view == CalibreView.DIAL) drawLumeGlow(cur, hands, m.night, studio) else drawLumeRing(cur, m.night, studio)
         }
     }
-    // Lens vignette.
-    drawRect(studio.vignette)
     if (o.intro < 1f) {
-        // Entrance accent: the modelling light comes up (exposure from black) while one glint crosses the bevel.
+        // Entrance accent: the bench light comes up (from a dim exposure) while one glint crosses the bevel.
         val e = Intro.out(o.intro, 0f, 0.85f)
-        drawRect(Color.Black.a((1f - e) * 0.92f))
+        drawRect(DIM.a((1f - e) * 0.55f))
         if (o.intro in 0.25f..0.9f) bevelSweep(this@draw, wx, wy, r, (o.intro - 0.25f) / 0.65f)
     }
     if (m.freeze > 0.01f) drawRect(Color.Black.a(0.30f * m.freeze))
 
     drawCaption(ds, text, w, h)
-    debugMs?.let { val l = text.get("draw %.1f ms".format(it), h * 0.03f, Color(0xFF9FE8B9)); drawText(l, topLeft = Offset(16f, h - l.size.height - 12f)) }
+    debugMs?.let { val l = text.get("draw %.1f ms".format(it), h * 0.03f, Color(0xFF1E6B45)); drawText(l, topLeft = Offset(16f, h - l.size.height - 12f)) }
 }
 
-/** Black velvet: the cloth, its pile texture, the key-light lift around the watch and the soft floating shadow. */
-private fun CalibreRuntime.drawVelvet(ds: DrawScope, wx: Float, wy: Float, r: Float): Unit = with(ds) {
-    drawRect(CalPal.velvet)
-    translate(wx - r * 0.55f, wy - r * 0.65f) { drawCircle(studio.lift, r * 3.4f, Offset.Zero) }
-    studio.pile?.let { drawRect(it) }
-    translate(wx + r * 0.10f, wy + r * 0.14f) { drawCircle(studio.shadow, r * 1.75f, Offset.Zero) }
+/** The warm dark of a dimmed exposure (entrance). */
+private val DIM = Color(0xFF2A241E)
+
+/** The bench (one cached picture) and its props, which fade out when the watch moves into the corner. */
+private fun CalibreRuntime.drawBench(ds: DrawScope): Unit = with(ds) {
+    studio.bench?.let { drawImage(it) }
+    val a = ((scale.value - 0.35f) / 0.6f).coerceIn(0f, 1f)
+    if (a > 0.01f) for (s in studio.props) drawImage(s.bmp, s.at, alpha = a)
 }
 
 /** A short arc of light running once round the case bevel; [t] 0..1 is the turn, 1..1.25 the closing glint. */
@@ -255,6 +260,8 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
     val u = L.u; val c = L.c; val light = L.light; val pal = L.pal
     val o = rt.lastOptions
     val parts = L.parts
+    val tb = L.step.tourbillon
+    val sm = L.screwMetal
 
     // Winder cradle (EV charging): a turned gunmetal ring behind the watch
     if (m.winder > 0.01f) {
@@ -278,19 +285,22 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         val minDeg = hands.minuteDeg
         part(L.wheels.getValue(Wheel.CENTRE_W), L.p(g.CENTRE), -minDeg)
         part(L.wheels.getValue(Wheel.THIRD_W), L.p(g.THIRD), minDeg * 8f)
-        part(L.wheels.getValue(Wheel.FOURTH_W), L.p(g.FOURTH), -hands.secondDeg)
         val chronoSec = (m.chronoElapsedMs % 60_000L) / 1000f * 6f
         part(L.wheels.getValue(Wheel.RUNNER_W), L.p(g.RUNNER), -chronoSec)
         part(L.wheels.getValue(Wheel.COUNTER_W), L.p(g.COUNTER), -((m.chronoElapsedMs / 60_000f) % 30f) * 12f)
-        val beats = CalibreTime.beats(nowMs)
-        part(L.escape, L.p(g.ESCAPE), (beats % 40) * 9f)
-        // Pallet fork snaps from side to side on every beat
-        val side = if (beats % 2 == 0L) 1f else -1f
-        val snap = ((Math.floorMod(nowMs, 125L)) / 14f).coerceAtMost(1f)
-        rotate(side * (4.5f * snap - 4.5f * (1f - snap)) * 0.5f + side * 2.2f, parts.palletPivot) {
-            blackPolished(parts.pallet, parts.palletPivot, parts.stone1)
-            drawLine(CalPal.ruby.base, parts.stone1, parts.stone1 + (parts.palletPivot - parts.stone1) * 0.25f, strokeWidth = 0.02f * u)
-            drawLine(CalPal.ruby.base, parts.stone2, parts.stone2 + (parts.palletPivot - parts.stone2) * 0.25f, strokeWidth = 0.02f * u)
+        // With the tourbillon, the fourth wheel is the cage itself and the escapement rides in it.
+        if (!tb) {
+            part(L.wheels.getValue(Wheel.FOURTH_W), L.p(g.FOURTH), -hands.secondDeg)
+            val beats = CalibreTime.beats(nowMs)
+            part(L.escape, L.p(g.ESCAPE), (beats % 40) * 9f)
+            // Pallet fork snaps from side to side on every beat
+            val side = if (beats % 2 == 0L) 1f else -1f
+            val snap = ((Math.floorMod(nowMs, 125L)) / 14f).coerceAtMost(1f)
+            rotate(side * (4.5f * snap - 4.5f * (1f - snap)) * 0.5f + side * 2.2f, parts.palletPivot) {
+                blackPolished(parts.pallet, parts.palletPivot, parts.stone1)
+                drawLine(CalPal.ruby.base, parts.stone1, parts.stone1 + (parts.palletPivot - parts.stone1) * 0.25f, strokeWidth = 0.02f * u)
+                drawLine(CalPal.ruby.base, parts.stone2, parts.stone2 + (parts.palletPivot - parts.stone2) * 0.25f, strokeWidth = 0.02f * u)
+            }
         }
     }
 
@@ -303,16 +313,16 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         part(L.crownWheel, L.p(g.CROWN_WHEEL), (m.crownWheelAngle * 180.0 / PI).toFloat())
         rotate(parts.clickLiftSign * m.clickLift * 4.5f, parts.clickPivot) { blackPolished(parts.click, parts.clickPivot, parts.clickTip) }
         drawPath(parts.clickSpring, CalPal.rhodium.light, style = Stroke(width = (0.008f * u).coerceAtLeast(1f), cap = StrokeCap.Round))
-        screw(parts.clickPivot, 0.02f * u, 60f, light)
+        screw(parts.clickPivot, 0.02f * u, 60f, light, sm)
         // Column wheel, clutch and reset hammer
         part(L.column, L.p(g.COLUMN), (m.columnAngle * 180.0 / PI).toFloat())
         rotate(if (m.chronoRunning) 0f else 3.5f, parts.clutchPivot) {
             blackPolished(parts.clutch, parts.clutchPivot, parts.clutchTip)
             drawCircle(metalBrush(pal.wheel, parts.clutchTip, 0.034f * u, light), 0.034f * u, parts.clutchTip)
         }
-        screw(parts.clutchPivot, 0.022f * u, 10f, light)
+        screw(parts.clutchPivot, 0.022f * u, 10f, light, sm)
         rotate(-6f * m.resetHammer + 2f, parts.resetPivot) { blackPolished(parts.reset, parts.resetPivot, parts.resetHeadA) }
-        screw(parts.resetPivot, 0.02f * u, 130f, light)
+        screw(parts.resetPivot, 0.02f * u, 130f, light, sm)
         // Reversers: the driving one carries a bright ring
         val ra = (m.reverserA * 180.0 / PI).toFloat(); val rb = (m.reverserB * 180.0 / PI).toFloat()
         part(L.wheels.getValue(Wheel.REVERSER_A_W), L.p(g.REVERSER_A), ra)
@@ -323,10 +333,12 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         for (i in intArrayOf(7, 10, 11)) { val j = g.JEWELS[i]; jewel(L.p(j.x, j.y), j.r * u, light, sink) }
     }
 
-    // ---- balance (4 Hz from the real clock) and its cock (parallax 3 px)
-    translate(px, py) {
+    // ---- balance (4 Hz from the real clock) and its cock, or the flying tourbillon at six (parallax 3 px)
+    val amp = CalibreTime.amplitudeDeg(m.reserveH) * if (o.reducedMotion) 0.25f else 1f
+    if (tb) translate(px, py) {
+        drawTourbillon(L, nowMs, TB.cageDeg(hands, -1f), amp, -1f, rt.hairspring)
+    } else translate(px, py) {
         val b = L.p(g.BALANCE)
-        val amp = CalibreTime.amplitudeDeg(m.reserveH) * if (o.reducedMotion) 0.25f else 1f
         val bal = CalibreTime.balanceDeg(nowMs, amp)
         drawHairspring(rt, b, u, bal, amp)
         rotate(bal, b) {
@@ -340,7 +352,7 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         }
         val rr = g.BALANCE.r * u
         drawArc(Color.White.a(0.55f), light.deg - 35f, 70f, false, Offset(b.x - rr, b.y - rr), Size(rr * 2, rr * 2), style = Stroke(width = 1.4f))
-        drawImage(L.cock, Offset.Zero)
+        L.cock?.let { drawImage(it, Offset.Zero) }
         translate(0f, -m.shock * 0.012f * u) { drawPath(parts.shockSpring, CalPal.rhodium.light, style = Stroke(width = (0.006f * u).coerceAtLeast(1f))) }
     }
 
@@ -353,7 +365,7 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         drawArc(lerp(CalPal.rhodium.base, Color.White, 0.4f * m.gongR), 72f, -160f, false, Offset(c.x - gr, c.y - gr), Size(gr * 2, gr * 2), style = Stroke(width = 0.012f * u))
         rotate(-m.hammerL * 7f, parts.hammerPivotL) { blackPolished(parts.hammerL, parts.hammerPivotL, parts.hammerHeadL) }
         rotate(m.hammerR * 7f, parts.hammerPivotR) { blackPolished(parts.hammerR, parts.hammerPivotR, parts.hammerHeadR) }
-        screw(parts.hammerPivotL, 0.018f * u, 20f, light); screw(parts.hammerPivotR, 0.018f * u, 160f, light)
+        screw(parts.hammerPivotL, 0.018f * u, 20f, light, sm); screw(parts.hammerPivotR, 0.018f * u, 160f, light, sm)
     }
 
     // ---- rotor (parallax 5 px): contact shadow, the rotor, a sheen fixed to the light, the bearing
@@ -367,7 +379,8 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
         }
         part(L.rotor, c, rotDeg)
         withTransform({ translate(c.x, c.y); rotate(rotDeg, Offset.Zero) }) {
-            clipPath(L.rotorPath) {
+            // The circular-grained rotor's streak of light (a bead-blasted Lv.1 rotor has none).
+            if (L.step.deco) clipPath(L.rotorPath) {
                 rotate(-rotDeg, Offset.Zero) { drawCircle(L.rotorSheen, CalibreGeometry.ROTOR_R * u, Offset.Zero) }
             }
             // Km marker steps one division per km driven
@@ -384,17 +397,31 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
             drawCircle(Brush.radialGradient(listOf(Color.White, CalPal.rhodium.base, CalPal.rhodium.dark), bp + Offset(light.x, light.y) * (br * 0.04f), br * 0.16f), br * 0.13f, bp)
         }
         drawCircle(metalBrush(CalPal.rhodium, c, br * 0.45f, light), br * 0.45f, c)
-        screw(c, br * 0.28f, 25f, light)
+        screw(c, br * 0.28f, 25f, light, sm)
+    }
+
+    // ---- a struck gong rings: one soft shimmer runs along the steel wire, away from its hammer (at most 1.5 a second)
+    if (!o.calm) translate(px, py) {
+        fun shimmer(g: Float, rr: Float, from: Float, dir: Float) {
+            if (g < 0.03f) return
+            val at = from + dir * (1f - g) * 150f
+            drawArc(Color.White.a(0.8f * g), at - 14f, 28f, false, Offset(c.x - rr, c.y - rr), Size(rr * 2, rr * 2), style = Stroke(width = 0.016f * u, cap = StrokeCap.Round))
+        }
+        shimmer(m.gongL, 0.975f * u, 112f, 1f)
+        shimmer(m.gongR, 0.962f * u, 68f, -1f)
     }
 
     // ---- star glints travelling along the jewels
     if (!o.calm) drawGlints(L, m.decoTime, m.glintStart, m.trainGlintStart, rt.studio)
+    // Braking: the watch tips a little toward the light, and the balance's cap jewel (the tourbillon's) catches it.
+    val bk = rt.brake.value.coerceIn(0f, 1f)
+    if (bk > 0.02f) translate(px, py) { catchLight(L, if (tb) L.p(TB.C.x, TB.C.y) else L.p(g.BALANCE), 0.9f * bk, rt.studio, size = 1.7f) }
 
     // ---- crown (on the LEFT seen from the back) and the chronograph pushers
     drawCrownAndPushers(L, m, mirrored = true)
 
     // ---- sapphire crystal: condensation, rain, reflection (parallax 6 px)
-    translate(px * 2f, py * 2f) { drawCrystal(L, m) }
+    translate(px * 2f, py * 2f) { drawCrystal(L, m, bk) }
 
 }
 
@@ -448,29 +475,31 @@ private fun DrawScope.drawHairspring(rt: CalibreRuntime, b: Offset, u: Float, ba
  * event lights the going train in order; the combo lights every jewel.
  */
 private fun DrawScope.drawGlints(L: CalibreLayers, t: Double, star: Double, train: Double, studio: CalibreStudio) {
-    val g = CalibreGeometry
-    fun catchLight(at: Offset, i: Float) {
-        if (i <= 0.01f) return
-        val r = 0.07f * L.u * i
-        translate(at.x, at.y) { scale(r, r, Offset.Zero) { drawCircle(studio.bloom, 1f, Offset.Zero, alpha = i) } }
-        drawLine(Color.White.a(0.85f * i), at - Offset(r * 2.4f, 0f), at + Offset(r * 2.4f, 0f), strokeWidth = 1.1f)
-        drawCircle(Color.White.a(i), r * 0.22f, at)
-    }
-    g.TRAIN_PATH.forEachIndexed { k, idx ->
+    L.trainGlints.forEachIndexed { k, at ->
         val x = ((t - star - k * 0.09) / 0.35).toFloat()
-        if (x in 0f..1f) { val j = g.JEWELS[idx]; catchLight(L.p(j.x, j.y), sin(PI.toFloat() * x)) }
+        if (x in 0f..1f) catchLight(L, at, sin(PI.toFloat() * x), studio)
     }
-    g.JEWELS.forEachIndexed { k, j ->
+    L.allGlints.forEachIndexed { k, at ->
         val x = ((t - train - k * 0.06) / 0.3).toFloat()
-        if (x in 0f..1f) catchLight(L.p(j.x, j.y), sin(PI.toFloat() * x))
+        if (x in 0f..1f) catchLight(L, at, sin(PI.toFloat() * x), studio)
     }
+}
+
+/** A ruby catching the key light: a soft ruby bloom, a thin horizontal lens flare and a bright point. */
+private fun DrawScope.catchLight(L: CalibreLayers, at: Offset, i: Float, studio: CalibreStudio, size: Float = 1f) {
+    if (i <= 0.01f) return
+    val r = 0.07f * L.u * i * size
+    translate(at.x, at.y) { scale(r, r, Offset.Zero) { drawCircle(studio.bloom, 1f, Offset.Zero, alpha = i) } }
+    drawLine(Color.White.a(0.85f * i), at - Offset(r * 2.4f, 0f), at + Offset(r * 2.4f, 0f), strokeWidth = 1.1f)
+    drawCircle(Color.White.a(i), r * 0.22f, at)
 }
 
 /** Night, caseback: the lume ring in the flange and the rotor's km marker glow green-blue. */
 private fun DrawScope.drawLumeRing(L: CalibreLayers, night: Float, studio: CalibreStudio) {
     val c = L.c; val u = L.u
-    drawCircle(CalPal.lumeHalo.a(0.35f * night), CW.LUME_RING * u, c, style = L.lumeHaloStroke)
-    drawCircle(CalPal.lumeNight.a(night), CW.LUME_RING * u, c, style = L.lumeRingStroke)
+    // Under the lamp the lume reads as a soft green-blue line with a faint halo (no neon glow).
+    drawCircle(CalPal.lumeHalo.a(0.18f * night), CW.LUME_RING * u, c, style = L.lumeHaloStroke)
+    drawCircle(CalPal.lumeNight.a(0.8f * night), CW.LUME_RING * u, c, style = L.lumeRingStroke)
 }
 
 /** Crown and pushers. [mirrored]: the caseback view puts them on the left. */
@@ -481,15 +510,15 @@ private fun DrawScope.drawCrownAndPushers(L: CalibreLayers, m: io.vroomi.charact
     for ((deg, press) in listOf(-30f to m.pusher, 30f to m.resetHammer)) {
         val a = (if (mirrored) 180f - deg else deg) * PI.toFloat() / 180f
         val inset = press * 0.035f * u
-        val p0 = pol(c, (CW.CASE_OUT - 0.02f) * u, a); val p1 = pol(c, (CW.CASE_OUT + 0.11f) * u - inset, a)
+        val p0 = pol(c, (L.pusherEdge - 0.02f) * u, a); val p1 = pol(c, (L.pusherEdge + 0.11f) * u - inset, a)
         drawLine(lerp(pal.case.dark, Color.Black, 0.3f), p0, p1, strokeWidth = 0.10f * u, cap = StrokeCap.Butt)
         drawLine(pal.case.base, p0, p1, strokeWidth = 0.085f * u, cap = StrokeCap.Round)
         drawLine(pal.case.light.a(0.8f), p0 + Offset(light.x, light.y) * (0.02f * u), p1 + Offset(light.x, light.y) * (0.02f * u), strokeWidth = 0.015f * u, cap = StrokeCap.Round)
     }
     // Crown: a knurled cylinder whose ridges roll across as it turns
     val y = c.y + CalibreGeometry.STEM_Y * u
-    val xIn = c.x + sx * (CW.CASE_OUT - 0.02f) * u
-    val xOut = c.x + sx * (CW.CASE_OUT + 0.17f) * u
+    val xIn = c.x + sx * (L.crownEdge - 0.02f) * u
+    val xOut = c.x + sx * (L.crownEdge + 0.17f) * u
     val hh = 0.12f * u
     val left = minOf(xIn, xOut); val wdt = abs(xOut - xIn)
     drawRect(lerp(pal.case.dark, Color.Black, 0.2f), Offset(left, y - hh * 0.55f), Size(wdt, hh * 1.1f))
@@ -510,7 +539,7 @@ private fun DrawScope.drawCrownAndPushers(L: CalibreLayers, m: io.vroomi.charact
     }
 }
 
-private fun DrawScope.drawCrystal(L: CalibreLayers, m: io.vroomi.character.calibre.CalibreMechanics) {
+private fun DrawScope.drawCrystal(L: CalibreLayers, m: io.vroomi.character.calibre.CalibreMechanics, tip: Float = 0f) {
     val u = L.u; val c = L.c; val light = L.light
     val r = CW.GASKET * u
     clipPath(L.crystal) {
@@ -542,17 +571,17 @@ private fun DrawScope.drawCrystal(L: CalibreLayers, m: io.vroomi.character.calib
             }
             drawRect(Brush.horizontalGradient(listOf(Color.Transparent, Color.White.a(0.16f * m.rain), Color.Transparent), sweepX - 0.25f * u, sweepX + 0.25f * u), Offset(sweepX - 0.25f * u, c.y - r), Size(0.5f * u, 2 * r))
         }
-        // One soft reflection on the sapphire, toward the light
-        drawArc(Color.White.a(0.09f), light.deg - 40f, 80f, false, Offset(c.x - r * 0.9f, c.y - r * 0.9f), Size(r * 1.8f, r * 1.8f), style = Stroke(width = 0.07f * u, cap = StrokeCap.Round))
+        // One soft reflection on the sapphire, toward the light (it slides and brightens as the watch tips under braking)
+        drawArc(Color.White.a(0.09f + 0.20f * tip), light.deg - 40f + 26f * tip, 80f, false, Offset(c.x - r * 0.9f, c.y - r * 0.9f), Size(r * 1.8f, r * 1.8f), style = Stroke(width = 0.07f * u, cap = StrokeCap.Round))
     }
 }
 
 // ------------------------------------------------------------------ dial view
 
-private fun DrawScope.drawDial(L: CalibreLayers, rt: CalibreRuntime, hands: CalibreTime.Hands, text: CalibreText, px: Float, py: Float) {
+private fun DrawScope.drawDial(L: CalibreLayers, rt: CalibreRuntime, hands: CalibreTime.Hands, text: CalibreText, px: Float, py: Float, nowMs: Long) {
     val m = rt.mech
     drawImage(L.dial, Offset.Zero)
-    translate(px * 0.5f, py * 0.5f) { drawDialFrame(L, rt, hands, text) }
+    translate(px * 0.5f, py * 0.5f) { drawDialFrame(L, rt, hands, text, nowMs) }
     drawCrownAndPushers(L, m, mirrored = false)
     translate(px * 2f, py * 2f) { drawCrystal(L, m) }
 }
@@ -581,12 +610,13 @@ private fun DrawScope.lumeHand(hand: Hand, c: Offset, deg: Float, night: Float, 
  */
 private fun CalibreRuntime.drawCaption(ds: DrawScope, text: CalibreText, w: Float, h: Float): Unit = with(ds) {
     val corner = ((1f - scale.value) / 0.7f).coerceIn(0f, 1f)
-    val a = (1f - corner * 2f).coerceIn(0f, 1f) * (1f - 0.55f * mech.night)
+    // Dark grey on the bright bench, at full strength by night too (the lamp keeps the bench mid-bright).
+    val a = (1f - corner * 2f).coerceIn(0f, 1f)
     if (a < 0.02f) return@with
     // Parked: the fine catalogue line. Driving: the values alone at 24 sp or more (cross-faded with the info spring).
     studio.caption(h, with(ds) { MIN_DRIVING_SP.sp.toPx() }, text)
     val d = info.value.coerceIn(0f, 1f)
-    if (d < 0.99f) captionLine(ds, studio.parkedCaption, w, h, a * 0.75f * (1f - d), moving = false)
+    if (d < 0.99f) captionLine(ds, studio.parkedCaption, w, h, a * 0.92f * (1f - d), moving = false)
     if (d > 0.01f) captionLine(ds, studio.drivingCaption, w, h, a * d, moving = true)
 }
 

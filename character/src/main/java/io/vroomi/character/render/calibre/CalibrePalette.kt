@@ -19,7 +19,7 @@ internal class CalibrePalette(
     val dial: Metal,
     val dialPrint: Color,
     val hand: Metal,
-    /** Dial guilloché: 0 sunray, 1 concentric (clous-free original wave). */
+    /** Plain dial finish of the first two steps: 0 sunray brushing, 1 opaline (a fine matte). */
     val guilloche: Int,
 )
 
@@ -33,23 +33,43 @@ internal object CalPal {
     val dlc = Metal(Color(0xFF2B2D32), Color(0xFF70747D), Color(0xFF0D0E11))
     val dlcPlate = Metal(Color(0xFF3A3D43), Color(0xFF7D828B), Color(0xFF17181B))
     val blued = Metal(Color(0xFF2E54B0), Color(0xFF9DB9F2), Color(0xFF11224F))
+    /** Plain polished steel screws (the first step, and the case back's screws at every step). */
+    val steelScrew = Metal(Color(0xFFAEB3BA), Color(0xFFF4F6F8), Color(0xFF50565E))
     val blackSteel = Metal(Color(0xFF1C1E23), Color(0xFFD9DDE3), Color(0xFF07080A))
     val ruby = Metal(Color(0xFFB0233C), Color(0xFFFF9AAB), Color(0xFF4A0816))
     val lume = Color(0xFFA9EBD2)
     /** Lume by day: a pale cream-green, it only glows at night. */
     val lumeDay = Color(0xFFE3EADC)
     val lumeGlow = Color(0xFF7FE7C2)
-    val hairspring = Color(0xFF9AA6BA)
+    val hairspring = Color(0xFF8C98AD)
     val coldLight = Color(0xFFDCE8FF)
     val warmLight = Color(0xFFFFE2BC)
-    /** Black velvet: the cloth, the pile lit by the key light, the fibre sheen. */
-    val velvet = Color(0xFF09090B)
-    val velvetLift = Color(0xFF2A292D)
-    val fibre = Color(0xFF6E6C72)
     val gunmetal = Metal(Color(0xFF4A4E55), Color(0xFF9EA3AB), Color(0xFF1C1E22))
-    /** Night: only the lume glows (a green-blue light). */
+    /** Night: the lume glows green-blue under the warm desk lamp. */
     val lumeNight = Color(0xFF8DF2DC)
     val lumeHalo = Color(0xFF3FD6C0)
+
+    // ---- the watchmaker's bench (a bright matte studio)
+    /** Ivory at the top of the bench, warm grey toward the front edge. */
+    val benchTop = Color(0xFFF3EFE8)
+    val benchMid = Color(0xFFEAE4DA)
+    val benchBottom = Color(0xFFDDD6CB)
+    /** The colour of every shadow on the bench (a warm, slightly brown dark, never pure black). */
+    val benchShadow = Color(0xFF3A3027)
+    /** The soft fall-off at the bench's edges. */
+    val benchEdge = Color(0xFF8A7E6E)
+    /** Soft out-of-focus props: a satin aluminium loupe and steel tweezers. */
+    val propMetal = Color(0xFFB9B4AB)
+    val propDark = Color(0xFF8E887E)
+    /** The openworked steps' plate: dark ruthenium grey, so the bright bevelled bridges and the wheels stand out. */
+    val ruthenium = Metal(Color(0xFF4E535B), Color(0xFF8F959E), Color(0xFF2C3036))
+    /** Through an opening in the movement: the dial's underside, far below (a dark slate, softly lit). */
+    val depth = Metal(Color(0xFF2E333B), Color(0xFF59616C), Color(0xFF1A1D22))
+
+    /** Night: the bench under a warm desk lamp (multiplied over the day scene): the lamp's pool, then its fall-off. */
+    val lampCentre = Color(0xFFFFF1DE)
+    val lampMid = Color(0xFFDCC6AA)
+    val lampEdge = Color(0xFFA58F78)
 
     fun of(t: CalibreTone): CalibrePalette = when (t) {
         CalibreTone.YELLOW_GOLD -> CalibrePalette(

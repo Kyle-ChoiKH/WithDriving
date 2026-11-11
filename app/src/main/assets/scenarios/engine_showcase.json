@@ -5,6 +5,7 @@
   "order": 2,
   "theme": "ENGINE",
   "powertrain": "ICE",
+  "model": 4,
   "durationS": 126,
   "keyframes": [
     { "t": 0,    "gear": "P", "speed": 0, "door": false, "fan": 0, "temp": 22, "ac": false, "lights": false, "wiper": false, "defrost": false, "turn": "NONE", "brake": false, "mode": "NORMAL", "safety": false, "caption": "주차 중: 공회전 750rpm (추정), 슬로모션으로 보여 줘요" },

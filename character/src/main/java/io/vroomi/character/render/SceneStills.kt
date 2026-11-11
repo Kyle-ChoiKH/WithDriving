@@ -46,6 +46,8 @@ data class StillSpec(
     val speedKmh: Float = 0f,
     /** The entrance accent to draw ([SceneOptions.intro]); 1 = the normal frame. */
     val intro: Float = 1f,
+    /** The upgrade step to draw ([SceneOptions.model], 0..4 = Lv.1..5). */
+    val model: Int = 0,
 )
 
 /**
@@ -75,7 +77,7 @@ class SceneStillRenderer(fontFamilyResolver: FontFamily.Resolver, private val de
             car = io.vroomi.character.CarSignals(speedKmh = spec.speedKmh, accelMps2 = 0f, gear = io.vroomi.core.vehicle.model.GearState.DRIVE, moving = true, safetyWarningActive = false),
             journey = io.vroomi.character.Journey(active = true, tripSeq = 1),
         ) else CharacterTarget(sizeMode = SizeMode.FULL)
-        val options = SceneOptions(hourOfDay = spec.hourOfDay, season = spec.season, skin = spec.skin, intro = spec.intro)
+        val options = SceneOptions(hourOfDay = spec.hourOfDay, season = spec.season, skin = spec.skin, intro = spec.intro, model = spec.model)
         val frames = (spec.seconds * 60).toInt()
         val start = spec.nowMs - (spec.seconds * 1000).toLong()
         when (theme) {
