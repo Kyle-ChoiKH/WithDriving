@@ -911,6 +911,11 @@ private fun ThemeSoundKeeper(rt: VroomiRuntime, kit: ThemeSceneState?, theme: Sc
 private fun ThemeKeeper(rt: VroomiRuntime, kit: ThemeSceneState?, theme: SceneTheme?) {
     LaunchedEffect(theme) { releaseThemeLayers(if (theme != null && isKitTheme(theme)) theme else null) }
     if (kit == null) return
+    // The hangar's robot is built by real distance only: a demo shows its own build, and the saved one stands still.
+    val demo by rt.demo.collectAsStateWithLifecycle()
+    LaunchedEffect(kit, demo) {
+        (kit.sim as? io.vroomi.character.hangar.HangarSim)?.let { if (demo) it.startDemo() else it.demo = false }
+    }
     LaunchedEffect(kit) {
         while (true) {
             delay(30_000)
