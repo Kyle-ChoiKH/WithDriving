@@ -34,6 +34,14 @@ import io.vroomi.core.vehicle.model.DriveModeState
 import io.vroomi.core.vehicle.model.GearState
 import io.vroomi.core.vehicle.model.TurnSignal
 import org.junit.Rule
+import io.vroomi.character.render.theme.simulate
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import org.junit.Test
 
 /** Renders Pixel World (docs/screenshots/pixel_*). */
@@ -45,6 +53,21 @@ class PixelSnapshotTest {
         Journey(active = true, tripSeq = 2, tripKm = kmh * t / 3600f, stars = stars, starSeq = stars, comboSeq = combo, biome = biome, milestoneKm = km, destinationM = dest)
     private fun shot(name: String, s: Float, opt: SceneOptions = o(), prepare: (PixelMechanics) -> Unit = {}, at: (Float) -> CharacterTarget) =
         KitShots.script(paparazzi, SceneTheme.PIXEL, name, s, opt, prepare, at = at)
+
+    // ---- the upgrade ladder (spec 5.10): the vehicle of each step
+    private fun lv(name: String, model: Int, hour: Float = 14f, block: io.vroomi.character.CarSignals.() -> io.vroomi.character.CarSignals = { this }) =
+        shot(name, 6f, o(hour).copy(model = model)) { t -> driving(car(50f) { block() }, trip(t, 50f)) }
+    @Test fun lv1Day() = lv("pixel_lv1_day", 0)
+    @Test fun lv2Day() = lv("pixel_lv2_day", 1)
+    @Test fun lv3Day() = lv("pixel_lv3_day", 2)
+    @Test fun lv4Day() = lv("pixel_lv4_day", 3)
+    @Test fun lv5Day() = lv("pixel_lv5_day", 4)
+    @Test fun lv5Night() = lv("pixel_lv5_night", 4, 21.5f) { copy(headlightsOn = true) }
+    @Test fun lv3BlinkerLeft() = lv("pixel_lv3_blinker_left", 2) { copy(turnSignal = TurnSignal.LEFT) }
+    @Test fun lv3Brake() = shot("pixel_lv3_brake", 4.15f, o().copy(model = 2)) { t ->
+        driving(car(if (t < 4f) 60f else 30f, if (t < 4f) 0f else -6f) { copy(brakePressed = t >= 4f, harshBrakeSeq = if (t >= 4f) 1 else 0) }, trip(t, 60f))
+    }
+    @Test fun lv5Parked() = shot("pixel_lv5_parked", 3f, o().copy(model = 4)) { parked(car(0f, gear = GearState.PARK) { copy(moving = false) }) }
 
     @Test fun cityDayCruise() = shot("pixel_city_day_cruise", 6f) { t -> driving(car(50f), trip(t, 50f)) }
     @Test fun cityNightNeon() = shot("pixel_city_night_neon", 6f, o(21.5f)) { t -> driving(car(50f) { copy(headlightsOn = true) }, trip(t, 50f)) }
@@ -166,4 +189,40 @@ class PixelDetailSnapshotTest {
     @Test fun tilesField() = tiles(Biome.FIELD)
     @Test fun tilesSeaside() = tiles(Biome.SEASIDE)
     @Test fun tilesMountain() = tiles(Biome.MOUNTAIN)
+}
+
+/** The upgrade ladder in one picture: Lv.1 to Lv.5 as five stacked 8:3 strips (1000 x 1875, each 960 x 360 at scale 2). */
+class PixelLadderSnapshotTest {
+    @get:Rule val paparazzi = app.cash.paparazzi.Paparazzi(
+        deviceConfig = app.cash.paparazzi.DeviceConfig.PIXEL_5.copy(
+            screenWidth = 1000, screenHeight = 1875, xdpi = 120, ydpi = 120,
+            density = com.android.resources.Density.LOW, orientation = com.android.resources.ScreenOrientation.PORTRAIT, softButtons = false,
+        ),
+        maxPercentDifference = 100.0,
+    )
+
+    @Test fun ladder() {
+        val runtimes = (0 until 5).map { i ->
+            requireNotNull(io.vroomi.character.render.theme.ThemeCatalog.create(SceneTheme.PIXEL)).also { rt ->
+                rt.simulate(6f, SceneOptions(hourOfDay = 14f, model = i), io.vroomi.character.render.calibre.DEFAULT_NOW_MS) { t ->
+                    driving(car(50f), Journey(active = true, tripSeq = 2, tripKm = 50f * t / 3600f))
+                }
+            }
+        }
+        paparazzi.snapshot("pixel_ladder") {
+            val tm = androidx.compose.ui.text.rememberTextMeasurer()
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize()) {
+                runtimes.forEachIndexed { i, rt ->
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxWidth().aspectRatio(8f / 3f)) {
+                        androidx.compose.foundation.Canvas(androidx.compose.ui.Modifier.fillMaxSize()) { rt.draw(this, tm) }
+                        androidx.compose.foundation.text.BasicText(
+                            io.vroomi.character.theme.ThemeModels.tag(i),
+                            androidx.compose.ui.Modifier.padding(start = 12.dp, top = 10.dp).background(androidx.compose.ui.graphics.Color(0xD9101316), androidx.compose.foundation.shape.RoundedCornerShape(4.dp)).padding(horizontal = 7.dp, vertical = 2.dp),
+                            style = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White, fontSize = 15.sp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
