@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import io.vroomi.character.render.hash01
+import io.vroomi.character.render.theme.drawTextCentered
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -269,4 +270,24 @@ internal fun DrawScope.clamps(cx: Float, close: Float, lampAngle: Double) {
         drawCircle(Bay.amber.copy(alpha = (0.55f + 0.4f * facing) * close + 0.2f * (1f - close)), 7f, c)
         drawLine(Color.White.copy(alpha = 0.5f * facing * close), Offset(c.x + (4.0 * sin(lampAngle)).toFloat(), c.y - 4f), Offset(c.x + (4.0 * sin(lampAngle)).toFloat(), c.y + 4f), 1.4f)
     }
+}
+
+/**
+ * The order board on the wall beside the gantry: the unit's code over a swatch of its three paints. It names the
+ * unit the step picker chose, so the choice shows even in an empty bay.
+ */
+internal fun DrawScope.unitSign(x: Float, y: Float, style: MechStyle, code: androidx.compose.ui.text.TextLayoutResult) {
+    val w = 132f; val h = 92f
+    drawRect(Color.Black.copy(alpha = 0.35f), Offset(x - w / 2 + 3f, y - h / 2 + 4f), Size(w, h))
+    drawRect(Color(0xFF23272D), Offset(x - w / 2, y - h / 2), Size(w, h))
+    drawRect(Color(0xFF4A515A), Offset(x - w / 2, y - h / 2), Size(w, h), style = HAIR)
+    drawRect(Color.White.copy(alpha = 0.06f), Offset(x - w / 2, y - h / 2), Size(w, 2f))
+    drawTextCentered(code, x, y - 16f)
+    val sw = (w - 24f) / 3f
+    val paints = arrayOf(style.primary, style.secondary, style.accent)
+    for (i in 0 until 3) {
+        drawRect(paints[i], Offset(x - w / 2 + 12f + i * sw, y + 14f), Size(sw - 4f, 20f))
+        drawRect(Color.Black.copy(alpha = 0.4f), Offset(x - w / 2 + 12f + i * sw, y + 14f), Size(sw - 4f, 20f), style = HAIR)
+    }
+    for (s in floatArrayOf(-1f, 1f)) drawCircle(Color(0xFF6A727C), 2.2f, Offset(x + s * (w / 2 - 6f), y - h / 2 + 6f))
 }

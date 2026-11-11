@@ -23,6 +23,10 @@ import kotlin.math.sin
  * The new roads are other faces of roads the trip already has (the tree-lined road, the city, the mountain road):
  * they take those roads' turns on every other lap of the rotation, starting with the first. The trip's own scenery
  * model, its spoken lines and the diary stay as they are.
+ *
+ * A step is seen the moment it is chosen: the road a step added is where its trips begin, so it is also what the
+ * parked scene shows ([signature]). The neon street and the aurora bring their own night ([dusk]), and the parade
+ * roadster drives under bunting on every road ([drawParade]).
  */
 internal object KartStep {
     fun blossom(model: Int): Boolean = model >= 1
@@ -33,17 +37,30 @@ internal object KartStep {
     /** How many different roads the rotation has at this step. */
     fun roads(model: Int): Int = Biome.entries.size + listOf(blossom(model), neon(model), aurora(model)).count { it }
 
-    /** True when [biome] shows its new face at this point of the trip. */
-    fun variant(model: Int, biome: Biome, tripKm: Float): Boolean {
-        val lap = floor(tripKm * 1000f / (Thresholds.BIOME_EVERY_M * Biome.entries.size)).toInt()
-        if (lap % 2 != 0) return false
+    /** The road this step added, named by the road whose new face it is (blossom PARK, neon CITY, aurora MOUNTAIN). */
+    fun signature(model: Int): Biome? = when (model) { 1 -> Biome.PARK; 2 -> Biome.CITY; 3 -> Biome.MOUNTAIN; else -> null }
+
+    /**
+     * The new face shown at this point of the trip, named by the road it belongs to, or null for the plain road.
+     * The first stretch of a trip (and so the parked scene) is the chosen step's own road.
+     */
+    fun face(model: Int, biome: Biome, tripKm: Float): Biome? {
+        val stretch = floor(tripKm * 1000f / Thresholds.BIOME_EVERY_M).toInt()
+        if (stretch <= 0) return signature(model)
+        if ((stretch / Biome.entries.size) % 2 != 0) return null
         return when (biome) {
-            Biome.PARK -> blossom(model)
-            Biome.CITY -> neon(model)
-            Biome.MOUNTAIN -> aurora(model)
-            else -> false
+            Biome.PARK -> biome.takeIf { blossom(model) }
+            Biome.CITY -> biome.takeIf { neon(model) }
+            Biome.MOUNTAIN -> biome.takeIf { aurora(model) }
+            else -> null
         }
     }
+
+    /** True when the road shows a new face at this point of the trip. */
+    fun variant(model: Int, biome: Biome, tripKm: Float): Boolean = face(model, biome, tripKm) != null
+
+    /** How dark a face makes the scene whatever the hour: the neon street and the aurora are night roads. */
+    fun dusk(face: Biome?): Float = when (face) { Biome.CITY -> 0.86f; Biome.MOUNTAIN -> 0.78f; else -> 0f }
 
     /** The ground between the horizon and the road for a road's new face. */
     fun ground(biome: Biome): Color = when (biome) {
@@ -227,6 +244,50 @@ internal fun DrawScope.drawMidVariant(rt: SceneRuntime, b: Biome, k: Int, x: Flo
                 drawLine(Color(0xFFE4574B).night(n, 0.6f), Offset(x, baseY), Offset(x, baseY - u * 6f), strokeWidth = u * 0.6f)
                 drawOval(Color.White.night(n, 0.5f), Offset(x - u * 0.9f, baseY - u * 6.8f), Size(u * 1.8f, u * 1.2f))
             }
+        }
+    }
+}
+
+private val PENNANTS = arrayOf(Color(0xFF3CC8B4), Color(0xFFFFD84D), Color(0xFFFF7A6B), Color(0xFFFDFBF4), Color(0xFF7FB7F2))
+
+/**
+ * The parade (step 5): a line of pennants from this roadside pole to the next one ([xNext]), and now and then a bunch
+ * of balloons tied to the pole. Nothing blinks; the balloons sway slowly.
+ */
+internal fun DrawScope.drawParade(rt: SceneRuntime, k: Int, x: Float, xNext: Float, baseY: Float, h: Float, n: Float, o: SceneOptions) {
+    val u = h * 0.01f
+    val top = baseY - h * 0.25f
+    val pole = Color(0xFFF4F1E8).night(n, 0.55f)
+    drawLine(Color(0xFF8E96A0).night(n, 0.5f), Offset(x + u * 0.5f, baseY), Offset(x + u * 0.5f, top), strokeWidth = u * 1.1f)
+    drawLine(pole, Offset(x, baseY), Offset(x, top), strokeWidth = u * 0.9f)
+    drawCircle(Color(0xFFFFD84D).night(n, 0.4f), u * 1.1f, Offset(x, top - u * 0.6f))
+    // The string sags between the poles; a pennant hangs every few steps.
+    val span = xNext - x
+    val count = 9
+    var px = x; var py = top
+    for (i in 1..count) {
+        val f = i / count.toFloat()
+        val nx = x + span * f
+        val ny = top + h * 0.055f * (1f - (2f * f - 1f) * (2f * f - 1f))
+        drawLine(Color(0xFF5A606B).night(n, 0.4f), Offset(px, py), Offset(nx, ny), strokeWidth = u * 0.3f)
+        if (i < count) {
+            val c = PENNANTS[Math.floorMod(k * 3 + i, PENNANTS.size)].night(n, 0.45f)
+            val hw = span / count * 0.36f
+            val path = rt.tmpPath2
+            path.reset(); path.moveTo(nx - hw, ny); path.lineTo(nx + hw, ny); path.lineTo(nx, ny + u * 3.4f); path.close()
+            drawPath(path, c)
+            drawLine(Color.White.alpha(0.35f * (1f - n)), Offset(nx - hw, ny + u * 0.3f), Offset(nx + hw * 0.4f, ny + u * 0.3f), strokeWidth = u * 0.3f)
+        }
+        px = nx; py = ny
+    }
+    if (Math.floorMod(k, 3) == 0) {
+        val sway = if (o.calm) 0f else sin(rt.time * 0.7f + k) * u * 0.8f
+        for (i in 0 until 3) {
+            val c = PENNANTS[Math.floorMod(k + i * 2, PENNANTS.size)].night(n, 0.45f)
+            val bx = x + u * (2.2f + i * 2.3f) + sway * (1f + i * 0.3f); val by = top - u * (5.5f + (i % 2) * 2.4f)
+            drawLine(Color(0xFF5A606B).night(n, 0.4f), Offset(x, top), Offset(bx, by + u * 2f), strokeWidth = u * 0.22f)
+            drawOval(c, Offset(bx - u * 1.5f, by - u * 1.9f), Size(u * 3f, u * 3.8f))
+            drawOval(Color.White.alpha(0.4f * (1f - n * 0.6f)), Offset(bx - u * 0.9f, by - u * 1.4f), Size(u * 0.8f, u * 1.2f))
         }
     }
 }

@@ -64,6 +64,9 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
         bayWet(f.dw, f.dh, cx, sim.rain)
         bayNight(f.dw, f.dh, cx, sim.night)
 
+        // The unit on order: its code and its colours on the wall, whatever the state of the build.
+        unitSign(cx - 318f, 214f, MechStyle.STEPS[f.model], signText(tx, f.model))
+
         // Workers for scale: one crosses the floor in front, one keeps to the catwalk, one waits by the tower.
         val walk = (t * (if (sim.parked) 0.035 else 0.02)).let { (it % 2.0).toFloat() }
         val wx = cx - 420f + 300f * (if (walk < 1f) walk else 2f - walk)
@@ -86,6 +89,7 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
         pose.idleT = if (stage >= 5 && !sim.calm) t.toFloat() else 0f
         pose.flicker = (0.93 + 0.07 * sin(t * 1.9)).toFloat()
         pose.unitText = unitText(tx, sim.unit, f.model)
+        pose.holoT = if (sim.calm || sim.reducedMotion) 0f else t.toFloat()
         val m = mech(f.model)
         withTransform({ translate(cx, Bay.FEET); scale(Bay.ROBOT, Bay.ROBOT, Offset.Zero) }) { with(m) { draw(stage, sim.stageProgress, pose) } }
 
@@ -108,6 +112,12 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
             }
             else -> crane(cx + 300f, 24f, plate = false)
         }
+    }
+
+    /** "HX-1" .. "HX-5", large enough to read at a glance. */
+    private fun signText(tx: ThemeTexts, model: Int): TextLayoutResult {
+        if (textsOf !== tx) { textsOf = tx; unitTexts.clear() }
+        return unitTexts.getOrPut(-1 - model) { tx.get("HX-%d".format(model + 1), 36f, Color(0xFFF4F2EC), bold = true) }
     }
 
     private fun smooth(x: Float): Float { val u = x.coerceIn(0f, 1f); return u * u * (3f - 2f * u) }
