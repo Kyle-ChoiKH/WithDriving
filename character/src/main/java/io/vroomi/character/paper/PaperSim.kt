@@ -22,6 +22,9 @@ class PaperSim : ThemeSim() {
     var sunAngle = 0.0; private set
     /** The pull-tab that turns the sun wheel (0..1 along its slot). */
     var tab = 0f; private set
+    /** Step 4's cloud strip, 0..1 along its slot: it is pulled only while parked (the page-flip rule). */
+    var cloudSlide = 0.35f; private set
+    private var cloudPhase = 1.27
     var wheelAngle = 0.0; private set
     var dustAt = -100.0; private set
     private var lastBrake = false
@@ -69,6 +72,7 @@ class PaperSim : ThemeSim() {
         val dir = if (gear == GearState.REVERSE) -1.0 else 1.0
         strip += v / 3.6 * 9.0 * ddt * dir * calmK
         tab = approach(tab, (kmh / 120f).coerceIn(0f, 1f), (dt / 0.6).toFloat())
+        if (parked && !reducedMotion) { cloudPhase += ddt * 0.22 * calmK; cloudSlide = (0.5 - 0.5 * kotlin.math.cos(cloudPhase)).toFloat() }
         sunAngle += ddt * (0.05 + 0.6 * tab) * calmK
         wheelAngle += v / 3.6 * ddt * 0.9 * dir
         val brake = car.brakePressed == true && kmh > 3f

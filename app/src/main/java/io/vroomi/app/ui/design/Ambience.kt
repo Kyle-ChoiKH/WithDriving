@@ -56,7 +56,7 @@ object Ambience {
 
     val all: List<ThemeAmbience> = listOf(
         a(SceneTheme.KART, 0xFF3CC8B4, 0xFF15262A, 0.52f),        // brand teal over a dusk-teal letterbox
-        a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.439f),      // fluorescent pink ink, the night mat's violet
+        a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.433f),      // fluorescent pink ink, the night mat's violet
         a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF2B2520, 0.677f),    // brushed steel, the bench's warm shadow
         a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF14171A, 0.062f),     // oil amber, the graphite studio
         a(SceneTheme.MUSIC_BOX, 0xFF8E2F45, 0xFF241A14, 0.097f),   // burgundy velvet, the lamp-lit brown room

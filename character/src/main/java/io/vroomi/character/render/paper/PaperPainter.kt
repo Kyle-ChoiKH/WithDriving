@@ -187,6 +187,7 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
 
     override fun drawPx(s: DrawScope, sim: PaperSim, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
         val g = geo(f.dw, f.dh)
+        PaperInk.use(f.model)
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
         val key = (w.toLong() shl 20) xor h.toLong()
         val n = sim.night
@@ -203,12 +204,18 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
 
     override fun draw(s: DrawScope, sim: PaperSim, f: ThemeFrame, tx: ThemeTexts) = with(s) {
         val g = geo(f.dw, f.dh)
+        val model = f.model
+        PaperInk.use(model)
         val n = sim.night
         light(n)
         val intro = f.options.intro
         withTransform({ translate(0f, g.oy) }) {
             clipRect(g.l, g.t - 40f, g.r, g.b) {
                 sky(g, sim)
+                // Foil is stamped on the page itself, so the planes stand in front of it.
+                if (PaperStep.special(model)) foil(g)
+                if (PaperStep.pullTab(model)) cloudTab(g, sim)
+                if (PaperStep.farPlane(model)) standUp(intro, 0, g.foldBack - 26f) { farHills(g, sim) }
                 standUp(intro, 0, g.foldBack) { mountains(g, sim) }
                 standUp(intro, 1, g.foldMid) { scenery(g, sim) }
                 ribbon(g, sim)
@@ -218,7 +225,7 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 garland(g, sim)
             }
             pullTab(g, sim)
-            title(g.cx + 70f, 100f, sdx, PaperInk.BLUE, PaperInk.REG_BLUE, TITLE_SCALE, TITLE, legibility(sim, f, CutType.H * TITLE_SCALE))
+            title(g.cx + 70f, 100f, sdx, if (PaperStep.special(model)) PaperInk.GOLD else PaperInk.BLUE, PaperInk.REG_BLUE, TITLE_SCALE, TITLE, legibility(sim, f, CutType.H * TITLE_SCALE))
             confetti(g, sim)
             bookmark(g, sim)
             pageFlip(g, sim)
@@ -249,7 +256,7 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
         sdx = 6f - 12f * n; sdy = 7f
         shadow = lerp(PaperInk.SHADOW_DAY, PaperInk.SHADOW_NIGHT, n)
         pink = PaperInk.pink(n)
-        pinkTone = if (n > 0.5f) TONE_VIOLET else TONE_PINK
+        pinkTone = if (n > 0.5f) TONE_VIOLET else if (PaperInk.PINK == PaperInk.FLUO) TONE_PINK else TONE_RED
     }
 
     // ------------------------------------------------------------------ printing helpers
@@ -315,6 +322,13 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 drawLine(PaperInk.PAGE_EDGE, Offset(g.l + 2f + k, g.b + 2f + k * 1.6f), Offset(g.r - 2f - k, g.b + 2f + k * 1.6f), 1.4f)
             }
             drawPath(g.pageL, PaperInk.PAGE); drawPath(g.pageR, PaperInk.PAGE)
+            // Paper fibres in the sheet: short hairs, barely lighter or darker than the page.
+            for (i in 0 until 460) {
+                val fx = g.l + 6f + h01(i, 71) * (g.r - g.l - 12f); val fy = g.t + 16f + h01(i, 72) * (g.b - g.t - 22f)
+                val a = h01(i, 73) * 3.14f; val len = 5f + h01(i, 74) * 12f
+                drawLine(if (i % 3 == 0) Color.White.copy(alpha = 0.55f) else Color(0xFF8A7F68).copy(alpha = 0.10f + 0.09f * h01(i, 75)),
+                    Offset(fx, fy), Offset(fx + kotlin.math.cos(a) * len, fy + kotlin.math.sin(a) * len), 0.7f)
+            }
             // The gutter: a halftone shade band and the centre crease.
             tmp.reset(); tmp.addRect(Rect(g.cx - 36f, g.t + 10f, g.cx + 36f, g.b))
             drawPath(tmp, fineTone, colorFilter = TONE_CREASE, blendMode = BlendMode.Multiply)
@@ -323,6 +337,8 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
             drawLine(PaperInk.CREASE, Offset(g.cx, g.t + 12f), Offset(g.cx, g.b), 1.6f)
             // The parallel folds and slots the planes stand on.
             for (fy in floatArrayOf(g.foldBack, g.foldMid, g.foldFront)) {
+                // The fold's own shadow: the page dips toward the crease.
+                drawRect(Brush.verticalGradient(listOf(Color.Transparent, Color(0xFF7A7364).copy(alpha = 0.20f)), startY = fy - 18f, endY = fy), Offset(g.l + 8f, fy - 18f), Size(g.r - g.l - 16f, 18f))
                 drawLine(Color(0xFF8C8577), Offset(g.l + 8f, fy + 0.5f), Offset(g.r - 8f, fy + 0.5f), 1.2f)
                 drawLine(Color.White, Offset(g.l + 8f, fy + 2f), Offset(g.r - 8f, fy + 2f), 1f)
             }
@@ -421,6 +437,59 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                     }
                 }
             }
+        }
+    }
+
+    // ------------------------------------------------------------------ the upgrade steps' additions (PaperStep)
+
+    /** Step 3: one more plane behind the mountains (far hills in a fine blue halftone), standing on its own fold. */
+    private fun DrawScope.farHills(g: PGeo, sim: PaperSim) {
+        val period = 310f
+        val s = (sim.strip * 0.10).toFloat()
+        val first = floor(s / period).toInt()
+        val off = s - first * period
+        val base = g.foldBack - 26f
+        val count = ((g.r - g.l) / period).toInt() + 3
+        for (k in -1 until count) {
+            val idx = first + k
+            val x = g.l + k * period - off
+            val h = 104f + h01(idx, 61) * 44f
+            tmp.reset(); tmp.moveTo(x - 30f, base)
+            tmp.quadraticTo(x + period * 0.28f, base - h * 1.5f, x + period * 0.62f, base - h * 0.5f)
+            tmp.quadraticTo(x + period * 0.85f, base - h * 0.9f, x + period + 30f, base); tmp.close()
+            piece(tmp, Color.White, Offset.Zero, lift = 0.7f)
+            halftone(tmp, TONE_BLUE, fine = true)
+        }
+        crease(Offset(g.l + 8f, base), Offset(g.r - 8f, base))
+    }
+
+    /** Step 4: two clouds ride a paper strip in a slot across the right page's sky; the tab is pulled only while parked. */
+    private fun DrawScope.cloudTab(g: PGeo, sim: PaperSim) {
+        val y = 196f; val l = g.cx + 60f; val r = g.r - 60f
+        drawRoundRectSlot(l, y, r - l)
+        val x = l + 20f + (r - l - 350f) * sim.cloudSlide
+        withTransform({ translate(x + 296f, y - 13f) }) { piece(g.tab, Color.White, Offset.Zero, PaperInk.KRAFT, lift = 0.5f) }
+        for (c in 0 until 2) {
+            val cx = x + c * 160f; val sc = if (c == 0) 1f else 0.8f
+            tmp.reset()
+            tmp.addOval(Rect(cx, y - 30f * sc, cx + 60f * sc, y + 2f)); tmp.addOval(Rect(cx + 32f * sc, y - 54f * sc, cx + 98f * sc, y + 2f)); tmp.addOval(Rect(cx + 76f * sc, y - 34f * sc, cx + 134f * sc, y + 2f))
+            piece(tmp, Color.White, Offset.Zero, lift = 0.6f)
+            tmp2.reset(); tmp2.addOval(Rect(cx + 8f * sc, y - 12f * sc, cx + 126f * sc, y + 2f))
+            halftone(tmp2, TONE_BLUE, fine = true)
+        }
+    }
+
+    /** Step 5: gold foil stamped on the special edition: a rule inside each page's edge and punched discs in the sky. */
+    private fun DrawScope.foil(g: PGeo) {
+        val rule = androidx.compose.ui.graphics.drawscope.Stroke(2.6f)
+        for ((x0, x1) in listOf(g.l + 14f to g.cx - 22f, g.cx + 22f to g.r - 14f)) {
+            drawRect(PaperInk.GOLD, Offset(x0, g.t + 24f), Size(x1 - x0, g.b - g.t - 42f), style = rule)
+            drawLine(PaperInk.GOLD_LIGHT, Offset(x0 + 6f, g.t + 23.4f), Offset(x1 - (x1 - x0) * 0.4f, g.t + 23.4f), 1f)
+        }
+        for (i in 0 until 10) {
+            val x = g.l + 70f + h01(i, 91) * (g.r - g.l - 140f); val y = g.t + 40f + h01(i, 92) * 120f; val r = 4f + h01(i, 93) * 5f
+            drawCircle(PaperInk.GOLD, r, Offset(x, y))
+            drawArc(PaperInk.GOLD_LIGHT, 200f, 110f, false, Offset(x - r * 0.65f, y - r * 0.65f), Size(r * 1.3f, r * 1.3f), style = hairline)
         }
     }
 
@@ -943,7 +1012,8 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
         val CONFETTI = arrayOf(PaperInk.PINK, PaperInk.YELLOW, PaperInk.BLUE)
         val CONFETTI_REG = arrayOf(PaperInk.REG_PINK, PaperInk.REG_YELLOW, PaperInk.REG_BLUE)
         val REG_INKS = arrayOf(PaperInk.PINK to PaperInk.REG_PINK, PaperInk.BLUE to PaperInk.REG_BLUE, PaperInk.YELLOW to PaperInk.REG_YELLOW)
-        val TONE_PINK = ColorFilter.tint(PaperInk.PINK, BlendMode.SrcIn)
+        val TONE_PINK = ColorFilter.tint(PaperInk.FLUO, BlendMode.SrcIn)
+        val TONE_RED = ColorFilter.tint(PaperInk.RED, BlendMode.SrcIn)
         val TONE_VIOLET = ColorFilter.tint(PaperInk.VIOLET, BlendMode.SrcIn)
         val TONE_BLUE = ColorFilter.tint(PaperInk.BLUE, BlendMode.SrcIn)
         val TONE_CREASE = ColorFilter.tint(Color(0xFFB9B1A0), BlendMode.SrcIn)
