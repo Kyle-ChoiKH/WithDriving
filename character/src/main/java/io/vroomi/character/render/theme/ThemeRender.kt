@@ -186,6 +186,11 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
     val corner = Spring(0f, 30f, 11f)
     var options = SceneOptions(); private set
     val frame = ThemeFrame()
+    /**
+     * Shows the whole composition scaled to the canvas, whatever its shape (no cropped sides, no headroom): for
+     * pictures that zoom into a part of the scene by its place in the composition.
+     */
+    var wholeComposition = false
     private var headPx = 0f
     private var headColor: Color? = null
     private var texts: ThemeTexts? = null
@@ -216,11 +221,11 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
         val f = frame
         f.w = w; f.h = h; f.density = this; f.options = options
         val kByH = h / DESIGN_H
-        val kByW = w / min(painter.focusWidth, painter.minDesignWidth)
+        val kByW = w / (if (wholeComposition) painter.minDesignWidth else min(painter.focusWidth, painter.minDesignWidth))
         f.k = min(kByH, kByW)
         f.dw = w / f.k; f.dh = h / f.k
         // An upright canvas: the scene moves down toward the middle under a band of its own top colour.
-        headColor = painter.headroom(sim)
+        headColor = if (wholeComposition) null else painter.headroom(sim)
         headPx = if (headColor != null && f.dh - DESIGN_H > 1f) (f.dh - DESIGN_H) * HEAD_SHARE * f.k else 0f
         if (headPx > 0f) { f.h = h - headPx; f.dh = f.h / f.k }
         val tx = texts(tm, this)

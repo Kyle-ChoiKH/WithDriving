@@ -72,6 +72,8 @@ object KitShots {
     ) {
         val rt = requireNotNull(ThemeCatalog.create(theme))
         prepare(rt.sim as S)
+        // A detail is framed by its place in the whole composition, not by what a window of this shape would show.
+        rt.wholeComposition = zoom != 1f
         rt.simulate(seconds, o, DEFAULT_NOW_MS, at)
         p.snapshot(name) {
             val tm = rememberTextMeasurer()
