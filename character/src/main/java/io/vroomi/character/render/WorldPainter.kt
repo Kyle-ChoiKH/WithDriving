@@ -120,7 +120,8 @@ internal fun DrawScope.drawFar(rt: SceneRuntime, o: SceneOptions) {
         val x0 = ((k * slot - rt.scrollFar) * w).toFloat()
         val sw = (slot * w).toFloat()
         val biome = if (k >= rt.farBoundary) rt.biomeCur else rt.biomePrev
-        drawFarSlot(rt, biome, k, x0, sw, horizon, h, n, o)
+        val variant = if (k >= rt.farBoundary) rt.variantCur else rt.variantPrev
+        if (variant) drawFarVariant(rt, biome, k, x0, sw, horizon, h, n, o) else drawFarSlot(rt, biome, k, x0, sw, horizon, h, n, o)
     }
     // Destination flag grows on the horizon in the last kilometre of guidance.
     val d = rt.lastJourney.destinationM
@@ -265,7 +266,8 @@ internal fun DrawScope.drawGroundAndMid(rt: SceneRuntime, o: SceneOptions) {
     for (k in first..first + (1.0 / slot).toInt() + 3) {
         val x = ((k * slot - rt.scrollMid) * w).toFloat() + (hash01(k, 31) * 0.3f * slot * w).toFloat()
         val biome = if (k >= rt.midBoundary) rt.biomeCur else rt.biomePrev
-        drawMidProp(rt, biome, k, x, baseY, h, n, o)
+        val variant = if (k >= rt.midBoundary) rt.variantCur else rt.variantPrev
+        if (variant) drawMidVariant(rt, biome, k, x, baseY, h, n, o) else drawMidProp(rt, biome, k, x, baseY, h, n, o)
     }
 }
 
