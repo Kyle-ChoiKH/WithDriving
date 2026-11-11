@@ -61,7 +61,7 @@ object Ambience {
         a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF131A21, 0.687f),     // oil amber, the night drafting slate
         a(SceneTheme.MUSIC_BOX, 0xFF6CC3A0, 0xFF2A2522, 0.787f),   // mint enamel, the lamp-lit warm grey
         a(SceneTheme.PLASMA, 0xFFB45CFF, 0xFF0E1016, 0.013f),     // plasma violet, the dark lab's blue-black
-        a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.021f),     // signal orange, the hangar's graphite
+        a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.054f),     // signal orange, the hangar's graphite
         a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.284f),  // fresh leaf, moonlit moss
         a(SceneTheme.AQUARIUM, 0xFF2F8FD8, 0xFF081622, 0.318f),   // open-water blue, the deep
         a(SceneTheme.ORBIT, 0xFF7FF0FF, 0xFF020405, 0.003f),      // phosphor cyan, the display's black
