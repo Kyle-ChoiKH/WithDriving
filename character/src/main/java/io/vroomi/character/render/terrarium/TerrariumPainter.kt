@@ -88,16 +88,19 @@ private val LEAF = arrayOf(Color(0xFF7DB843), Color(0xFF3E7F2E), Color(0xFFC9712
 private val LEAF_LIT = arrayOf(Color(0xFFC3E58A), Color(0xFF86C25A), Color(0xFFEFB25A), Color(0xFF86AE98))
 private val PETAL = arrayOf(Color(0xFFF7B7CF), Color(0xFFFFFFFF), Color(0xFFF5C451), Color(0xFFF4F1EA))
 
-private class TGeo(val dw: Float) {
+private class TGeo(val dw: Float, val kind: Int) {
     /** The jar stands a little right of centre (a photographer's third), more so on wide canvases. */
     val x = dw / 2f + max(0f, dw - 900f) * 0.10f
-    val base = 472f
-    val half = 226f
-    val shoulder = 236f
-    val neckHalf = 148f
-    val neckY = 156f
-    val lipY = 136f
-    val ground = 374f
+    /** The vessel of this upgrade step (TerrariumSteps.kt): the measures below are its own. */
+    val v = Vessel(kind, x)
+    val base = v.base
+    val half = v.half
+    val shoulder = v.shoulder
+    val neckHalf = v.neckHalf
+    val neckY = v.neckY
+    val lipY = v.lipY
+    val ground = v.ground
+    val q = v.q
 
     /** The boulder under the jar: a lumpy dome whose crown is the focal plane. */
     val sx = x + 14f
@@ -113,35 +116,8 @@ private class TGeo(val dw: Float) {
         return ((64f + 26f * sin(px * 0.017f + 1f) + 12f * sin(px * 0.052f)) * (1.25f - 0.75f * u)).coerceAtLeast(8f)
     }
 
-    val jar = Path().apply {
-        moveTo(x - half + 18f, base)
-        lineTo(x + half - 18f, base)
-        quadraticTo(x + half, base, x + half + 2f, base - 20f)
-        cubicTo(x + half + 9f, 400f, x + half + 8f, 300f, x + half - 2f, shoulder)
-        cubicTo(x + half - 14f, 182f, x + neckHalf + 46f, neckY + 6f, x + neckHalf, neckY)
-        lineTo(x + neckHalf, lipY)
-        lineTo(x - neckHalf, lipY)
-        lineTo(x - neckHalf, neckY)
-        cubicTo(x - neckHalf - 46f, neckY + 6f, x - half + 14f, 182f, x - half + 2f, shoulder)
-        cubicTo(x - half - 8f, 300f, x - half - 9f, 400f, x - half - 2f, base - 20f)
-        quadraticTo(x - half, base, x - half + 18f, base)
-        close()
-    }
-    val inner = Path().apply {
-        val i = 7f
-        moveTo(x - half + 20f, base - i)
-        lineTo(x + half - 20f, base - i)
-        quadraticTo(x + half - i, base - i, x + half - i + 2f, base - 22f)
-        cubicTo(x + half - i + 9f, 400f, x + half - i + 8f, 300f, x + half - i - 2f, shoulder)
-        cubicTo(x + half - i - 14f, 186f, x + neckHalf + 40f, neckY + 12f, x + neckHalf - i, neckY + i)
-        lineTo(x + neckHalf - i, lipY + i)
-        lineTo(x - neckHalf + i, lipY + i)
-        lineTo(x - neckHalf + i, neckY + i)
-        cubicTo(x - neckHalf - 40f, neckY + 12f, x - half + i + 14f, 186f, x - half + i + 2f, shoulder)
-        cubicTo(x - half + i - 8f, 300f, x - half + i - 9f, 400f, x - half + i - 2f, base - 22f)
-        quadraticTo(x - half + i, base - i, x - half + 20f, base - i)
-        close()
-    }
+    val jar = v.path(0f)
+    val inner = v.path(7f)
     val stone = Path().apply {
         val x0 = sx - sr * 1.25f; val x1 = sx + sr * 1.25f
         moveTo(x0, 660f)
@@ -157,11 +133,12 @@ private class TGeo(val dw: Float) {
     val ivy = Offset(x - 178f, 222f)
     val succulent = Offset(x + 102f, ground + 13f)
     val flower = Offset(x + 172f, ground + 2f)
-    val pond = Rect(x + 4f, ground - 5f, x + 112f, ground + 15f)
+    /** The pond comes with the stream (step 3); before that it lies far outside the frame. */
+    val pond = if (TerraStep.stream(kind)) Rect(x + 4f, ground - 5f, x + 112f, ground + 15f) else Rect(-9000f, -9000f, -8990f, -8990f)
     val pondPath = Path().apply { addOval(pond) }
-    val ladyLeafA = Offset(x - 206f, ground + 2f)
-    val bladeCtrl = Offset(x - 200f, ground - 140f)
-    val ladyLeafB = Offset(x - 108f, ground - 118f)
+    val ladyLeafA = Offset(x - 206f * q, ground + 2f)
+    val bladeCtrl = Offset(x - 200f * q, ground - 140f * q)
+    val ladyLeafB = Offset(x - 108f * q, ground - 118f * q)
     val blade = Path().apply {
         moveTo(ladyLeafA.x - 5f, ladyLeafA.y)
         quadraticTo(bladeCtrl.x - 6f, bladeCtrl.y, ladyLeafB.x, ladyLeafB.y)
@@ -174,8 +151,8 @@ private class TGeo(val dw: Float) {
     val dropX = FloatArray(240) { x - half + 14f + hash01(it, 81) * (half * 2f - 28f) }
     val dropY = FloatArray(240) { neckY + 26f + hash01(it, 82).pow(0.7f) * (base - neckY - 50f) }
     val dropR = FloatArray(240) { 0.9f + hash01(it, 83) * hash01(it, 84) * 4.2f * (0.5f + (dropY[it] - neckY) / (base - neckY)) }
-    val fireX = FloatArray(TerrariumSim.FIREFLIES) { x - 168f + it * 64f + hash01(it, 91) * 26f }
-    val fireY = FloatArray(TerrariumSim.FIREFLIES) { 232f + hash01(it, 92) * 104f }
+    val fireX = FloatArray(TerrariumSim.FIREFLIES) { x + (-168f + it * 64f + hash01(it, 91) * 26f) * q }
+    val fireY = FloatArray(TerrariumSim.FIREFLIES) { ground - 142f * q + hash01(it, 92) * 104f * q }
     /** Out-of-focus fireflies in the garden behind (large soft glows). */
     val farFireX = FloatArray(7) { hash01(it, 93) * dw }
     val farFireY = FloatArray(7) { 90f + hash01(it, 94) * 300f }
@@ -209,16 +186,16 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
     private val hair = Stroke(0.8f)
     private val rim = Stroke(1.1f)
 
-    private fun geo(dw: Float): TGeo {
+    private fun geo(dw: Float, kind: Int): TGeo {
         val g = geo
-        if (g != null && abs(g.dw - dw) < 0.5f) return g
-        return TGeo(dw).also { geo = it }
+        if (g != null && abs(g.dw - dw) < 0.5f && g.kind == kind) return g
+        return TGeo(dw, kind).also { geo = it }
     }
 
     override fun drawPx(s: DrawScope, sim: TerrariumSim, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
-        val g = geo(f.dw)
+        val g = geo(f.dw, f.model)
         val w = f.w.roundToInt(); val h = f.h.roundToInt(); val k = f.k
-        val key = (w.toLong() shl 24) xor (h.toLong() shl 4) xor sim.season.toLong()
+        val key = (w.toLong() shl 24) xor (h.toLong() shl 4) xor sim.season.toLong() xor (f.model.toLong() shl 44)
         val n = sim.night
         val intro = f.options.intro
         val off = IntOffset(left.roundToInt(), top.roundToInt())
@@ -246,18 +223,24 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
     }
 
     override fun draw(s: DrawScope, sim: TerrariumSim, f: ThemeFrame, tx: ThemeTexts) = with(s) {
-        val g = geo(f.dw)
+        val g = geo(f.dw, f.model)
         daylight(g, sim, f)
         farFireflies(g, sim)
         clipPath(g.inner) {
+            // The planting follows the upgrade step (TerraStep): each step keeps the one before and adds its own.
+            val kind = g.kind
             causticsOnSoil(g, sim)
-            pond(g, sim)
+            if (TerraStep.stream(kind)) {
+                stream(g.v, if (sim.reducedMotion) 0f else sim.decoTime.toFloat() * (if (sim.calm) 0.5f else 1f), sim.night)
+                pond(g, sim)
+            }
             moss(g, sim)
-            plant(1, g, sim, f, PlantGen.Kind.SAPLING, g.sapling, TerrariumSim.SAPLING, 4.0f)
-            plant(0, g, sim, f, PlantGen.Kind.FERN, g.fern, TerrariumSim.FERN, 3.2f)
-            plant(2, g, sim, f, PlantGen.Kind.IVY, g.ivy, TerrariumSim.IVY, 2.1f)
-            succulent(g, sim, f)
-            flowerPlant(g, sim)
+            if (!TerraStep.planted(kind)) sprouts(g.v, sim.sway * sin(sim.swayPhase).toFloat() * 3f - sim.tilt * 0.6f, LEAF[sim.season], LEAF_LIT[sim.season])
+            if (TerraStep.stream(kind)) plant(1, g, sim, f, PlantGen.Kind.SAPLING, g.sapling, TerrariumSim.SAPLING, 4.0f)
+            if (TerraStep.planted(kind)) plant(0, g, sim, f, PlantGen.Kind.FERN, g.fern, TerrariumSim.FERN, 3.2f)
+            if (TerraStep.vines(kind)) plant(2, g, sim, f, PlantGen.Kind.IVY, g.ivy, TerrariumSim.IVY, 2.1f)
+            if (TerraStep.planted(kind)) succulent(g, sim, f)
+            if (TerraStep.bridge(kind)) flowerPlant(g, sim)
             bloomWave(g, sim)
             ladybug(g, sim)
             rainCloud(g, sim)
@@ -268,7 +251,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         condensation(g, sim)
         val k = f.k
         val nightKey = if (sim.night > 0.5f) 1L else 0L
-        val gk = (f.w.roundToInt().toLong() shl 24) xor (f.h.roundToInt().toLong() shl 4) xor (sim.season.toLong() shl 1) xor nightKey
+        val gk = (f.w.roundToInt().toLong() shl 24) xor (f.h.roundToInt().toLong() shl 4) xor (sim.season.toLong() shl 1) xor nightKey xor (f.model.toLong() shl 44)
         val top = glassTop.get(gk, f.w.roundToInt(), f.h.roundToInt(), f.density) { withTransform({ scale(k, k, Offset.Zero) }) { glassOverlay(g, f, sim.season, nightKey == 1L) } }
         drawNative(top, f, 0f, 0f)
         moth(g, sim)
@@ -331,7 +314,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         // Behind the glass: the garden magnified by the jar (a pre-baked lens), then the soil in section.
         clipPath(g.inner) {
             withTransform({ scale(1.10f, 1.10f, Offset(g.x, 300f)) }) { garden(g, f, season, night) }
-            soil(g)
+            soil(g, season, night)
         }
     }
 
@@ -409,9 +392,9 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
             drawOval(Brush.radialGradient(listOf(Color.Black.copy(alpha = if (night) 0.30f else 0.42f), Color.Transparent), Offset(g.x - 190f, g.base + 12f), 300f),
                 Offset(g.x - 470f, g.base - 6f), Size(600f, 46f))
             val cc = if (night) TP.moon else TP.sun
-            drawArc(Brush.radialGradient(listOf(cc.copy(alpha = if (night) 0.20f else 0.70f), cc.copy(alpha = 0f)), Offset(g.x - 260f, g.base + 12f), 120f),
-                200f, 140f, false, Offset(g.x - 370f, g.base + 2f), Size(220f, 22f), style = Stroke(7f, cap = StrokeCap.Round))
-            drawArc(cc.copy(alpha = if (night) 0.25f else 0.8f), 215f, 110f, false, Offset(g.x - 360f, g.base + 5f), Size(200f, 16f), style = Stroke(1.6f, cap = StrokeCap.Round))
+            drawArc(Brush.radialGradient(listOf(cc.copy(alpha = if (night) 0.20f else 0.70f), cc.copy(alpha = 0f)), Offset(g.x - 260f * g.q, g.base + 12f), 120f),
+                200f, 140f, false, Offset(g.x - 370f * g.q, g.base + 2f), Size(220f * g.q, 22f), style = Stroke(7f, cap = StrokeCap.Round))
+            drawArc(cc.copy(alpha = if (night) 0.25f else 0.8f), 215f, 110f, false, Offset(g.x - 360f * g.q, g.base + 5f), Size(200f * g.q, 16f), style = Stroke(1.6f, cap = StrokeCap.Round))
         }
         drawOval(Color.Black.copy(alpha = 0.40f), Offset(g.x - g.half - 6f, g.base - 5f), Size(g.half * 2f + 12f, 12f))
         // The stone's front falls out of focus (a soft haze toward the bottom of the frame).
@@ -426,7 +409,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         return (1f - (dy * dy + dx * dx * 0.6f)).coerceIn(0f, 1f)
     }
 
-    private fun DrawScope.soil(g: TGeo) {
+    private fun DrawScope.soil(g: TGeo, season: Int, night: Boolean) {
         val l = g.x - g.half; val wd = g.half * 2f
         drawRect(Brush.verticalGradient(listOf(TP.soil, TP.soilDark), startY = g.ground, endY = 430f), Offset(l, g.ground - 4f), Size(wd, 434f - g.ground))
         for (i in 0 until 160) {
@@ -441,14 +424,17 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
             drawOval(Brush.radialGradient(listOf(TP.pebble, TP.pebbleDark), Offset(px + r * 0.35f, py - r * 0.35f), r * 1.7f), Offset(px - r, py - r * 0.7f), Size(r * 2f, r * 1.4f))
         }
         // Pebbles on the surface.
-        for (i in 0 until 12) {
+        for (i in 0 until (if (TerraStep.planted(g.kind)) 12 else 0)) {
             val px = l + 30f + hash01(i, 14) * (wd - 60f)
             val r = 4f + hash01(i, 15) * 5f
             drawOval(Brush.radialGradient(listOf(Color(0xFFD2CEC2), Color(0xFF77736A)), Offset(px + 2f, g.ground - 3f), r * 1.5f), Offset(px - r, g.ground - r * 0.4f), Size(r * 2f, r * 1.2f))
         }
         // Driftwood branch the ivy hangs from.
-        drawLine(TP.bark, Offset(g.x - g.half + 12f, 240f), Offset(g.x - 128f, 214f), 9f, cap = StrokeCap.Round)
-        drawLine(Color(0xFFA8916F), Offset(g.x - g.half + 16f, 237f), Offset(g.x - 130f, 211f), 2f, cap = StrokeCap.Round)
+        if (TerraStep.vines(g.kind)) {
+            drawLine(TP.bark, Offset(g.x - g.half + 12f, 240f), Offset(g.x - 128f, 214f), 9f, cap = StrokeCap.Round)
+            drawLine(Color(0xFFA8916F), Offset(g.x - g.half + 16f, 237f), Offset(g.x - 130f, 211f), 2f, cap = StrokeCap.Round)
+        }
+        stepSoil(g.v, night, LEAF[season], LEAF_LIT[season], PETAL[season])
     }
 
     /** Glass in sharp focus: refraction bands, window highlights, thick green edges, lid, frost, the moss in front. */
@@ -472,7 +458,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
                 Offset(g.x - g.half + 18f, g.shoulder - 10f), Size(60f, g.base - g.shoulder - 10f))
             drawOval(spec.copy(alpha = 0.26f * specA), Offset(g.x - g.half + 92f, g.shoulder + 40f), Size(2.4f, 170f))
             // Shoulder highlight (the curved glass catches the sky).
-            drawArc(Brush.horizontalGradient(listOf(spec.copy(alpha = 0f), spec.copy(alpha = 0.75f * specA)), startX = g.x, endX = g.x + g.half),
+            if (g.kind <= 2) drawArc(Brush.horizontalGradient(listOf(spec.copy(alpha = 0f), spec.copy(alpha = 0.75f * specA)), startX = g.x, endX = g.x + g.half),
                 290f, 60f, false, Offset(g.x - g.half + 10f, g.neckY - 4f), Size(g.half * 2f - 20f, 170f), style = Stroke(5f, cap = StrokeCap.Round))
             if (season == 3) {
                 // Winter: frost feathers along the bottom and the sides of the glass.
@@ -490,20 +476,22 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         // Thick glass reads green at its edges; the base is a heavy slab.
         drawPath(g.jar, TP.glassEdge.copy(alpha = if (night) 0.28f else 0.55f), style = Stroke(2.6f))
         drawPath(g.inner, spec.copy(alpha = 0.20f * specA), style = Stroke(1f))
-        drawRect(Brush.verticalGradient(listOf(TP.glassEdge.copy(alpha = 0.10f), TP.glassEdge.copy(alpha = if (night) 0.25f else 0.45f)), startY = g.base - 14f, endY = g.base),
+        if (g.kind <= 2) drawRect(Brush.verticalGradient(listOf(TP.glassEdge.copy(alpha = 0.10f), TP.glassEdge.copy(alpha = if (night) 0.25f else 0.45f)), startY = g.base - 14f, endY = g.base),
             Offset(g.x - g.half + 16f, g.base - 14f), Size(g.half * 2f - 32f, 14f))
-        drawLine(spec.copy(alpha = 0.7f * specA), Offset(g.x - g.half + 30f, g.base - 13f), Offset(g.x + g.half - 30f, g.base - 13f), 1.2f)
-        // Glass lid: a thick disc with a blown knob.
-        val lidL = g.x - g.neckHalf - 14f; val lidW = (g.neckHalf + 14f) * 2f
-        drawOval(TP.glassEdge.copy(alpha = if (night) 0.18f else 0.30f), Offset(lidL, g.lipY - 12f), Size(lidW, 20f))
-        drawOval(spec.copy(alpha = 0.55f * specA), Offset(lidL, g.lipY - 12f), Size(lidW, 20f), style = Stroke(1.4f))
-        drawRect(TP.glassEdge.copy(alpha = if (night) 0.20f else 0.38f), Offset(lidL, g.lipY - 2f), Size(lidW, 6f))
-        drawLine(spec.copy(alpha = 0.8f * specA), Offset(g.x + 30f, g.lipY - 9f), Offset(g.x + g.neckHalf, g.lipY - 6f), 1.6f, cap = StrokeCap.Round)
-        val kc = Offset(g.x, g.lipY - 30f)
-        drawLine(TP.glassEdge.copy(alpha = 0.5f), Offset(g.x, g.lipY - 12f), Offset(g.x, kc.y + 10f), 7f)
-        drawCircle(Brush.radialGradient(listOf(Color(0xFF223322).copy(alpha = 0.10f), TP.glassEdge.copy(alpha = 0.55f)), Offset(kc.x - 4f, kc.y + 4f), 20f), 16f, kc)
-        drawCircle(spec.copy(alpha = 0.9f * specA), 3.2f, Offset(kc.x + 6f, kc.y - 6f))
-        drawArc(spec.copy(alpha = 0.6f * specA), 300f, 70f, false, Offset(kc.x - 13f, kc.y - 13f), Size(26f, 26f), style = Stroke(1.6f))
+        if (g.kind <= 2) drawLine(spec.copy(alpha = 0.7f * specA), Offset(g.x - g.half + 30f, g.base - 13f), Offset(g.x + g.half - 30f, g.base - 13f), 1.2f)
+        if (g.kind == 0) {
+            // Glass lid: a thick disc with a blown knob.
+            val lidL = g.x - g.neckHalf - 14f; val lidW = (g.neckHalf + 14f) * 2f
+            drawOval(TP.glassEdge.copy(alpha = if (night) 0.18f else 0.30f), Offset(lidL, g.lipY - 12f), Size(lidW, 20f))
+            drawOval(spec.copy(alpha = 0.55f * specA), Offset(lidL, g.lipY - 12f), Size(lidW, 20f), style = Stroke(1.4f))
+            drawRect(TP.glassEdge.copy(alpha = if (night) 0.20f else 0.38f), Offset(lidL, g.lipY - 2f), Size(lidW, 6f))
+            drawLine(spec.copy(alpha = 0.8f * specA), Offset(g.x + 30f, g.lipY - 9f), Offset(g.x + g.neckHalf, g.lipY - 6f), 1.6f, cap = StrokeCap.Round)
+            val kc = Offset(g.x, g.lipY - 30f)
+            drawLine(TP.glassEdge.copy(alpha = 0.5f), Offset(g.x, g.lipY - 12f), Offset(g.x, kc.y + 10f), 7f)
+            drawCircle(Brush.radialGradient(listOf(Color(0xFF223322).copy(alpha = 0.10f), TP.glassEdge.copy(alpha = 0.55f)), Offset(kc.x - 4f, kc.y + 4f), 20f), 16f, kc)
+            drawCircle(spec.copy(alpha = 0.9f * specA), 3.2f, Offset(kc.x + 6f, kc.y - 6f))
+            drawArc(spec.copy(alpha = 0.6f * specA), 300f, 70f, false, Offset(kc.x - 13f, kc.y - 13f), Size(26f, 26f), style = Stroke(1.6f))
+        } else vesselTop(g.v, spec, specA, TP.glassEdge, night)
         // Moss in front of the glass foot (the jar sits in it).
         val moss = if (night) TP.nMoss else TP.moss
         val mossLit = if (night) TP.nMossLit else TP.mossLit
@@ -585,7 +573,8 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         for (i in 0 until n) {
             val u = hash01(i, 50)
             val px = g.x - g.half + 16f + u * (g.half * 2f - 32f)
-            if (px > g.pond.left - 4f && px < g.pond.right + 4f) continue
+            // No moss on the water: the pond, and the stream's bed with the spring's stones to its left.
+            if (px > g.pond.left - 100f && px < g.pond.right + 4f) continue
             val mound = sin(u * 9f) * 0.5f + 0.5f
             val py = g.ground + 4f - mound * (6f + 16f * gr) - hash01(i, 51) * 5f
             val r = 2.6f + hash01(i, 52) * 3.6f * (0.6f + 0.6f * gr)
@@ -853,7 +842,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
     private fun DrawScope.moth(g: TGeo, sim: TerrariumSim) {
         val m = sim.moth
         if (m < 0.05f) return
-        val mx = g.x + 70f; val my = g.lipY - 14f
+        val mx = g.v.mothAt.x; val my = g.v.mothAt.y
         drawOval(TP.moth.copy(alpha = m), Offset(mx - 9f, my - 4f), Size(9f, 7f))
         drawOval(TP.moth.copy(alpha = m), Offset(mx, my - 4f), Size(9f, 7f))
         drawLine(Color(0xFF4A4034).copy(alpha = m), Offset(mx, my - 4f), Offset(mx, my + 3f), 1.4f)
