@@ -149,7 +149,7 @@ fun Modifier.material(token: MaterialToken, shape: Shape, blur: Boolean = false,
             val hair = if (dark) Color.White.copy(alpha = MaterialToken.HAIRLINE_DARK) else Color.Black.copy(alpha = MaterialToken.HAIRLINE_LIGHT)
             onDrawBehind {
                 val src = backdrop?.layer
-                val blurred = blurLayer != null && src != null
+                val blurred = blurLayer != null && src != null && blurPx * MaterialToken.BLUR_SCALE > 0.5f   // radius 0 throws
                 if (blurred) {
                     val q = MaterialToken.BLUR_SCALE
                     blurLayer!!.renderEffect = BlurEffect(blurPx * q, blurPx * q, TileMode.Clamp)

@@ -312,8 +312,10 @@ fun AppRoot(rt: VroomiRuntime) {
     LaunchedEffect(demo) {
         if (demo) { afterglow = true; return@LaunchedEffect }
         if (!afterglow) return@LaunchedEffect
-        snapshotFlow { rt.isMoving.value }.first { !it }
-        withTimeoutOrNull(prefs.ms(Motion.TRIP_RETURN_MS)) { snapshotFlow { rt.lastTrip.value }.first { it == null } }
+        // These are StateFlows, not Compose state: collected directly (a snapshotFlow over .value would see only the
+        // first value, and a demo ended mid-drive would keep its theme on screen for good).
+        rt.isMoving.first { !it }
+        withTimeoutOrNull(prefs.ms(Motion.TRIP_RETURN_MS)) { rt.lastTrip.first { it == null } }
         stage.hint = PassageHint(PassageStyle.ENTRANCE, intensity = 0.6f)
         afterglow = false; demoForced = null
     }
@@ -541,10 +543,11 @@ fun AppRoot(rt: VroomiRuntime) {
             val blurBehind = blurOk && sheetAmount > 0.01f && !moving
             Box(
                 Modifier.fillMaxSize().graphicsLayer {
-                    if (blurBehind) {
-                        val r = Dimens.sheetBlur.toPx() * sheetAmount
-                        renderEffect = BlurEffect(r, r, TileMode.Clamp)
-                    } else renderEffect = null
+                    // This block re-runs on a state change before the next composition, so [blurBehind] can be a frame
+                    // old while the amount is already 0 (a sheet that closes across a long frame). A blur of radius 0
+                    // has no native effect and throws, so the radius is checked here as well.
+                    val r = Dimens.sheetBlur.toPx() * sheetAmount
+                    renderEffect = if (blurBehind && r > 0.5f) BlurEffect(r, r, TileMode.Clamp) else null
                 },
             ) {
                 CompositionLocalProvider(LocalSceneBackdrop provides sceneBackdrop) {

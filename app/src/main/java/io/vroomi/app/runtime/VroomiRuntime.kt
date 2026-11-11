@@ -212,11 +212,12 @@ class VroomiRuntime(private val app: Application) {
             voice.request(ev.lineKey, gate, now)?.let { _lastLine.value = it; lastSpokeAtMs = now }
         }
 
-        recorder.onSnapshot(s, now)?.let { trip ->
+        // The recorder marks a trip with any demo driving in it, so "End demo" pressed mid-drive cannot leave a real trip.
+        recorder.onSnapshot(s, now, _demo.value)?.let { trip ->
             val j = _target.value.journey
             // The map theme hands over a normalised 64-point sketch of the trail (no coordinates).
             val sketch = io.vroomi.core.vehicle.route.TripSketch.take()?.toList()
-            val full = trip.copy(stars = j.stars, bestCombo = j.bestCombo, biomes = j.biomesSeen, demo = _demo.value, sketch = sketch)
+            val full = trip.copy(stars = j.stars, bestCombo = j.bestCombo, biomes = j.biomesSeen, demo = trip.demo || _demo.value, sketch = sketch)
             diary.add(full)
             raiseGrade()
             _lastTrip.value = full

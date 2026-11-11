@@ -62,10 +62,15 @@ Task 1~16이 모두 끝나 PR로 올라가 있다. 모든 PR은 base main이고 
 
 Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로 병합한 뒤 작업):
 - 공용 테스트: `PassageCostTest.stepFiveOfEveryTheme`(12개 테마 5단계의 레이어 48MB 이하·해제 확인, `build/reports/passage_cost_step5.txt`), `ScenarioGoldenTest`의 `plasmaShowcase`·`hangarShowcase`.
-- 밝기 재측정(12개 테마, `Ambience.kt`와 `theme_luminance.json`이 일치), 전체 `testDebugUnitTest lint assembleDebug` 통과: 테스트 793개(단위 285 + 화면 508) 실패 0, lint 오류 0.
+- 밝기 재측정(12개 테마, `Ambience.kt`와 `theme_luminance.json`이 일치), 전체 `testDebugUnitTest lint assembleDebug` 통과: 테스트 796개(단위 288 + 화면 508) 실패 0, lint 오류 0.
 - 스냅샷 517장 재기록 → `docs/screenshots/` 갱신, `marble_*` 그림과 gif 삭제.
 - 문서: README(등급·업그레이드 절, 플라즈마·격납고), 제안서, 독창성 문서, 영상 대본, 제출 점검표. 버전 1.7.0-contest(8).
-- **하지 않은 것:** 에뮬레이터 확인(이 PC에 adb·에뮬레이터 없음, 사용자가 해야 함), 사다리 헬퍼를 `KitShots.ladder()`로 모으기(동작에 영향 없어 생략), 릴리스 APK 서명 빌드(키는 본 체크아웃에만 있음).
+- **에뮬레이터 확인**(Pleos Connect v2.1.0, `C:\vroomi-tools\android-sdk`, 디버그 빌드): 첫 실행, 등급 탭, 테마 탭, 업그레이드 단계 시트, 데모 목록 17개, 격납고·시계 쇼케이스(5단계) 재생. 약 60fps(격납고 50초 3,178프레임 끊김 0.13%, 시계 20초 1,214프레임 끊김 0.33%). 여기서 찾아 고친 버그 3개:
+  1. 데모를 "데모 끝내기"로 중간에 멈추면 그 주행이 실제 주행으로 저장되어 등급 거리에 들어갔다 → `TripRecorder`가 데모가 섞인 주행을 데모로 표시(`DemoTripTest`).
+  2. 시트가 닫히는 프레임이 길어지면(무거운 테마로 넘어갈 때) 흐림 반경 0으로 앱이 죽었다(`RenderEffect` "nativePtr is null") → `AppRoot`·`Materials`에서 반경 확인.
+  3. 데모를 주행 중에 끝내면 홈이 원래 테마로 돌아오지 않았다(StateFlow를 `snapshotFlow`로 읽어 변화를 못 봄) → 흐름을 직접 수집.
+- **에뮬레이터에서 못 본 것:** 나머지 테마 10개의 쇼케이스, 등급이 실제로 오르는 순간(실주행 10km 필요), 릴리스 빌드.
+- **하지 않은 것:** 사다리 헬퍼를 `KitShots.ladder()`로 모으기(동작에 영향 없어 생략), 릴리스 APK 서명 빌드(키는 본 체크아웃에만 있음).
 - 5단계 한 프레임 시간(빌드 PC의 JVM 기준, 차량 아님)은 종이 팝업북 220ms, 시계 137ms로 다른 테마보다 길다. 실제 기기에서 끊기면 이 둘부터 본다.
 
 알아 둘 점:
@@ -78,7 +83,7 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 ## 5. 다음에 할 일 (순서대로)
 
 1. **PR 병합(사용자 승인 후).** 통합 PR(`phase-c/integration`) 하나를 main에 합친다. 그러면 #1~#15는 내용이 이미 들어가므로 닫으면 된다. (따로 합치고 싶으면 #1 → #2 → #3 → #4~#15 순서.)
-2. **에뮬레이터 확인**(사용자): Pleos Connect Virtual Console에서 등급 탭, 테마 12개의 단계 고르기, 쇼케이스 재생.
+2. **에뮬레이터 마저 확인**(선택): 나머지 테마 쇼케이스 10개, 릴리스 APK 설치 확인. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 3. **제출 준비**(9장).
 
 각 테마 작업의 공통 단계(스냅샷 이름, 사다리 그림, 직접 보기, 반복, 올리기)는 계획의 "Phase B 공통 단계"와 "병렬 작업 규칙"에 있다. 요점:
