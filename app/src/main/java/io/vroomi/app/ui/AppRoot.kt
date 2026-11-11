@@ -150,6 +150,9 @@ fun AppRoot(rt: VroomiRuntime) {
     val demo by rt.demo.collectAsStateWithLifecycle()
     val caption by rt.demoCaption.collectAsStateWithLifecycle()
     val progress by rt.demoProgress.collectAsStateWithLifecycle()
+    val handsOnRunning by rt.handsOn.running.collectAsStateWithLifecycle()
+    val handsOnSet by rt.handsOn.on.collectAsStateWithLifecycle()
+    val handsOnCaption by rt.handsOn.caption.collectAsStateWithLifecycle()
     val demoTheme by rt.demoTheme.collectAsStateWithLifecycle()
     val demoPowertrain by rt.demoPowertrain.collectAsStateWithLifecycle()
     val demoModel by rt.demoModel.collectAsStateWithLifecycle()
@@ -192,9 +195,12 @@ fun AppRoot(rt: VroomiRuntime) {
     val renderer = rememberSceneStillRenderer()
     val stills = remember(renderer) { HeroStills(renderer, scope) }
     val clock by produceState(Calendar.getInstance()) { while (true) { delay(60_000); value = Calendar.getInstance() } }
-    val hour = clock.get(Calendar.HOUR_OF_DAY) + clock.get(Calendar.MINUTE) / 60f
+    val clockHour = clock.get(Calendar.HOUR_OF_DAY) + clock.get(Calendar.MINUTE) / 60f
+    // A demo plays in mid-afternoon and in the theme's own colours, so what its captions describe shows whatever the
+    // hour or the colourway (the headlights bring the night; a drive mode tints the light).
+    val hour = if (demo) DEMO_HOUR else clockHour
     val season = Season.ofMonth(clock.get(Calendar.MONTH) + 1)
-    stills.spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, hourOfDay = hour, season = season)
+    stills.spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, hourOfDay = clockHour, season = season)
 
     LaunchedEffect(stage) { stage.run { currentPrefs } }
     LaunchedEffect(desired) { stage.show(desired) }
@@ -256,7 +262,7 @@ fun AppRoot(rt: VroomiRuntime) {
     val sceneModel = demoModel ?: modelOf(shownTheme)
     stills.modelOf = modelOf
     // The colourway of each theme: the user's choice among those the grade has opened.
-    val colorOf: (SceneTheme) -> Int = { t -> ThemeAccess.effectiveColor(grade, settings.colors[t]) }
+    val colorOf: (SceneTheme) -> Int = { t -> if (demo) 0 else ThemeAccess.effectiveColor(grade, settings.colors[t]) }
     stills.colorOf = colorOf
     // The props of each theme: those switched on among the ones the grade has opened.
     val decorOf: (SceneTheme) -> Int = { t -> ThemeAccess.effectiveDecor(grade, settings.decor[t]) }
@@ -349,7 +355,10 @@ fun AppRoot(rt: VroomiRuntime) {
             val wPx = constraints.maxWidth.toFloat(); val hPx = constraints.maxHeight.toFloat()
             // The painters keep their readings out of the chrome's corners; they need the window's real height to tell
             // the live scene (always this tall) from a miniature of it, on any display density.
-            val windowH = maxHeight.value
+            // The hands-on demo keeps a band under the scene for its controls: the full-bleed scene ends above it.
+            val handsBand = if (demo && handsOnRunning) Dimens.handsOnBand else 0.dp
+            val handsBandPx = with(density) { handsBand.toPx() }
+            val windowH = maxHeight.value - handsBand.value
             androidx.compose.runtime.SideEffect { io.vroomi.character.render.theme.ChromeZones.screenH = windowH }
             val wide = maxWidth >= Dimens.wideBreak
             val railPx = with(density) { Dimens.railWidth.toPx() }
@@ -368,13 +377,15 @@ fun AppRoot(rt: VroomiRuntime) {
                 Rect(r.center.x - r.width * s / 2f, r.center.y - r.height * s / 2f, r.center.x + r.width * s / 2f, r.center.y + r.height * s / 2f)
             }
             fun rectFor(p: Place): Rect? = when (p) {
-                Place.FULL, Place.STAGE -> Rect(0f, 0f, wPx, hPx)
+                Place.FULL -> Rect(0f, 0f, wPx, hPx - handsBandPx)
+                Place.STAGE -> Rect(0f, 0f, wPx, hPx)
                 Place.HOME -> Rect(railPx, 0f, wPx, hPx)
                 Place.PANE -> Rect(railPx, 0f, railPx + (wPx - railPx) * io.vroomi.app.ui.design.Layout.SCENE_PANE, hPx)
                 Place.CARD -> cardRect(appliedRef.value)
             }
             fun layoutFor(p: Place): IntSize = when (p) {
-                Place.CARD, Place.STAGE, Place.FULL -> IntSize(wPx.toInt(), hPx.toInt())
+                Place.CARD, Place.STAGE -> IntSize(wPx.toInt(), hPx.toInt())
+                Place.FULL -> IntSize(wPx.toInt(), (hPx - handsBandPx).toInt())
                 else -> rectFor(p)!!.let { IntSize(it.width.toInt(), it.height.toInt()) }
             }
             val rectAnim = remember { Animatable(rectFor(place) ?: Rect(railPx, 0f, wPx, hPx), Rect.VectorConverter) }
@@ -384,7 +395,7 @@ fun AppRoot(rt: VroomiRuntime) {
             var snapNext by remember { mutableStateOf(false) }
             val pull = remember { Animatable(0f) }
 
-            LaunchedEffect(place, wPx, hPx) {
+            LaunchedEffect(place, wPx, hPx, handsBandPx) {
                 if (following) rectFor(Place.CARD)?.let { rectAnim.snapTo(it) }
                 following = false
                 val spec = if (place == Place.STAGE || place == Place.CARD) Motion.Passage else Motion.Smooth
@@ -472,16 +483,16 @@ fun AppRoot(rt: VroomiRuntime) {
                     delay(prefs.ms(Motion.CONFIRM_CHIP_MS)); confirmChip = false
                 }
             }
-            fun startDemo(id: String, theme: SceneTheme?) {
+            fun startDemo(sc: io.vroomi.core.vehicle.sim.Scenario, theme: SceneTheme?) {
                 optionSheet = null; demoSheet = false
                 scope.launch {
-                    val th = theme ?: rt.demoScenarios.firstOrNull { it.id == id }?.let { VroomiRuntime.demoThemeOf(it) }?.let(ThemeRegistry::resolve)
+                    val th = theme ?: VroomiRuntime.demoThemeOf(sc)?.let(ThemeRegistry::resolve)
                     if (th != null && th != stage.live) {
                         demoPreroll = th
                         snapshotFlow { stage.live == th && stage.phase == PassagePhase.IDLE }.first { it }
                     }
                     if (theme != null) demoForced = theme
-                    rt.startDemo(id)
+                    rt.startDemo(sc)
                     demoPreroll = null
                 }
             }
@@ -655,7 +666,7 @@ fun AppRoot(rt: VroomiRuntime) {
                             onPrev = if (shownOnStage != null && ThemeRegistry.indexOf(shownOnStage) > 0) ({ step(-1) }) else null,
                             onNext = if (shownOnStage != null && ThemeRegistry.indexOf(shownOnStage) < ThemeRegistry.all.size - 1) ({ step(1) }) else null,
                             onApply = ::applyStaged,
-                            onDemo = shownOnStage?.let { s -> ThemeRegistry.of(s).showcase?.let { id -> { startDemo(id, s) } } },
+                            onDemo = shownOnStage?.let { s -> ThemeRegistry.of(s).showcase?.let { id -> rt.demoScenarios.firstOrNull { it.id == id } }?.let { sc -> { startDemo(sc, s) } } },
                             chips = { ThemeOptionChips(shownOnStage ?: applied, pickerContext(rt, settings, grade, modelOf, ::pickModel, colorOf = colorOf, onColor = pickColor, decorOf = decorOf, onDecor = toggleDecor)) { optionSheet = it } },
                         )
                         // The applied card's step tag: its picture is the live scene drawn above the gallery, so the
@@ -677,8 +688,9 @@ fun AppRoot(rt: VroomiRuntime) {
                             muted = settings.muted, calm = settings.calm,
                             onMute = { rt.settingsStore.update { it.copy(muted = !it.muted) } },
                             onCalm = { rt.settingsStore.update { it.copy(calm = !it.calm) } },
-                            demoCaption = if (demo) caption else null,
-                            demoProgress = if (demo) progress else null,
+                            demoCaption = if (demo) (if (handsOnRunning) handsOnCaption else caption) else null,
+                            demoProgress = if (demo && !handsOnRunning) progress else null,
+                            handsOn = if (demo && handsOnRunning) HandsOnStrip(rt.handsOn.controls, handsOnSet) { rt.handsOn.press(it) } else null,
                             onEndDemo = { rt.stopDemo() },
                             sceneTheme = stage.live ?: applied,
                             modifier = Modifier.graphicsLayer { alpha = movingAlpha.value }.blockTouches(!controlsShown),
@@ -701,10 +713,12 @@ fun AppRoot(rt: VroomiRuntime) {
             BottomSheet(optionSheet != null && !moving, onDismiss = { optionSheet = null }, progress = { sheetAmount = it }) {
                 optionSheet?.let { o -> OptionSheet(o, staged ?: applied, ctx) }
             }
-            DemoPicker(rt.demoScenarios, onPick = { startDemo(it, null) }, onClose = { demoSheet = false }, visible = demoSheet && !moving, progress = { if (optionSheet == null) sheetAmount = it })
+            DemoPicker(
+                remember(applied) { io.vroomi.app.demo.DemoCatalog.sections(applied, rt.demoScenarios) }, stringResource(ThemeRegistry.of(applied).title),
+                onPick = { startDemo(it, null) }, onHandsOn = { optionSheet = null; demoSheet = false; rt.startHandsOn(applied) }, onClose = { demoSheet = false }, visible = demoSheet && !moving, progress = { if (optionSheet == null) sheetAmount = it })
             if (!settings.onboarded && !moving && sceneIn.value >= 1f) {
                 WelcomeCard(
-                    onDemo = { rt.settingsStore.update { it.copy(onboarded = true) }; startDemo("highlight", null) },
+                    onDemo = { rt.settingsStore.update { it.copy(onboarded = true) }; rt.demoScenarios.firstOrNull { it.id == io.vroomi.app.demo.DemoCatalog.showcaseIds(applied).firstOrNull() }?.let { startDemo(it, null) } },
                     onStart = { rt.settingsStore.update { it.copy(onboarded = true) } },
                 )
             }
@@ -819,6 +833,9 @@ private fun Modifier.atTopEndOf(rect: () -> Rect?, inset: androidx.compose.ui.un
 /** Where the bubble and the trip card go on the home screen [width] wide: beside the grade badge, or under it in a narrow window. */
 internal fun Modifier.underBadge(width: androidx.compose.ui.unit.Dp): Modifier =
     if (width < Dimens.badgeWidth + Dimens.tripCard + Space.s16) padding(top = Dimens.badgeHeight + Space.s12) else this
+
+/** The hour of day every demo drive plays at. */
+private const val DEMO_HOUR = 14f
 
 /** Home's chrome over the scene: the grade badge, the speech bubble, the demo and talk buttons, the trip card. */
 @Composable

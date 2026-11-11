@@ -88,6 +88,11 @@ object Dimens {
     val statusChipMaxW = ChromeZones.CHIP_MAX_W.dp
     val statusDot = 10.dp
     val captionW = ChromeZones.CAPTION_W.dp
+    /** A button of the hands-on demo's control strip. */
+    val handsOnW = 132.dp
+    val handsOnH = 64.dp
+    /** The band under the scene that holds the hands-on demo's controls. */
+    val handsOnBand = 96.dp
     val captionMaxH = ChromeZones.CAPTION_MAX_H.dp
     val captionGap = ChromeZones.CAPTION_GAP.dp
 

@@ -124,6 +124,14 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 - **#23에서 놓친 것:** 창 모양 작업이 테마 세부 그림(`*_detail_*`, 정사각 캔버스에서 확대) 26장의 구도를 틀어 놓았는데 확인 없이 문서에 반영했다. `ThemeRuntime.wholeComposition`(확대 그림은 전체 구도 기준, `KitShots.script`가 zoom ≠ 1일 때 켬)으로 되돌렸고, 26장 모두 창 모양 작업 전 그림과 픽셀 단위로 같음을 비교했다. 교훈: 스냅샷 동기화에서 "changed"로 나온 파일은 손대지 않은 테마라도 목록을 보고 열어 볼 것.
 - 하지 않은 것: 세로 창의 탭 레일을 아래쪽 막대로 바꾸기(핵심 배치 코드 전반을 건드려 마감 직전에는 위험하다고 판단).
 
+**2026-11-12 심야: 테마별 데모 드라이브 정리**(`feat/theme-demos`). 사용자: "데모는 실제 운전 없이 각 테마에서 어떤 액션이 나오는지 알려 주는 것. 온도·음악·rpm 등 내가 상호작용하며 테마와 함께 운전하는 느낌이 들어야 하는데 정리가 안 돼 있다."
+- 전에는 데모 목록이 17개 시나리오를 테마 구분 없이 한 줄로 나열했고(아쿠아리움을 쓰다가 "출근길"을 고르면 꼬마차 설명이 나옴), 플라즈마·격납고 쇼케이스는 실제 반응의 절반만 보여 줬다.
+- `app/demo/DemoCatalog.kt`: `ThemeReactions`(테마 × 조작 → 반응 한 줄, 쇼케이스·시뮬레이션에 적힌 실제 반응만), `DemoCatalog.sections(theme)`(그 테마의 쇼케이스 + 조작별 레슨 + 꼬마차만 하루 이야기), `lesson()`(테마가 반응하는 조작만 골라 키프레임을 생성; 급제동 말고는 부드럽게, 별은 자막에 맞춰).
+- `app/demo/HandsOnDrive.kt` + `VroomiRuntime.startHandsOn`: 가상 차가 스스로 달리고 사용자가 버튼으로 조작. 버튼은 장면 아래 전용 띠(`Dimens.handsOnBand`)에 있고 장면은 그 위에 배치된다(판독값을 가리지 않게).
+- 데모 중에는 낮 14시·기본 색상으로 보여 준다(자막의 색 설명이 맞도록). 플라즈마·격납고 쇼케이스 보강, 잘리던 자막 6개 단축.
+- 테스트 `DemoCatalogTest`(목록 구성, 자막 길이, 레슨이 주차로 끝남, 급제동 횟수, 별 타이밍, 직접 조작 논리).
+- 못 한 것: **음악** — 앱이 재생 중인 음악 정보를 받지 않아서(권한·SDK 미확인) 음악 변경에는 반응하지 않는다. 직접 조작의 실제 화면 확인은 아쿠아리움·엔진룸만(에뮬레이터), 나머지는 논리 테스트.
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 

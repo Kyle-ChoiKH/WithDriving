@@ -122,32 +122,57 @@ fun WelcomeCard(onDemo: () -> Unit, onStart: () -> Unit) {
     }
 }
 
-/** Pick a bundled scenario (in a sheet); the car is simulated and captions explain each reaction. */
+/**
+ * The demo drives of the present theme (in a sheet): a hands-on drive first, then its showcase, a short lesson per
+ * kind of control and, for the kart, its day-drive stories. The car is simulated; captions say what the theme does.
+ */
 @Composable
-fun DemoPicker(scenarios: List<Scenario>, onPick: (String) -> Unit, onClose: () -> Unit, visible: Boolean = true, progress: (Float) -> Unit = {}) {
+fun DemoPicker(
+    sections: List<io.vroomi.app.demo.DemoSection>, themeTitle: String, onPick: (Scenario) -> Unit, onClose: () -> Unit,
+    visible: Boolean = true, progress: (Float) -> Unit = {}, onHandsOn: (() -> Unit)? = null,
+) {
     // On a pick the sheet collapses toward the bottom-right corner, where the demo dock will appear.
     BottomSheet(visible, onClose, collapseTo = TransformOrigin(1f, 1f), progress = progress) {
-        DemoPickerContent(scenarios, onPick, visible)
+        DemoPickerContent(sections, themeTitle, onPick, onHandsOn, visible)
     }
 }
 
 @Composable
-private fun DemoPickerContent(scenarios: List<Scenario>, onPick: (String) -> Unit, visible: Boolean) {
+private fun DemoPickerContent(sections: List<io.vroomi.app.demo.DemoSection>, themeTitle: String, onPick: (Scenario) -> Unit, onHandsOn: (() -> Unit)?, visible: Boolean) {
     val rows = rememberStagger(visible, 2, Motion.SHEET_STAGGER_MS)
     Column(Modifier.heightIn(max = Dimens.sheetMax).verticalScroll(rememberScrollState())) {
-        Column(Modifier.staggered(rows[0])) { SheetHeader(stringResource(R.string.demo_drive), stringResource(R.string.demo_hint)) }
-        // One grouped list: each scenario is a row, its action a round play button at the end.
-        Column(Modifier.fillMaxWidth().staggered(rows[1]).grouped(Shapes.card)) {
-            scenarios.forEachIndexed { i, sc ->
-                if (i > 0) RowDivider()
-                ScenarioRow(sc) { onPick(sc.id) }
+        Column(Modifier.staggered(rows[0])) { SheetHeader(stringResource(R.string.demo_drive_of, themeTitle), stringResource(R.string.demo_hint)) }
+        Column(Modifier.fillMaxWidth().staggered(rows[1])) {
+            if (onHandsOn != null) {
+                DemoSectionTitle(stringResource(R.string.demo_hands_on_section), first = true)
+                Column(Modifier.fillMaxWidth().grouped(Shapes.card)) {
+                    ScenarioRow(stringResource(R.string.demo_hands_on), stringResource(R.string.demo_hands_on_hint), onHandsOn)
+                }
+            }
+            sections.forEachIndexed { n, section ->
+                DemoSectionTitle(section.title, first = n == 0 && onHandsOn == null)
+                // One grouped list per section: each demo is a row, its action a round play button at the end.
+                Column(Modifier.fillMaxWidth().grouped(Shapes.card)) {
+                    section.items.forEachIndexed { i, item ->
+                        if (i > 0) RowDivider()
+                        ScenarioRow(item.title, item.description) { onPick(item.scenario) }
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ScenarioRow(sc: Scenario, onPlay: () -> Unit) {
+private fun DemoSectionTitle(text: String, first: Boolean) {
+    Text(
+        text, Modifier.padding(start = Space.s24, end = Space.s24, top = if (first) Space.s4 else Space.s24, bottom = Space.s8),
+        style = VType.callout, color = Ink.secondary,
+    )
+}
+
+@Composable
+private fun ScenarioRow(title: String, description: String, onPlay: () -> Unit) {
     val chrome = LocalChrome.current
     val play = stringResource(R.string.demo_play)
     Row(
@@ -160,15 +185,15 @@ private fun ScenarioRow(sc: Scenario, onPlay: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {
-            Text(sc.title, style = VType.headline, color = Ink.primary)
-            if (sc.description.isNotBlank()) {
+            Text(title, style = VType.headline, color = Ink.primary)
+            if (description.isNotBlank()) {
                 Spacer(Modifier.height(Space.s4))
-                Text(sc.description, style = VType.callout, color = Ink.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Text(description, style = VType.callout, color = Ink.secondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             }
         }
         Spacer(Modifier.width(Space.s24))
         Box(
-            Modifier.size(Dimens.buttonCompact).drawBehind { drawCircle(chrome.tint) }.semantics { contentDescription = "$play: ${sc.title}" },
+            Modifier.size(Dimens.buttonCompact).drawBehind { drawCircle(chrome.tint) }.semantics { contentDescription = "$play: $title" },
             contentAlignment = Alignment.Center,
         ) {
             Image(VIcons.Play, null, Modifier.size(Dimens.iconSmall), colorFilter = ColorFilter.tint(chrome.onTint))
