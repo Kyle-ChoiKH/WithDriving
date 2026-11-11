@@ -37,7 +37,11 @@ import io.vroomi.character.pixel.PixelPalette
 import io.vroomi.character.pixel.PixelThing
 import io.vroomi.character.pixel.sprites.PilotSprites
 import io.vroomi.character.pixel.sprites.PixelFont
+import io.vroomi.character.pixel.sprites.HoverPadSprite
+import io.vroomi.character.pixel.sprites.PixelVehicle
 import io.vroomi.character.pixel.sprites.RoverSprite
+import io.vroomi.character.pixel.sprites.ShipSprite
+import io.vroomi.character.pixel.sprites.TrailerSprite
 import io.vroomi.character.render.theme.ThemeFrame
 import io.vroomi.character.render.theme.ThemePainter
 import io.vroomi.character.render.theme.ThemeTexts
@@ -67,6 +71,8 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     // Frame-flip state, sampled on the fixed sprite clock (12 ticks per decoration second, 6 in calm mode).
     private var heldTick = Long.MIN_VALUE
     private var wheelFrame = 0
+    /** The vehicle of the upgrade step (set from the frame's model before rendering). */
+    private var vehicle = PixelVehicle.ROVER
     private var pinFrame = 0
     private var flagFrame = 0
     private var gemFrame = 0
@@ -76,6 +82,7 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     override fun drawPx(s: DrawScope, sim: PixelMechanics, f: ThemeFrame, tx: ThemeTexts, left: Float, top: Float) {
         val sc = PixelModels.scale(f.w, f.h)
         legibility(sim, f, sc)
+        vehicle = PixelVehicle.of(f.model)
         render(sim, f)
         val (ox, oy) = PixelModels.offset(f.w, f.h, sc)
         // Letterbox in the sky and ground colours, so the bands read as more sky and more ground.
@@ -532,7 +539,8 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     private fun hero(sim: PixelMechanics) {
         val hop = sim.hop().toInt()
         val kx = HERO_X + sim.heroOffsetX.toInt()
-        val ky = ROVER_Y - hop + sim.bob
+        val v = vehicle
+        val ky = ROVER_Y - hop + sim.bob + v.dy
         val pose = sim.pose()
         val standing = pose == PilotSprites.Pose.STEP_OUT || pose == PilotSprites.Pose.WAVE && sim.arrival > 3.5
         val lean = sim.leansOut && !standing // door open while parked: lean out of the seat and wave
@@ -548,10 +556,36 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
         }
         if (sim.warmth <= -0.99f) { buf.dot(fx + 2, fy + 3, c(CREAM)); buf.dot(fx + 3, fy + 2, c(CREAM)) }
         if (sim.arrival > 5.0) return // the hangar door is down
-        buf.blit(sprites.rover(pal), kx + RoverSprite.BODY_DX, ky + RoverSprite.BODY_DY)
         val wf = wheelFrame
-        buf.blit(sprites.wheel(wf, pal), kx + RoverSprite.WHEEL_REAR_X, ky + RoverSprite.WHEEL_Y)
-        buf.blit(sprites.wheel(wf, pal), kx + RoverSprite.WHEEL_FRONT_X, ky + RoverSprite.WHEEL_Y)
+        // A floating vehicle's shadow stays on the road (it does not hop with it).
+        if (!v.wheels) buf.rect(kx - 1, ROAD_Y, 28, 1, c(INK))
+        if (v == PixelVehicle.SHIP) {
+            buf.blit(sprites.ship(pal), kx + RoverSprite.BODY_DX, ky + RoverSprite.BODY_DY)
+            for (px in intArrayOf(ShipSprite.POD_REAR_X, ShipSprite.POD_FRONT_X)) buf.rect(kx + px + (wf and 1), ky + ShipSprite.POD_Y, 2, 1, lit(if (wf % 2 == 0) LIME else CREAM))
+        } else {
+            if (v == PixelVehicle.CARGO) {
+                buf.blit(sprites.trailer(pal), kx + TrailerSprite.DX, ky + TrailerSprite.DY)
+                buf.blit(sprites.wheel(wf, pal), kx + TrailerSprite.WHEEL_X, ky + RoverSprite.WHEEL_Y)
+                buf.rect(kx - 10, ky + 5, 6, 1, c(INK))
+            }
+            buf.blit(sprites.rover(pal), kx + RoverSprite.BODY_DX, ky + RoverSprite.BODY_DY)
+            if (v.wheels) {
+                buf.blit(sprites.wheel(wf, pal), kx + RoverSprite.WHEEL_REAR_X, ky + RoverSprite.WHEEL_Y)
+                buf.blit(sprites.wheel(wf, pal), kx + RoverSprite.WHEEL_FRONT_X, ky + RoverSprite.WHEEL_Y)
+            } else {
+                buf.blit(sprites.pad(wf, pal), kx + RoverSprite.WHEEL_REAR_X, ky + HoverPadSprite.Y)
+                buf.blit(sprites.pad(wf, pal), kx + RoverSprite.WHEEL_FRONT_X, ky + HoverPadSprite.Y)
+            }
+            if (v == PixelVehicle.JET) {
+                // The nozzle at the tail, and exhaust dots trailing behind while it moves.
+                buf.rect(kx - 8, ky + 1, 4, 1, c(INK)); buf.rect(kx - 8, ky + 6, 4, 1, c(INK)); buf.rect(kx - 8, ky + 2, 1, 4, c(INK))
+                buf.rect(kx - 7, ky + 2, 3, 4, c(SLATE)); buf.rect(kx - 7, ky + 2, 3, 1, c(MIST))
+                if (sim.kmh > 1f && !sim.reducedMotion) for (i in 0 until 5) {
+                    val col = if (i < 2) CREAM else if (i < 4) SAND else PINK
+                    buf.dot(kx - 10 - i * 3 - (wf % 3), ky + 3 + ((i + wf) and 1), lit(col))
+                }
+            }
+        }
         // Lamps.
         val braking = sim.car.brakePressed == true || sim.accel < -0.6f
         if (braking) { buf.rect(kx - 3, ky + 2, 1, 2, lit(PINK)); buf.dot(kx - 4, ky + 2, lit(MAGENTA)); buf.dot(kx - 4, ky + 3, lit(MAGENTA)) }
