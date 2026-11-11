@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="vroomi_night">#0E1B2B</color>
-    <color name="ic_launcher_background">#DFF5EE</color>
+    <color name="ic_launcher_background">#17A590</color>
 
     <style name="Theme.Vroomi" parent="android:Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/vroomi_night</item>

@@ -151,6 +151,10 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
     private var textClock = -1.0
     private val hairline = androidx.compose.ui.graphics.drawscope.Stroke(1f)
     private val tmp2 = Path()
+    // The front row's flowers (step 3), cut once about their stem: the leaf for a stem 50 tall, the two heads about the stem's top.
+    private val flowerLeaf = Path().apply { moveTo(0f, -17.5f); quadraticTo(15f, -31f, 22f, -15f); quadraticTo(10f, -12f, 0f, -17.5f); close() }
+    private val flowerCrown = Path().apply { moveTo(-12f, -18f); lineTo(-6f, -9f); lineTo(0f, -21f); lineTo(6f, -9f); lineTo(12f, -18f); lineTo(10f, 3f); lineTo(-10f, 3f); close() }
+    private val flowerRound = Path().apply { addOval(Rect(-13f, -19f, 13f, 7f)) }
 
     // Per-frame lighting: the window light (day) comes from the upper left, the desk lamp (night) from the upper right.
     private var sdx = 6f
@@ -519,16 +523,15 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
             val x = g.l + k * period - off + h01(idx, 71) * 16f
             val hgt = 36f + h01(idx, 72) * 26f
             drawLine(PaperInk.BLUE, Offset(x, base), Offset(x, base - hgt), 3.2f)
-            tmp.reset(); tmp.moveTo(x, base - hgt * 0.35f); tmp.quadraticTo(x + 15f, base - hgt * 0.62f, x + 22f, base - hgt * 0.3f); tmp.quadraticTo(x + 10f, base - hgt * 0.24f, x, base - hgt * 0.35f); tmp.close()
-            drawPath(tmp, PaperInk.BLUE)
+            // The leaf and the head are shapes cut once (flowerLeaf, flowerCrown, flowerRound) and only moved here:
+            // a path left alone is drawn from the renderer's cache, one built anew every frame never is.
+            withTransform({ translate(x, base); scale(hgt / 50f, hgt / 50f, Offset.Zero) }) { drawPath(flowerLeaf, PaperInk.BLUE) }
             val head = if (Math.floorMod(idx, 3) == 0) PaperInk.YELLOW else PaperInk.PINK
-            val top = base - hgt
-            tmp.reset()
-            if (Math.floorMod(idx, 2) == 0) {
-                tmp.moveTo(x - 12f, top - 18f); tmp.lineTo(x - 6f, top - 9f); tmp.lineTo(x, top - 21f); tmp.lineTo(x + 6f, top - 9f); tmp.lineTo(x + 12f, top - 18f); tmp.lineTo(x + 10f, top + 3f); tmp.lineTo(x - 10f, top + 3f); tmp.close()
-            } else tmp.addOval(Rect(x - 13f, top - 19f, x + 13f, top + 7f))
-            piece(tmp, head, Offset.Zero, lift = 0.5f)
-            if (Math.floorMod(idx, 2) != 0) drawCircle(PaperInk.CARD, 4.6f, Offset(x, top - 6f))
+            val round = Math.floorMod(idx, 2) != 0
+            withTransform({ translate(x, base - hgt) }) {
+                piece(if (round) flowerRound else flowerCrown, head, Offset.Zero, lift = 0.5f)
+                if (round) drawCircle(PaperInk.CARD, 4.6f, Offset(0f, -6f))
+            }
         }
         crease(Offset(g.l + 8f, base), Offset(g.r - 8f, base))
     }

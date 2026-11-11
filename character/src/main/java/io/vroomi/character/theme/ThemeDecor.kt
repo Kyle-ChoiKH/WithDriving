@@ -2,6 +2,10 @@ package io.vroomi.character.theme
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -489,14 +493,36 @@ object ThemeDecor {
  */
 fun Modifier.themeDecor(theme: SceneTheme, mask: Int, alpha: () -> Float = { 1f }, shown: () -> Size? = { null }): Modifier {
     if (mask == 0 || !ThemeDecor.has(theme)) return this
-    return drawWithContent {
-        drawContent()
-        val r = shown()
-        if (r == null || r.width <= 0f || r.height <= 0f) ThemeDecor.draw(this, theme, mask, alpha())
-        else {
-            val f = max(r.width / size.width, r.height / size.height)
-            val dx = ((size.width - r.width / f) / 2f).coerceAtLeast(0f); val dy = ((size.height - r.height / f) / 2f).coerceAtLeast(0f)
-            inset(dx, dy) { ThemeDecor.draw(this, theme, mask, alpha()) }
+    // The props never move, so they are drawn once into a picture and that picture is laid over every frame. While
+    // the shown rectangle is changing (the scene flying to a card) they are drawn directly; the picture is made
+    // again once the size has stood still for a frame.
+    return drawWithCache {
+        var picture: ImageBitmap? = null
+        var lastW = -1; var lastH = -1
+        onDrawWithContent {
+            drawContent()
+            val a = alpha()
+            if (a <= 0.01f) return@onDrawWithContent
+            val r = shown()
+            var dx = 0f; var dy = 0f
+            if (r != null && r.width > 0f && r.height > 0f) {
+                val f = max(r.width / size.width, r.height / size.height)
+                dx = ((size.width - r.width / f) / 2f).coerceAtLeast(0f); dy = ((size.height - r.height / f) / 2f).coerceAtLeast(0f)
+            }
+            val w = (size.width - 2f * dx).toInt(); val h = (size.height - 2f * dy).toInt()
+            if (w < 2 || h < 2) return@onDrawWithContent
+            // (The very first frame counts as standing still.)
+            val stable = lastW < 0 || (w == lastW && h == lastH)
+            lastW = w; lastH = h
+            var p = picture
+            if (p != null && (p.width != w || p.height != h)) { p = null; picture = null }
+            if (p == null && stable) {
+                p = ImageBitmap(w, h)
+                CanvasDrawScope().draw(this, layoutDirection, Canvas(p), Size(w.toFloat(), h.toFloat())) { ThemeDecor.draw(this, theme, mask) }
+                picture = p
+            }
+            if (p != null) drawImage(p, topLeft = Offset(dx, dy), alpha = a)
+            else inset(dx, dy) { ThemeDecor.draw(this, theme, mask, a) }
         }
     }
 }

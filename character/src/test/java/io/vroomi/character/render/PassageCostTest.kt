@@ -136,8 +136,9 @@ class PassageCostTest {
             val img = ImageBitmap(w, h)
             val s = CanvasDrawScope()
             val l = live(theme, tm, density, five)
-            l.draw(s, img)                              // warm: layers built
-            val t0 = System.nanoTime(); l.draw(s, img); val steady = (System.nanoTime() - t0) / 1e6
+            repeat(6) { l.draw(s, img) }                // warm: layers built, the drawing code compiled
+            // The median of fifteen frames (one frame alone measures the JVM's mood).
+            val steady = List(15) { val t0 = System.nanoTime(); l.draw(s, img); (System.nanoTime() - t0) / 1e6 }.sorted()[7]
             val bytes = l.caches()
             val after = l.release()
             out.append("%-13s layers %5.1f MB, steady frame %6.1f ms\n".format(theme, bytes / 1e6, steady))
