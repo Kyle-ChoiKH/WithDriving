@@ -225,4 +225,42 @@ class MusicBoxSimTest {
         a.restore("clicks=999")
         assertEquals(60, a.clicks)
     }
+
+    // ---------------------------------------------------------------- upgrade steps (spec 5.3)
+
+    @Test fun combTeethFollowStep() {
+        assertEquals(listOf(18, 18, 36, 50, 72), (0..4).map { MusicBoxSim.teethFor(it) })
+        val sim = MusicBoxSim()
+        for (m in 0..4) {
+            sim.model = m
+            assertEquals(MusicBoxSim.teethFor(m), sim.combTeeth)
+            // Every note keeps its own teeth, in pitch order, inside the comb.
+            var last = -1
+            for (t in 0 until MusicBoxComposer.TINES) {
+                val teeth = (0 until 64).map { sim.toothOf(t, it / 16, it % 16) }.toSet()
+                assertTrue("step $m note $t", teeth.all { it in 0 until sim.combTeeth })
+                assertEquals("step $m note $t", sim.teethPerNote, teeth.size)
+                assertTrue("step $m note $t", teeth.min() > last)
+                last = teeth.max()
+            }
+        }
+    }
+
+    @Test fun bellsOnlyAtStepFive() {
+        fun strikes(model: Int): Int {
+            val sim = MusicBoxSim().also { it.model = model }
+            val car = io.vroomi.character.CarSignals(speedKmh = 60f, accelMps2 = 0f, gear = io.vroomi.core.vehicle.model.GearState.DRIVE, moving = true, safetyWarningActive = false)
+            for (i in 0 until 60 * 30) {
+                val t = io.vroomi.character.CharacterTarget(kart = io.vroomi.character.KartState(driving = true), car = car,
+                    journey = io.vroomi.character.Journey(active = true, tripSeq = 1, tripKm = 60f * i / 60f / 3600f))
+                sim.step(1f / 60f, t, 1_000_000L + i * 16L, 14f)
+            }
+            return sim.bellStrikes
+        }
+        for (m in 0..3) assertEquals("step $m", 0, strikes(m))
+        val top = strikes(4)
+        assertTrue("bells ring at the top step: $top", top >= 8)
+        // Never faster than the flash rule: three bells, each at most once per 0.34 s, in 30 s.
+        assertTrue(top <= 3 * 30 * 3)
+    }
 }

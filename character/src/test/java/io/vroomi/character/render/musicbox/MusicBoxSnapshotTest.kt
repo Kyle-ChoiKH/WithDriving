@@ -1,11 +1,19 @@
 package io.vroomi.character.render.musicbox
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import io.vroomi.character.Journey
 import io.vroomi.character.SizeMode
 import io.vroomi.character.calibre.SceneTheme
 import io.vroomi.character.musicbox.MusicBoxSim
 import io.vroomi.character.render.SceneOptions
 import io.vroomi.character.render.theme.KitShots
+import io.vroomi.character.render.theme.simulate
 import io.vroomi.character.render.theme.KitShots.car
 import io.vroomi.character.render.theme.KitShots.driving
 import io.vroomi.character.render.theme.KitShots.parked
@@ -61,6 +69,62 @@ class MusicBoxSnapshotTest {
     }
 
     @Test fun ecoPark() = shot("music_box_eco_cruise", 12f) { t -> driving(car(35f) { copy(drivingMode = DriveModeState.ECO) }, trip(t, 35f)) }
+
+    // ---- the upgrade ladder (spec 5.3): driving at 50 km/h, three stars
+    private fun lv(name: String, model: Int, s: Float = 10f, o: SceneOptions = KitShots.day, block: io.vroomi.character.CarSignals.() -> io.vroomi.character.CarSignals = { this }) =
+        shot(name, s, o.copy(model = model), prepare = { it.model = model }) { t -> driving(car(50f, block = block), trip(t, 50f)) }
+    @Test fun lv1Day() = lv("music_box_lv1_day", 0)
+    @Test fun lv2Day() = lv("music_box_lv2_day", 1)
+    @Test fun lv3Day() = lv("music_box_lv3_day", 2)
+    @Test fun lv4Day() = lv("music_box_lv4_day", 3)
+    @Test fun lv5Day() = lv("music_box_lv5_day", 4, 10.05f)
+    @Test fun lv5Night() = lv("music_box_lv5_night", 4, 10.05f, KitShots.night) { copy(headlightsOn = true) }
+    @Test fun lv3BlinkerLeft() = lv("music_box_lv3_blinker_left", 2, 8.7f) { copy(turnSignal = TurnSignal.LEFT) }
+    @Test fun lv3Brake() = shot("music_box_lv3_brake", 8.3f, KitShots.day.copy(model = 2), prepare = { it.model = 2 }) { t ->
+        driving(car(if (t < 8f) 60f else 30f, if (t < 8f) 0f else -6f) { copy(brakePressed = t >= 8f, harshBrakeSeq = if (t >= 8f) 1 else 0) }, trip(t, 60f))
+    }
+}
+
+/**
+ * The upgrade ladder in one picture: Lv.1 to Lv.5 as five stacked 8:3 strips (1000 x 1875), each a small copy of
+ * the 1920 x 720 driving scene (density 0.75, so the type keeps its proportion), labelled "Lv.n" top left.
+ */
+class MusicBoxLadderSnapshotTest {
+    @get:Rule val paparazzi = app.cash.paparazzi.Paparazzi(
+        deviceConfig = app.cash.paparazzi.DeviceConfig.PIXEL_5.copy(
+            screenWidth = 1000, screenHeight = 1875, xdpi = 120, ydpi = 120,
+            density = com.android.resources.Density.LOW, orientation = com.android.resources.ScreenOrientation.PORTRAIT, softButtons = false,
+        ),
+        maxPercentDifference = 100.0,
+    )
+
+    @Test fun ladder() {
+        val runtimes = (0 until 5).map { model ->
+            requireNotNull(io.vroomi.character.render.theme.ThemeCatalog.create(SceneTheme.MUSIC_BOX)).also { rt ->
+                (rt.sim as MusicBoxSim).model = model
+                rt.simulate(10.05f, SceneOptions(hourOfDay = 14f, model = model), io.vroomi.character.render.calibre.DEFAULT_NOW_MS) { t ->
+                    driving(car(50f), Journey(active = true, tripSeq = 2, tripKm = 50f * t / 3600f, stars = 3, starSeq = 3))
+                }
+            }
+        }
+        paparazzi.snapshot("music_box_ladder") {
+            val tm = androidx.compose.ui.text.rememberTextMeasurer()
+            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.fillMaxSize()) {
+                runtimes.forEachIndexed { i, rt ->
+                    androidx.compose.foundation.layout.Box(androidx.compose.ui.Modifier.fillMaxWidth().aspectRatio(8f / 3f)) {
+                        androidx.compose.foundation.Canvas(androidx.compose.ui.Modifier.fillMaxSize()) { rt.draw(this, tm) }
+                        androidx.compose.foundation.text.BasicText(
+                            io.vroomi.character.theme.ThemeModels.tag(i),
+                            androidx.compose.ui.Modifier.padding(start = 12.dp, top = 10.dp)
+                                .background(androidx.compose.ui.graphics.Color(0xD9101316), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                            style = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White, fontSize = 15.sp),
+                        )
+                    }
+                }
+            }
+        }
+    }
 }
 
 /** 1000x1000 details: the comb with the pins, and the whole box. */
@@ -73,4 +137,12 @@ class MusicBoxDetailSnapshotTest {
     @Test fun box() = KitShots.script<MusicBoxSim>(paparazzi, SceneTheme.MUSIC_BOX, "music_box_detail_box", 12f) { t ->
         driving(car(50f), Journey(active = true, tripSeq = 3, tripKm = 50f * t / 3600f + 0.4f))
     }
+
+    @Test fun bellsLv5() = KitShots.script<MusicBoxSim>(paparazzi, SceneTheme.MUSIC_BOX, "music_box_detail_bells_lv5", 10.05f, SceneOptions(hourOfDay = 14f, model = 4),
+        prepare = { it.model = 4 }, zoom = 2.4f, fx = 0.86f, fy = 0.55f) { t ->
+        driving(car(50f), Journey(active = true, tripSeq = 3, tripKm = 50f * t / 3600f + 0.4f))
+    }
+
+    @Test fun combLv4() = KitShots.script<MusicBoxSim>(paparazzi, SceneTheme.MUSIC_BOX, "music_box_detail_comb_lv4", 6f, SceneOptions(hourOfDay = 14f, model = 3),
+        prepare = { it.model = 3; it.restore("clicks=40"); it.closeView = true }) { parked() }
 }

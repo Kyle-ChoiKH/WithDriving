@@ -59,7 +59,7 @@ object Ambience {
         a(SceneTheme.PAPER, 0xFFE8478C, 0xFF231C3B, 0.439f),      // fluorescent pink ink, the night mat's violet
         a(SceneTheme.CALIBRE, 0xFFB7C0CA, 0xFF2B2520, 0.677f),    // brushed steel, the bench's warm shadow
         a(SceneTheme.ENGINE, 0xFFE0A02A, 0xFF14171A, 0.062f),     // oil amber, the graphite studio
-        a(SceneTheme.MUSIC_BOX, 0xFF6CC3A0, 0xFF2A2522, 0.787f),   // mint enamel, the lamp-lit warm grey
+        a(SceneTheme.MUSIC_BOX, 0xFF8E2F45, 0xFF241A14, 0.097f),   // burgundy velvet, the lamp-lit brown room
         a(SceneTheme.PLASMA, 0xFFB45CFF, 0xFF0E1016, 0.013f),     // plasma violet, the dark lab's blue-black
         a(SceneTheme.HANGAR, 0xFFF07A1A, 0xFF1B1D20, 0.021f),     // signal orange, the hangar's graphite
         a(SceneTheme.TERRARIUM, 0xFF9BC53D, 0xFF14201A, 0.284f),  // fresh leaf, moonlit moss
