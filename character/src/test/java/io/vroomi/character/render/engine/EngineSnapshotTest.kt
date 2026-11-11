@@ -1,9 +1,15 @@
 package io.vroomi.character.render.engine
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.Density
@@ -92,12 +98,26 @@ class EngineSnapshotTest {
     @Test fun introFrame() = script("intro_frame", 3f, day.copy(intro = 0.45f)) { parked() }
     @Test fun evNight() = script("ev_night", 4f, night, forced = Powertrain.EV) { driving(car(60f) { copy(headlightsOn = true, evBatteryPct = 64) }) }
     @Test fun parkedQuiet() = script("parked_quiet", 3f) { CharacterTarget() }
-    /** Moving, with the widest value of every title-block cell (6,000 rpm, D8, 100 %; EV 16,000 rpm, D8, −60 kW). */
+
+    // ---- the upgrade ladder (spec 5.2): driving at 50 km/h, three stars
+    private fun lv(model: Int, o: SceneOptions = day) = o.copy(model = model)
+    private fun cruise50(block: CarSignals.() -> CarSignals = { this }) = driving(car(50f, 0.6f, block = block))
+    @Test fun lv1Day() = script("engine_lv1_day", 8f, lv(0)) { cruise50() }
+    @Test fun lv2Day() = script("engine_lv2_day", 8f, lv(1)) { cruise50() }
+    @Test fun lv3Day() = script("engine_lv3_day", 8f, lv(2)) { cruise50() }
+    @Test fun lv4Day() = script("engine_lv4_day", 8f, lv(3)) { cruise50() }
+    @Test fun lv5Day() = script("engine_lv5_day", 8f, lv(4)) { cruise50() }
+    @Test fun lv5Night() = script("engine_lv5_night", 8f, lv(4, night)) { cruise50 { copy(headlightsOn = true) } }
+    @Test fun lv3BlinkerLeft() = script("engine_lv3_blinker_left", 8.2f, lv(2)) { cruise50 { copy(turnSignal = TurnSignal.LEFT) } }
+    @Test fun lv3Brake() = script("engine_lv3_brake", 9f, lv(2)) { t -> driving(car(if (t < 7.5f) 60f else 60f - (t - 7.5f) * 8f, if (t < 7.5f) 0f else -2.2f) { copy(brakePressed = t >= 7.5f) }) }
+    @Test fun lv5Parked() = script("engine_lv5_parked", 3f, lv(4)) { parked() }
+    @Test fun evLv5Day() = script("engine_ev_lv5_day", 8f, lv(4), forced = Powertrain.EV) { driving(car(50f, 1.2f) { copy(evBatteryPct = 64) }) }
+    /** Moving, with the widest value of every readout cell (6,000 rpm, D8, 100 %; EV 16,000 rpm, D8, −60 kW). */
     @Test fun widestValuesIce() = script("widest_values_ice_moving", 4f, probe = true) { driving(car(120f, 2f) { copy(drivingMode = DriveModeState.SPORT) }) }
     @Test fun widestValuesEvNight() = script("widest_values_ev_night_moving", 4f, night, forced = Powertrain.EV, probe = true) { driving(car(120f, -2f) { copy(headlightsOn = true, evBatteryPct = 64) }) }
 }
 
-/** The narrowest canvas the theme supports (1080 × 720): the title block must still fit its widest values. */
+/** The narrowest canvas the theme supports (1080 × 720): the readout must still fit its widest values. */
 class EngineNarrowSnapshotTest {
     @get:Rule val paparazzi = Paparazzi(
         deviceConfig = DeviceConfig.PIXEL_5.copy(
@@ -124,4 +144,51 @@ class EngineNarrowSnapshotTest {
     @Test fun iceNightMoving() = shot("narrow_widest_ice_night_moving", SceneOptions(hourOfDay = 21.5f), Powertrain.ICE, true)
     @Test fun evDayMoving() = shot("narrow_widest_ev_day_moving", SceneOptions(hourOfDay = 14f), Powertrain.EV, true)
     @Test fun evDayParked() = shot("narrow_widest_ev_day_parked", SceneOptions(hourOfDay = 14f), Powertrain.EV, false)
+}
+
+/**
+ * The upgrade ladder in one picture: Lv.1 to Lv.5 as five stacked 8:3 strips (1000 x 1875), each a small copy of
+ * the 1920 x 720 driving scene (density 0.75, so the type keeps its proportion), labelled "Lv.n" top left.
+ */
+class EngineLadderSnapshotTest {
+    @get:Rule val paparazzi = Paparazzi(
+        deviceConfig = DeviceConfig.PIXEL_5.copy(
+            screenWidth = 1000, screenHeight = 1875, xdpi = 120, ydpi = 120,
+            density = Density.LOW, orientation = ScreenOrientation.PORTRAIT, softButtons = false,
+        ),
+        maxPercentDifference = 100.0,
+    )
+
+    private fun ladder(name: String, p: Powertrain) {
+        val c = CarSignals(speedKmh = 50f, accelMps2 = 0.8f, gear = GearState.DRIVE, moving = true, fanLevel = 2, fanMax = 8, acOn = false,
+            setTempC = 22f, turnSignal = TurnSignal.NONE, drivingMode = DriveModeState.NORMAL, safetyWarningActive = false, brakePressed = false,
+            evBatteryPct = if (p == Powertrain.EV) 64 else null)
+        val t = CharacterTarget(sizeMode = SizeMode.AMBIENT, kart = KartState(driving = true), car = c, journey = Journey(active = true, tripSeq = 1, stars = 3, starSeq = 3))
+        val runtimes = (0 until 5).map { model ->
+            EngineRuntime().also { rt ->
+                val start = DEFAULT_NOW_MS - 8000L
+                for (i in 0 until 480) rt.step(1f / 60f, t, SceneOptions(hourOfDay = 14f, model = model), EnginePowertrain.AUTO, p, start + i * 1000L / 60)
+            }
+        }
+        paparazzi.snapshot(name) {
+            val tm = rememberTextMeasurer()
+            androidx.compose.foundation.layout.Column(Modifier.fillMaxSize()) {
+                runtimes.forEachIndexed { i, rt ->
+                    androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().aspectRatio(8f / 3f)) {
+                        Canvas(Modifier.fillMaxSize()) { rt.draw(this, tm) }
+                        androidx.compose.foundation.text.BasicText(
+                            io.vroomi.character.theme.ThemeModels.tag(i),
+                            Modifier.padding(start = 12.dp, top = 10.dp)
+                                .background(androidx.compose.ui.graphics.Color(0xD9101316), androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp),
+                            style = androidx.compose.ui.text.TextStyle(color = androidx.compose.ui.graphics.Color.White, fontSize = 15.sp),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Test fun ladder() = ladder("engine_ladder", Powertrain.ICE)
+    @Test fun ladderEv() = ladder("engine_ev_ladder", Powertrain.EV)
 }

@@ -28,6 +28,8 @@ class EngineMechanics {
     private val detector = PowertrainDetector()
 
     var powertrain = Powertrain.ICE; private set
+    /** The drawn engine has a turbo (upgrade step 3 and up); without one the spool-up chip is never shown. */
+    var turbo = true
     /** The car's gear selector as last seen. */
     var gear = GearState.UNKNOWN; private set
 
@@ -311,7 +313,7 @@ class EngineMechanics {
             !ice && motor.regen && !stopped -> ChipKind.REGEN
             !ice && charging > 0.5f -> ChipKind.CHARGING
             ice && time < shiftChipUntil && c.gear == GearState.DRIVE -> ChipKind.SHIFT
-            ice && time - spoolSince < 4.0 -> ChipKind.SPOOL
+            ice && turbo && time - spoolSince < 4.0 -> ChipKind.SPOOL
             time - acSince < 6.0 -> ChipKind.AC
             c.cruiseOn == true -> ChipKind.CRUISE
             ice && engine.running && stopped -> ChipKind.IDLE

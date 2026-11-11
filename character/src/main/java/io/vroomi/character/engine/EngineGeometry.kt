@@ -101,5 +101,41 @@ object EngineGeometry {
     fun motorVisualRps(rpm: Double): Double =
         if (abs(rpm) < 1.0) 0.0 else sign(rpm) * (0.15 + 1.05 * (abs(rpm) / MOTOR_MAX_RPM).coerceAtMost(1.0))
 
+    // ---------------------------------------------------------------- telemetry curves (estimates, pure)
+
+    /** Valve lift 0..1 of cylinder 1 at [crankDeg] of the 720° cycle (0 = firing TDC): the intake or the exhaust valve. */
+    fun valveLift(crankDeg: Float, intake: Boolean): Float =
+        (if (intake) intakeLift(crankDeg.toDouble()) else exhaustLift(crankDeg.toDouble())).toFloat()
+
+    /** Peak torque (N·m) of each upgrade step, Lv.1..5. */
+    val PEAK_TORQUE_NM = floatArrayOf(125f, 140f, 220f, 250f, 300f)
+
+    /**
+     * Estimated full-load torque (N·m) at [rpm] for upgrade step [model] (0..4). The naturally aspirated steps
+     * (0, 1) peak in the mid range; the turbo steps rise to a plateau as the turbo spools and fall off at the top.
+     */
+    fun torqueAt(rpm: Float, model: Int): Float {
+        val m = model.coerceIn(0, 4)
+        val peak = PEAK_TORQUE_NM[m]
+        val x = rpm.coerceIn(0f, 7200f)
+        if (m < 2) {
+            val at = if (m == 0) 3800f else 4400f
+            val d = (x - at) / (if (x < at) at * 1.25f else 7200f - at)
+            return peak * (1f - 0.45f * d * d).coerceAtLeast(0.3f)
+        }
+        val spool = if (m == 4) 2600f else 1900f
+        val fall = if (m == 4) 6200f else 4800f
+        return peak * (0.35f + 0.65f * smooth(900f, spool, x)) * (1f - 0.35f * smooth(fall, 7200f, x))
+    }
+
+    /** Estimated power (kW) at [rpm]: torque × speed. */
+    fun powerKwAt(rpm: Float, model: Int): Float = torqueAt(rpm, model) * rpm * (2f * PI.toFloat() / 60f) / 1000f
+
+    /** Estimated spark advance (degrees before TDC): more with speed, less with load. */
+    fun ignitionAdvanceDeg(rpm: Double, load: Double): Float =
+        (10.0 + 24.0 * ((rpm - IDLE_RPM) / (DISPLAY_MAX_RPM - IDLE_RPM)).coerceIn(0.0, 1.0) - 8.0 * load.coerceIn(0.0, 1.0)).toFloat()
+
+    private fun smooth(a: Float, b: Float, x: Float): Float { val t = ((x - a) / (b - a)).coerceIn(0f, 1f); return t * t * (3f - 2f * t) }
+
     fun wrap720(d: Double): Double { val t = d % 720.0; return if (t < 0) t + 720.0 else t }
 }
