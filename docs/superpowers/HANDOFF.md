@@ -101,6 +101,8 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 - 밝기: 시계 0.659, 격납고 0.058.
 - 아직 약한 곳: 보물지도 Lv.4(0.95%), 팝업북 Lv.4(1.2%), 태양계 Lv.4(1.4%), 엔진룸 Lv.4(1.9%).
 
+**2026-11-11 밤: #18, #19 병합(사용자 승인) 후 릴리스 APK 교체.** 최신 main으로 `apk/Kyle_WithDriving_release.apk`를 다시 빌드했다(1.7.0-contest, versionCode 8, 19.9MB, v2 서명 확인). 에뮬레이터에 릴리스 빌드를 설치해 격납고 쇼케이스(12초 736프레임, 끊김 0%), 데모 중간 종료 후 원래 테마 복귀를 확인했다. 테스트 825개(단위 294 + 화면 531), 그림 539장.
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 
