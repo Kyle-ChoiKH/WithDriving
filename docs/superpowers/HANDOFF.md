@@ -82,9 +82,12 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 
 ## 5. 다음에 할 일 (순서대로)
 
-1. **PR 병합(사용자 승인 후).** 통합 PR(`phase-c/integration`) 하나를 main에 합친다. 그러면 #1~#15는 내용이 이미 들어가므로 닫으면 된다. (따로 합치고 싶으면 #1 → #2 → #3 → #4~#15 순서.)
-2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스, 릴리스 APK 설치 확인. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
-3. **제출 준비**(9장).
+**2026-11-11 낮: 통합 PR #16을 main에 병합했다(사용자 승인). #1~#15도 병합됨으로 처리됐고 main CI가 통과했다. 테마 개편은 main에 전부 들어가 있다.**
+
+병합 뒤 본 체크아웃(main)에서 서명된 릴리스 APK를 빌드해 확인했다: `apk/TEAMNAME_WithDriving_release.apk`(1.7.0-contest, versionCode 8, 19.8MB, v2 서명 확인). 에뮬레이터에 설치해 등급 탭, 테마 탭, 시계 쇼케이스(12초 735프레임, 끊김 0%, 크래시 0), 데모를 중간에 끝낸 뒤의 동작(트립 카드에 "데모" 표시, 등급 거리 그대로, 원래 테마로 복귀)을 봤다. 디버그 빌드와 릴리스 빌드는 서명이 달라 서로 덮어 설치되지 않는다(`adb uninstall io.withdriving.app` 후 설치).
+
+1. **제출 준비**(9장). 팀명이 정해지면 `gradle.properties`의 `vroomi.teamName`을 바꾸고 `powershell -ExecutionPolicy Bypass -File .\build.ps1`을 다시 돌린다(APK 이름에 팀명이 들어간다).
+2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 
 각 테마 작업의 공통 단계(스냅샷 이름, 사다리 그림, 직접 보기, 반복, 올리기)는 계획의 "Phase B 공통 단계"와 "병렬 작업 규칙"에 있다. 요점:
 - 사다리 헬퍼는 각 테스트 파일 안에 private으로 만들고 `KitShots.kt`는 고치지 않는다.
@@ -157,7 +160,6 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1 -Work C:\vroomi-build\<X>\V
   - 접수양식 docx(기획서)
   - 시연 영상(가산점)
 - 비공개 저장소이므로 심사용 계정을 Collaborator로 초대해야 한다(계정명은 공지 확인).
-- README, 기획서, 독창성 문서, 데모 대본, 체크리스트를 갱신한다(계획 Task 17).
-  - README 뒷부분에 아직 "브루미"와 구슬 장치 언급이 남아 있다.
+- README, 기획서, 독창성 문서, 데모 대본, 체크리스트는 12개 테마·등급·업그레이드 기준으로 갱신했다(구슬 언급 0). "브루미"는 꼬마차 테마 캐릭터 이름으로만 남아 있다.
 - `docs/superpowers/`, `CLAUDE.md`, 이 문서를 제출본에서 뺄지 사용자에게 묻는다.
 - 알려진 작은 문제: 데모 자막 중 꼬마차용 문구가 다른 테마 데모에도 나온다. 아직 고치지 않았다.
