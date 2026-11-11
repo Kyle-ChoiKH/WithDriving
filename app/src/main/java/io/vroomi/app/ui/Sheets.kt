@@ -208,6 +208,72 @@ internal fun ModelOptions(theme: SceneTheme, ctx: PickerContext) {
     }
 }
 
+// ---------------------------------------------------------------- the colourway sheet
+
+/**
+ * The colourway sheet of [theme] (chip "색상 · 코발트 바다"): five rows, each with a swatch, the colourway's name
+ * and the grade that opens it. An open one is chosen (and saved); a locked one is dimmed.
+ */
+@Composable
+internal fun ColorOptions(theme: SceneTheme, ctx: PickerContext) {
+    SheetHeader(stringResource(R.string.color_title), stringResource(R.string.color_hint))
+    val shown = ctx.colorOf(theme)
+    val max = ThemeAccess.maxModel(ctx.grade)
+    val base = io.vroomi.app.ui.design.Ambience.of(theme).tint
+    Column(Modifier.fillMaxWidth().grouped(Shapes.card)) {
+        io.vroomi.character.theme.ThemeColorways.of(theme).forEachIndexed { i, c ->
+            if (i > 0) RowDivider()
+            ColorRow(
+                swatch = androidx.compose.ui.graphics.Color(io.vroomi.character.theme.ThemeColorways.apply(theme, i, base)), title = c.name,
+                unlock = ThemeAccess.modelUnlockGrade(i), open = i <= max, chosen = i == shown,
+            ) { if (i <= max) ctx.onColor(theme, i) }
+        }
+    }
+}
+
+@Composable
+private fun ColorRow(swatch: androidx.compose.ui.graphics.Color, title: String, unlock: Grade, open: Boolean, chosen: Boolean, onClick: () -> Unit) {
+    val chrome = LocalChrome.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = Dimens.listRow)
+            .pressFeedback(Shapes.card, enabled = open, large = true)
+            .clickable(enabled = open, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.RadioButton, onClick = onClick)
+            .semantics { selected = chosen }
+            .padding(start = Space.s24, end = Space.s24, top = Space.s12, bottom = Space.s12),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Swatch(swatch, 36.dp, dim = !open)
+        Spacer(Modifier.width(Space.s16))
+        Column(Modifier.weight(1f)) {
+            Text(title, style = VType.headline, color = if (open) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Spacer(Modifier.height(Space.s4))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Medal(unlock, 20.dp, number = false)
+                Spacer(Modifier.width(Space.s8))
+                Text(
+                    stringResource(if (open) R.string.grade_badge else R.string.locked_grade, unlock.label),
+                    style = VType.callout, color = Ink.secondary, maxLines = 1,
+                )
+            }
+        }
+        Spacer(Modifier.width(Space.s16))
+        if (chosen) Image(VIcons.Check, null, Modifier.size(Dimens.icon), colorFilter = ColorFilter.tint(chrome.tint))
+    }
+}
+
+/** A colourway's swatch: a disc of the theme's accent as that colourway shows it, with a thin ring. */
+@Composable
+internal fun Swatch(color: androidx.compose.ui.graphics.Color, size: androidx.compose.ui.unit.Dp, dim: Boolean = false) {
+    val ring = Ink.separator
+    androidx.compose.foundation.Canvas(Modifier.size(size)) {
+        drawCircle(color.copy(alpha = if (dim) 0.35f else 1f))
+        drawCircle(ring, style = androidx.compose.ui.graphics.drawscope.Stroke(1.dp.toPx()))
+        drawCircle(androidx.compose.ui.graphics.Color.White.copy(alpha = if (dim) 0.08f else 0.28f), radius = this.size.minDimension * 0.16f, center = androidx.compose.ui.geometry.Offset(this.size.width * 0.36f, this.size.height * 0.34f))
+    }
+}
+
 @Composable
 private fun ModelRow(tag: String, title: String, unlock: Grade, open: Boolean, chosen: Boolean, previewing: Boolean, onClick: () -> Unit) {
     val chrome = LocalChrome.current

@@ -188,7 +188,8 @@ fun GradePanel(rt: VroomiRuntime) {
     val grade = VroomiRuntime.shownGrade(trips, settings)
     val theme = ThemeRegistry.resolve(settings.sceneTheme)
     val renderer = rememberSceneStillRenderer()
-    val spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, model = gradePreviewModel(grade))
+    val color = ThemeAccess.effectiveColor(grade, settings.colors[theme])
+    val spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, model = gradePreviewModel(grade), color = color)
     // Drawn once off the main thread by the theme's own painter (a still, so nothing animates on this page).
     val still by produceState<ImageBitmap?>(null, theme, spec) {
         value = runCatching { withContext(Dispatchers.Default) { renderer.render(theme, HeroStills.W, HeroStills.H, spec) } }.getOrNull()
@@ -203,6 +204,12 @@ fun GradePanel(rt: VroomiRuntime) {
         },
         worn = settings.wardrobe,
         chosen = ThemeAccess.effectiveModel(grade, settings.models[theme]),
+        color = color,
+        // A colourway picked here is saved for this theme (its own colours are the unset state).
+        onColor = { c ->
+            val top = ThemeAccess.maxModel(SafetyGrade.current(trips, settings.gradeReached))
+            if (c <= top) rt.settingsStore.update { s -> s.copy(colors = if (c == 0) s.colors - theme else s.colors + (theme to c)) }
+        },
         // A version picked here is saved for this theme (the best open one means "follow the grade"), as in the theme tab.
         onPick = { m ->
             val top = ThemeAccess.maxModel(SafetyGrade.current(trips, settings.gradeReached))
@@ -234,6 +241,8 @@ internal fun GradeContent(
     worn: Set<Accessory>,
     chosen: Int = ThemeAccess.maxModel(grade),
     onPick: (Int) -> Unit = {},
+    color: Int = 0,
+    onColor: (Int) -> Unit = {},
     onToggle: (Accessory, Boolean) -> Unit,
 ) {
     Page(stringResource(R.string.tab_grade)) { pane ->
@@ -251,6 +260,11 @@ internal fun GradeContent(
         }
         Spacer(Modifier.height(Space.s32))
         LadderSection(grade, theme, compact = pane < LadderCompact, chosen = chosen, onPick = onPick)
+        // What the grade opens to dress the theme with: its colourways, or (for the theme with a friend) the wardrobe.
+        if (io.vroomi.character.theme.ThemeColorways.has(theme)) {
+            Spacer(Modifier.height(Space.s32))
+            ColorSection(grade, theme, color, onColor)
+        }
         // Outfits are the friend's: only the theme with a friend on screen has a wardrobe.
         if (theme.hasCharacter) {
             Spacer(Modifier.height(Space.s32))
@@ -438,6 +452,54 @@ private fun LadderRow(g: Grade, theme: SceneTheme, current: Boolean, open: Boole
 }
 
 private val Radius16 = 16.dp
+
+/**
+ * The theme's colourways, laid out like the kart's wardrobe: one card each with its swatch, the grade that opens a
+ * locked one, and a ring round the one in use. Pressing an open card puts that colourway on the theme.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ColorSection(grade: Grade, theme: SceneTheme, chosen: Int, onColor: (Int) -> Unit) {
+    val chrome = LocalChrome.current
+    val top = ThemeAccess.maxModel(grade)
+    val base = io.vroomi.app.ui.design.Ambience.of(theme).tint
+    Column(Modifier.fillMaxWidth()) {
+        Header(stringResource(R.string.grade_colors))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s16), verticalArrangement = Arrangement.spacedBy(Space.s16)) {
+            io.vroomi.character.theme.ThemeColorways.of(theme).forEachIndexed { i, c ->
+                val unlocked = i <= top
+                val worn = i == chosen
+                Column(
+                    Modifier
+                        .width(Dimens.wardrobeCard)
+                        .grouped(Shapes.card)
+                        .drawBehind { if (worn) drawOutline(Shapes.card.createOutline(size, layoutDirection, this), chrome.tint, style = Stroke(Dimens.ring.toPx())) }
+                        .pressFeedback(Shapes.card, enabled = unlocked)
+                        .clickable(enabled = unlocked, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.RadioButton) { onColor(i) }
+                        .heightIn(min = Dimens.listRow + Space.s32)
+                        .padding(Space.s24),
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Swatch(androidx.compose.ui.graphics.Color(io.vroomi.character.theme.ThemeColorways.apply(theme, i, base)), 28.dp, dim = !unlocked)
+                        Spacer(Modifier.width(Space.s12))
+                        Text(c.name, style = VType.headline, color = if (unlocked) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    }
+                    Spacer(Modifier.height(Space.s12))
+                    when {
+                        !unlocked -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            Medal(Grade.of(i + 1), 20.dp, number = false)
+                            Spacer(Modifier.width(Space.s8))
+                            Text(stringResource(R.string.locked_grade, Grade.of(i + 1).label), style = VType.callout, color = Ink.secondary, maxLines = 1)
+                        }
+                        worn -> Tag(stringResource(R.string.color_worn), check = true)
+                        else -> Text(stringResource(R.string.color_wear), style = VType.callout, color = Ink.secondary)
+                    }
+                }
+            }
+        }
+        Text(stringResource(R.string.grade_colors_foot), Modifier.padding(start = Space.s24, end = Space.s24, top = Space.s8), style = VType.callout, color = Ink.secondary)
+    }
+}
 
 /** The kart's wardrobe (moved here from its own tab): one card per outfit, the grade that opens a locked one. */
 @OptIn(ExperimentalLayoutApi::class)

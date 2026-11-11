@@ -160,6 +160,13 @@
     <string name="model_title">버전 고르기</string>
     <string name="model_hint">안전운전 등급이 오르면 새 버전이 열려요. 열린 버전은 언제든 골라 쓸 수 있고, 잠긴 버전은 눌러서 미리 볼 수만 있어요.</string>
     <string name="model_previewing">미리 보기</string>
+    <string name="chip_color">색상 · %1$s</string>
+    <string name="color_title">색상 고르기</string>
+    <string name="color_hint">안전운전 등급이 오를 때마다 이 테마의 새 색상이 하나씩 열려요. 열린 색상은 언제든 바꿔 쓸 수 있어요.</string>
+    <string name="grade_colors">이 테마의 색상 · 눌러서 고르기</string>
+    <string name="grade_colors_foot">색상은 테마마다 따로 고르고, 버전과 함께 쓸 수 있어요.</string>
+    <string name="color_worn">쓰는 중</string>
+    <string name="color_wear">눌러서 쓰기</string>
     <string name="nudge_demo">데모 주행은 안전운전 등급에 들어가지 않아요.</string>
     <string name="nudge_promoted">%1$s 등급이 됐어요!</string>
     <string name="nudge_opened">모든 테마에 새 버전이 열렸어요 · %1$s %2$s</string>

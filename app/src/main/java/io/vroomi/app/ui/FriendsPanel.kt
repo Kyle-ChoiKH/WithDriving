@@ -108,6 +108,7 @@ internal fun RowScope.ThemeOptionChips(theme: SceneTheme, ctx: PickerContext, on
     spec.options.forEach { o ->
         val label = when (o) {
             ThemeOption.MODEL -> ctx.modelOf(theme).let { m -> stringResource(R.string.chip_model, ThemeModels.tag(m), ThemeModels.title(theme, m)) }
+            ThemeOption.COLOR -> stringResource(R.string.chip_color, io.vroomi.character.theme.ThemeColorways.name(theme, ctx.colorOf(theme)))
             ThemeOption.FRIEND -> stringResource(R.string.chip_friend, ctx.skin.label)
             ThemeOption.FINISH -> stringResource(R.string.chip_finish, ctx.finish.label)
             ThemeOption.POWERTRAIN -> stringResource(R.string.chip_powertrain, ctx.powertrain.label)
@@ -124,6 +125,7 @@ internal fun OptionSheet(option: ThemeOption, theme: SceneTheme, ctx: PickerCont
     Column(Modifier.heightIn(max = Dimens.sheetMax).verticalScroll(rememberScrollState())) {
         when (option) {
             ThemeOption.MODEL -> ModelOptions(theme, ctx)
+            ThemeOption.COLOR -> ColorOptions(theme, ctx)
             ThemeOption.FRIEND -> FriendOptions(ctx)
             ThemeOption.FINISH -> CalibreOptions(ctx)
             ThemeOption.POWERTRAIN -> EngineOptions(ctx)

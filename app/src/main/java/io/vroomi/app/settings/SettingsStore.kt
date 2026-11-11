@@ -48,6 +48,8 @@ data class Settings(
     val gradeReached: Int = 1,
     /** The upgrade step chosen per theme (0..4 = Lv.1..5, stored as "model.<THEME>"); a theme without one uses its best unlocked step. */
     val models: Map<SceneTheme, Int> = emptyMap(),
+    /** The colourway chosen per theme (0..4, stored as "color.<THEME>"); a theme without one keeps its own colours. */
+    val colors: Map<SceneTheme, Int> = emptyMap(),
     /** Developer: preview every grade (debug builds only, not stored). */
     val devAllGrades: Boolean = false,
 )
@@ -83,6 +85,7 @@ class SettingsStore(context: Context) {
         launchBackdrop = prefs.getInt("launchBackdrop", 0),
         gradeReached = prefs.getInt(KEY_GRADE, 1).coerceIn(1, 5),
         models = SceneTheme.entries.filter { prefs.contains(modelKey(it)) }.associateWith { prefs.getInt(modelKey(it), 0).coerceIn(0, ThemeModels.COUNT - 1) },
+        colors = SceneTheme.entries.filter { prefs.contains(colorKey(it)) }.associateWith { prefs.getInt(colorKey(it), 0).coerceIn(0, io.vroomi.character.theme.ThemeColorways.COUNT - 1) },
         devAllGrades = false,
     )
 
@@ -129,11 +132,13 @@ class SettingsStore(context: Context) {
         // still tell that no grade was ever stored ([hasStoredGrade]).
         if (s.gradeReached > 1 || prefs.contains(KEY_GRADE)) e.putInt(KEY_GRADE, s.gradeReached)
         SceneTheme.entries.forEach { t -> s.models[t]?.let { e.putInt(modelKey(t), it) } ?: e.remove(modelKey(t)) }
+        SceneTheme.entries.forEach { t -> s.colors[t]?.takeIf { it > 0 }?.let { e.putInt(colorKey(t), it) } ?: e.remove(colorKey(t)) }
         e.apply()
     }
 
     private companion object {
         const val KEY_GRADE = "gradeReached"
         fun modelKey(t: SceneTheme) = "model.${t.name}"
+        fun colorKey(t: SceneTheme) = "color.${t.name}"
     }
 }

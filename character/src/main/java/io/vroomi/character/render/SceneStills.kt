@@ -48,6 +48,8 @@ data class StillSpec(
     val intro: Float = 1f,
     /** The upgrade step to draw ([SceneOptions.model], 0..4 = Lv.1..5). */
     val model: Int = 0,
+    /** The theme's colourway ([io.vroomi.character.theme.ThemeColorways], 0 = its own colours). */
+    val color: Int = 0,
 )
 
 /**
@@ -64,7 +66,14 @@ class SceneStillRenderer(fontFamilyResolver: FontFamily.Resolver, private val de
         val img = ImageBitmap(w.coerceAtLeast(2), h.coerceAtLeast(2))
         LayerCache.scoped {
             CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(img), Size(img.width.toFloat(), img.height.toFloat())) {
-                drawStill(this, theme, spec)
+                val m = io.vroomi.character.theme.ThemeColorways.matrix(theme, spec.color)
+                if (m == null) drawStill(this, theme, spec)
+                else {
+                    val paint = androidx.compose.ui.graphics.Paint().apply { colorFilter = androidx.compose.ui.graphics.ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(m)) }
+                    drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), paint)
+                    drawStill(this, theme, spec)
+                    drawContext.canvas.restore()
+                }
             }
         }
         return img

@@ -29,7 +29,7 @@ enum class ThemeCategory(@StringRes val label: Int) {
 }
 
 /** The options a theme offers, each opened from a chip into a sheet. [MODEL] (the upgrade step) comes first on every theme. */
-enum class ThemeOption { MODEL, FRIEND, FINISH, POWERTRAIN, SOUND }
+enum class ThemeOption { MODEL, COLOR, FRIEND, FINISH, POWERTRAIN, SOUND }
 
 /**
  * What an option sheet needs. [stillAt] null = the live app (frame clock). [grade] is the grade shown (it decides
@@ -51,6 +51,9 @@ internal class PickerContext(
     val modelOf: (SceneTheme) -> Int = { ThemeAccess.maxModel(grade) },
     val previewing: (SceneTheme) -> Boolean = { false },
     val onModel: (SceneTheme, Int) -> Unit = { _, _ -> },
+    /** The colourway a theme shows now, and the pick of one (an open one is saved; a locked one does nothing). */
+    val colorOf: (SceneTheme) -> Int = { 0 },
+    val onColor: (SceneTheme, Int) -> Unit = { _, _ -> },
 ) {
     val live: Boolean get() = stillAt == null
     val nowMs: Long get() = stillAt ?: openedAt
@@ -74,7 +77,9 @@ internal class ThemeSpec(
     val chip: (host: SceneHost, target: CharacterTarget) -> String?,
 ) {
     /** Every option in chip order: the upgrade step ([ThemeOption.MODEL]) first on every theme, then the theme's own. */
-    val options: List<ThemeOption> = listOf(ThemeOption.MODEL) + ownOptions.filter { it != ThemeOption.MODEL }
+    val options: List<ThemeOption> = listOf(ThemeOption.MODEL) +
+        (if (io.vroomi.character.theme.ThemeColorways.has(theme)) listOf(ThemeOption.COLOR) else emptyList()) +
+        ownOptions.filter { it != ThemeOption.MODEL && it != ThemeOption.COLOR }
 
     val ambience: ThemeAmbience get() = Ambience.of(theme)
 }
