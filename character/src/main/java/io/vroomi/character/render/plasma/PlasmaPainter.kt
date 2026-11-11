@@ -70,6 +70,11 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
     private val rim = Stroke(2f)
     private val band = Stroke(7f, cap = StrokeCap.Round)
     private val bandThin = Stroke(3.6f, cap = StrokeCap.Round)
+    /** The gas of the chosen step: its glow and its filament body (and the second pair, for a mixed gas). */
+    private var gasV = Lab.violet
+    private var gasM = Lab.magenta
+    private var gasV2 = Lab.violet
+    private var gasM2 = Lab.magenta
 
     private fun bench(dw: Float): Bench {
         val b = bench
@@ -96,7 +101,8 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
         val desk = Bench.DESK
         // The room: blue-black, a faint cool light on the wall behind the globe.
         drawRect(Brush.verticalGradient(0f to Lab.roomTop, 1f to Lab.roomBottom, startY = 0f, endY = desk), size = Size(w, desk))
-        drawRect(Brush.radialGradient(listOf(Color(0xFF3A3560).copy(alpha = 0.30f), Color.Transparent), Offset(g.cx, 230f), 620f), size = Size(w, desk))
+        val wall = if (model == 0) Color(0xFF3A3560) else androidx.compose.ui.graphics.lerp(GAS[model.coerceIn(0, GAS.size - 1)][0], Color(0xFF14121E), 0.55f)
+        drawRect(Brush.radialGradient(listOf(wall.copy(alpha = if (model == 0) 0.30f else 0.42f), Color.Transparent), Offset(g.cx, 230f), 620f), size = Size(w, desk))
         // The bench top: a satin dark surface, its front edge catching a little light.
         drawRect(Brush.verticalGradient(0f to Lab.desk, 1f to Lab.deskDeep, startY = desk, endY = h), Offset(0f, desk), Size(w, h - desk))
         drawRect(Color.White.copy(alpha = 0.08f), Offset(0f, desk), Size(w, 1.4f))
@@ -128,17 +134,19 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
         val c = g.globe; val r = Bench.R
         val desk = Bench.DESK
         val model = f.model
+        val gas = GAS[model.coerceIn(0, GAS.size - 1)]
+        gasV = gas[0]; gasM = gas[1]; gasV2 = gas[2]; gasM2 = gas[3]
         // Brightness of everything the globe emits: the slow breath, dimmer while braking and when held.
         val b = sim.flicker * (1f - 0.42f * sim.braking) * (1f - 0.5f * sim.freeze)
 
         // The globe's light on the bench and inside the glass.
-        drawOval(Brush.radialGradient(listOf(Lab.violet.copy(alpha = 0.16f * b), Lab.violet.copy(alpha = 0f)), Offset(c.x, desk + 30f), 300f), Offset(c.x - 300f, desk + 4f), Size(600f, 60f))
-        drawCircle(Brush.radialGradient(0f to Lab.magenta.copy(alpha = 0.34f * b), 0.5f to Lab.violet.copy(alpha = 0.16f * b), 1f to Lab.violet.copy(alpha = 0.04f * b), center = c, radius = r), r, c)
+        drawOval(Brush.radialGradient(listOf(gasV.copy(alpha = 0.16f * b), gasV.copy(alpha = 0f)), Offset(c.x, desk + 30f), 300f), Offset(c.x - 300f, desk + 4f), Size(600f, 60f))
+        drawCircle(Brush.radialGradient(0f to gasM.copy(alpha = 0.34f * b), 0.5f to gasV.copy(alpha = 0.16f * b), 1f to gasV.copy(alpha = 0.04f * b), center = c, radius = r), r, c)
 
         filaments(sim, c, r, b)
 
         // The electrode: a small bright ball.
-        drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = b), Lab.magenta.copy(alpha = 0.7f * b), Lab.violet.copy(alpha = 0f)), c, 26f), 26f, c)
+        drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = b), gasM.copy(alpha = 0.7f * b), gasV.copy(alpha = 0f)), c, 26f), 26f, c)
         drawCircle(Lab.core.copy(alpha = 0.95f * b), 9f, c)
 
         // A blink's touch point on the glass: 80 ms in, a soft half second out (one per blink, flash-guarded).
@@ -146,14 +154,14 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
         if (tt in 0f..1.2f && !sim.calm && sim.touchSide != TurnSignal.NONE) {
             val e = if (tt < 0.08f) tt / 0.08f else exp(-(tt - 0.08f) / 0.3f)
             val p = Offset(c.x + (if (sim.touchSide == TurnSignal.LEFT) -1f else 1f) * r * 0.97f, c.y)
-            drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.8f * e), Lab.magenta.copy(alpha = 0.35f * e), Lab.violet.copy(alpha = 0f)), p, 30f), 30f, p)
+            drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.8f * e), gasM.copy(alpha = 0.35f * e), gasV.copy(alpha = 0f)), p, 30f), 30f, p)
         }
         // A star: one point of light rests on the glass for a while.
         val st = sim.since(sim.starAt).toFloat()
         if (st in 0f..PlasmaSim.STAR_S) {
             val e = (st / 0.5f).coerceAtMost(1f) * ((PlasmaSim.STAR_S - st) / 1.2f).coerceIn(0f, 1f)
             val p = Offset(c.x + sin(sim.starAngle) * r * 0.86f, c.y - cos(sim.starAngle) * r * 0.86f)
-            drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.5f * e), Lab.violet.copy(alpha = 0f)), p, 18f), 18f, p)
+            drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.5f * e), gasV.copy(alpha = 0f)), p, 18f), 18f, p)
             drawCircle(Lab.core.copy(alpha = 0.95f * e), 3.6f, p)
         }
 
@@ -197,11 +205,13 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
                 c.x + dx * len * 0.68f + nx * a2, c.y + dy * len * 0.68f + ny * a2,
                 end.x, end.y,
             )
-            drawPath(strand, Lab.violet.copy(alpha = 0.20f * b), style = glow)
-            drawPath(strand, Lab.magenta.copy(alpha = 0.55f * b), style = mid)
+            // The mixed gas of the last step: every other filament takes the second colour.
+            val second = i % 2 == 1
+            drawPath(strand, (if (second) gasV2 else gasV).copy(alpha = 0.20f * b), style = glow)
+            drawPath(strand, (if (second) gasM2 else gasM).copy(alpha = 0.55f * b), style = mid)
             drawPath(strand, Lab.core.copy(alpha = 0.9f * b), style = core)
             // Where a filament meets the glass it spreads into a small soft foot.
-            if (touching > 0.02f) drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.55f * b * touching), Lab.violet.copy(alpha = 0f)), end, 13f), 13f, end)
+            if (touching > 0.02f) drawCircle(Brush.radialGradient(listOf(Lab.core.copy(alpha = 0.55f * b * touching), gasV.copy(alpha = 0f)), end, 13f), 13f, end)
         }
     }
 
@@ -234,5 +244,17 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
 
     private companion object {
         const val DROPS = 34
+
+        /**
+         * The gas in the globe, one per step (glow, filament body, and a second pair for a mixed gas): violet argon,
+         * blue xenon, orange-red neon, green krypton, and a violet and teal mix.
+         */
+        val GAS = arrayOf(
+            arrayOf(Lab.violet, Lab.magenta, Lab.violet, Lab.magenta),
+            arrayOf(Color(0xFF3F5BFF), Color(0xFF86A8FF), Color(0xFF3F5BFF), Color(0xFF86A8FF)),
+            arrayOf(Color(0xFFFF4E2A), Color(0xFFFF9A62), Color(0xFFFF4E2A), Color(0xFFFF9A62)),
+            arrayOf(Color(0xFF1FCF7A), Color(0xFF9CFFC8), Color(0xFF1FCF7A), Color(0xFF9CFFC8)),
+            arrayOf(Lab.violet, Lab.magenta, Color(0xFF17B6C8), Color(0xFF74F2E8)),
+        )
     }
 }

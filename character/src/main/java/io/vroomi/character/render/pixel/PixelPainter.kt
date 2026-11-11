@@ -251,6 +251,15 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
                 if (i in 4..22 && i % 3 == 0) buf.dot(x, y - 1, lit(PINK))
             }
             buf.rect(hx - 1, hy - 1, 4, 3, lit(CREAM)); buf.rect(hx, hy - 2, 2, 5, lit(CREAM))
+            // A small second moon, low on the right, with its dark side.
+            val mx = 338; val my = 60; val mr = 13
+            for (dy in -mr..mr) {
+                val half = sqrt((mr * mr - dy * dy).toDouble()).toInt()
+                buf.rect(mx - half, my + dy, half * 2 + 1, 1, lit(CREAM))
+                val shade = (half * 0.7f).toInt()
+                if (shade > 0) buf.rect(mx + half - shade + 1, my + dy, shade, 1, c(LILAC))
+            }
+            buf.rect(mx - 7, my - 4, 3, 3, c(LILAC)); buf.rect(mx - 3, my + 4, 2, 2, c(LILAC)); buf.dot(mx - 9, my + 2, c(LILAC))
         }
         if (step >= 4) {
             // The mothership, high overhead: a long hull, a bridge, a row of steady lights.
