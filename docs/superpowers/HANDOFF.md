@@ -86,6 +86,14 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 
 병합 뒤 본 체크아웃(main)에서 서명된 릴리스 APK를 빌드해 확인했다: `apk/Kyle_WithDriving_release.apk`(팀명 Kyle, 1.7.0-contest, versionCode 8, 19.8MB, v2 서명 확인). 에뮬레이터에 설치해 등급 탭, 테마 탭, 시계 쇼케이스(12초 735프레임, 끊김 0%, 크래시 0), 데모를 중간에 끝낸 뒤의 동작(트립 카드에 "데모" 표시, 등급 거리 그대로, 원래 테마로 복귀)을 봤다. 디버그 빌드와 릴리스 빌드는 서명이 달라 서로 덮어 설치되지 않는다(`adb uninstall io.withdriving.app` 후 설치).
 
+**2026-11-11 저녁: 단계(버전) 디버깅.** 사용자가 전 등급을 연 빌드로 직접 보고 "등급별 변형이 안 보이고 허접한 게 많다, 열린 버전은 골라 쓸 수 있어야 한다, 등급 탭에서 옷장은 필요한 테마만"이라고 지적했다. 원인과 수정(`fix/step-visibility`):
+- 기존 사다리 스냅샷은 유리한 주행 상태만 찍어서, 새 사용자가 보는 **주차·기록 0** 화면에서 단계가 같아 보이는 것을 못 잡았다. `FreshLadderSnapshotTest`(주차·첫 주행 상태의 5단계 한 장)와 `PassageCostTest.everyStepShowsWhenParked`(단계마다 화면의 0.5% 이상이 바뀌는지 측정, `build/reports/step_visibility.txt`)를 추가했다. **새 테마·단계를 만들면 이 두 테스트부터 본다.**
+- 꼬마차: 고른 단계의 대표 풍경이 출발 구간과 주차 화면에 나온다(`KartStep.face`/`signature`), 네온·오로라는 시간과 무관하게 밤(`dusk`), 5단계는 퍼레이드 깃발(`drawParade`).
+- 격납고: 조립 전에도 고른 기체의 설계 홀로그램(`Mech.blueprint`)과 벽의 주문판(`unitSign`, HX-1~5)이 보인다.
+- 도트 월드: 단계별 하늘(고리 행성·떠 있는 섬·혜성과 둘째 달·모선). 태양계: 별밭·행성 대기·먼지 고리·성운(`OrbitExtras.light`). 플라즈마: 단계별 가스 색(`GAS`). 팝업북: 4단계 종이 열기구.
+- 등급 탭: 버전 줄을 눌러 그 테마의 버전을 바로 고른다(저장), 옷과 옷장은 캐릭터가 있는 테마(꼬마차)에서만 보인다. 문구는 "업그레이드" → "버전"("버전 고르기").
+- 전 등급을 연 상태로 보기(디버그 빌드): 에뮬레이터에서 `adb shell run-as io.withdriving.app --user 10`으로 `shared_prefs/vroomi_settings.xml`에 `<int name="gradeReached" value="5" />`를 넣는다.
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 

@@ -214,7 +214,7 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 sky(g, sim)
                 // Foil is stamped on the page itself, so the planes stand in front of it.
                 if (PaperStep.special(model)) foil(g)
-                if (PaperStep.pullTab(model)) cloudTab(g, sim)
+                if (PaperStep.pullTab(model)) { cloudTab(g, sim); balloon(g, sim) }
                 if (PaperStep.farPlane(model)) standUp(intro, 0, g.foldBack - 26f) { farHills(g, sim) }
                 standUp(intro, 0, g.foldBack) { mountains(g, sim) }
                 standUp(intro, 1, g.foldMid) { scenery(g, sim) }
@@ -477,6 +477,31 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
             tmp2.reset(); tmp2.addOval(Rect(cx + 8f * sc, y - 12f * sc, cx + 126f * sc, y + 2f))
             halftone(tmp2, TONE_BLUE, fine = true)
         }
+    }
+
+    /**
+     * Step 4, on the left page: a paper balloon on its own tab, striped in the edition's inks. It rides the same
+     * pull as the clouds (so it moves only while parked) and hangs still otherwise.
+     */
+    private fun DrawScope.balloon(g: PGeo, sim: PaperSim) {
+        val x = g.cx - 150f; val y = 178f - 26f * sim.cloudSlide
+        // The tab's slot and the strip the balloon stands on.
+        drawRoundRectSlot(x - 5f, 96f, 10f)
+        drawLine(PaperInk.KRAFT_DARK, Offset(x, 104f), Offset(x, y - 58f), 3f)
+        tmp.reset(); tmp.addOval(Rect(x - 56f, y - 66f, x + 56f, y + 50f))
+        piece(tmp, Color.White, Offset.Zero, lift = 0.9f)
+        clipPath(tmp) {
+            val inks = arrayOf(PaperInk.PINK, PaperInk.YELLOW, PaperInk.BLUE)
+            for (i in 0 until 7) if (i % 2 == 0) drawRect(inks[(i / 2) % 3], Offset(x - 56f + i * 16f, y - 66f), Size(16f, 116f))
+            drawRect(Color.Black.copy(alpha = 0.10f), Offset(x + 14f, y - 66f), Size(42f, 116f))
+        }
+        tmp2.reset(); tmp2.addOval(Rect(x - 40f, y + 20f, x + 40f, y + 50f))
+        halftone(tmp2, TONE_BLUE, fine = true)
+        // The ropes and the basket.
+        for (dx in floatArrayOf(-22f, 22f)) drawLine(PaperInk.KRAFT_DARK, Offset(x + dx, y + 44f), Offset(x + dx * 0.5f, y + 72f), 1.6f)
+        tmp.reset(); tmp.moveTo(x - 15f, y + 70f); tmp.lineTo(x + 15f, y + 70f); tmp.lineTo(x + 12f, y + 92f); tmp.lineTo(x - 12f, y + 92f); tmp.close()
+        piece(tmp, PaperInk.KRAFT, Offset.Zero, PaperInk.KRAFT, lift = 0.7f)
+        drawLine(PaperInk.KRAFT_DARK, Offset(x - 14f, y + 78f), Offset(x + 14f, y + 78f), 1.4f)
     }
 
     /** Step 5: gold foil stamped on the special edition: a rule inside each page's edge and punched discs in the sky. */

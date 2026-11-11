@@ -16,6 +16,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.exp
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -83,8 +84,8 @@ internal class SceneRuntime(seed: Int = 7) {
 
     // Scenery slots: new scenery scrolls in from the right instead of popping.
     var biomeCur = Biome.CITY; var biomePrev = Biome.CITY
-    /** The road's new face ([KartStep.variant]) for the current and the previous scenery, and the upgrade step. */
-    var variantCur = false; var variantPrev = false
+    /** The road's new face ([KartStep.face], null for the plain road) for the current and the previous scenery, and the upgrade step. */
+    var faceCur: Biome? = null; var facePrev: Biome? = null
     var model = 0
     var farBoundary = Int.MIN_VALUE; var midBoundary = Int.MIN_VALUE
     var biomeInit = false
@@ -198,7 +199,8 @@ internal class SceneRuntime(seed: Int = 7) {
         // ---- overlays
         wind.step(t.overlays.windLevel, dt)
         rain.step(t.overlays.rain, dt)
-        dark.step(darkness(o.hourOfDay, t.overlays.night), dt)
+        // The neon street and the aurora are night roads at any hour (the face of the scenery now arriving).
+        dark.step(max(darkness(o.hourOfDay, t.overlays.night), KartStep.dusk(faceCur)), dt)
         glow.step(t.overlays.footGlow, dt)
         blushA.step(if (t.mood == Mood.HAPPY || t.mood == Mood.WARM) 0.25f else 0f, dt)
 
@@ -210,9 +212,9 @@ internal class SceneRuntime(seed: Int = 7) {
 
         // ---- scenery
         model = o.model.coerceIn(0, 4)
-        syncBiome(t.journey.biome, KartStep.variant(model, t.journey.biome, t.journey.tripKm))
+        syncBiome(t.journey.biome, KartStep.face(model, t.journey.biome, t.journey.tripKm))
         val groundBiome = biomeAt(scrollMid + 0.33, MID_SLOT, midBoundary)
-        val groundTarget = if (variantAt(scrollMid + 0.33, MID_SLOT, midBoundary)) KartStep.ground(groundBiome) else groundColor(groundBiome, o.season)
+        val groundTarget = faceAt(scrollMid + 0.33, MID_SLOT, midBoundary)?.let { KartStep.ground(it) } ?: groundColor(groundBiome, o.season)
         groundCol = lerp(groundCol, groundTarget, 1f - exp(-dt * 1.5f))
 
         // ---- journey: stars, km signs, finish arch
@@ -264,11 +266,13 @@ internal class SceneRuntime(seed: Int = 7) {
 
     // ------------------------------------------------------------------ scenery
 
-    fun syncBiome(b: Biome, variant: Boolean = false) {
-        if (!biomeInit) { biomeCur = b; biomePrev = b; variantCur = variant; variantPrev = variant; biomeInit = true; return }
-        if (b == biomeCur && variant == variantCur) return
-        biomePrev = biomeCur; variantPrev = variantCur
-        biomeCur = b; variantCur = variant
+    fun syncBiome(b: Biome, face: Biome? = null) {
+        if (!biomeInit) { biomeCur = b; biomePrev = b; faceCur = face; facePrev = face; biomeInit = true; return }
+        if (b == biomeCur && face == faceCur) return
+        // A step chosen while the car stands still changes the whole scene at once (nothing scrolls in to replace it).
+        if (b == biomeCur && lastScrollDx == 0f) { faceCur = face; facePrev = face; return }
+        biomePrev = biomeCur; facePrev = faceCur
+        biomeCur = b; faceCur = face
         // Everything already on screen keeps the old scenery; new slots arrive from the right edge.
         farBoundary = floorDiv(scrollFar + 1.05, FAR_SLOT) + 1
         midBoundary = floorDiv(scrollMid + 1.05, MID_SLOT) + 1
@@ -277,8 +281,8 @@ internal class SceneRuntime(seed: Int = 7) {
     fun biomeAt(pos: Double, slot: Double, boundary: Int): Biome =
         if (floorDiv(pos, slot) >= boundary) biomeCur else biomePrev
 
-    fun variantAt(pos: Double, slot: Double, boundary: Int): Boolean =
-        if (floorDiv(pos, slot) >= boundary) variantCur else variantPrev
+    fun faceAt(pos: Double, slot: Double, boundary: Int): Biome? =
+        if (floorDiv(pos, slot) >= boundary) faceCur else facePrev
 
     // ------------------------------------------------------------------ journey sync
 

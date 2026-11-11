@@ -192,6 +192,16 @@ class KartStepTest {
         }
         org.junit.Assert.assertFalse(KartStep.variant(4, Biome.FIELD, 1.0f)); org.junit.Assert.assertFalse(KartStep.variant(4, Biome.SEASIDE, 1.0f))
         // Step 2 has the blossom road only.
-        org.junit.Assert.assertTrue(KartStep.variant(1, Biome.PARK, 1.0f)); org.junit.Assert.assertFalse(KartStep.variant(1, Biome.CITY, 0.1f))
+        org.junit.Assert.assertTrue(KartStep.variant(1, Biome.PARK, 1.0f)); org.junit.Assert.assertFalse(KartStep.variant(1, Biome.CITY, 1.0f))
+    }
+
+    /** A trip (and the parked scene) begins on the road the chosen step added, so the five steps differ at once. */
+    @org.junit.Test fun chosenStepShowsAtTheStart() {
+        val start = (0 until 5).map { KartStep.face(it, Biome.CITY, 0f) }
+        org.junit.Assert.assertEquals(listOf(null, Biome.PARK, Biome.CITY, Biome.MOUNTAIN, null), start)
+        org.junit.Assert.assertEquals(5, (0 until 5).map { start[it] to KartStep.roadster(it) }.distinct().size)
+        // The neon street and the aurora bring their own night; the blossom road and the plain roads keep the hour.
+        org.junit.Assert.assertTrue(KartStep.dusk(Biome.CITY) > 0.7f && KartStep.dusk(Biome.MOUNTAIN) > 0.7f)
+        org.junit.Assert.assertEquals(0f, KartStep.dusk(Biome.PARK), 0f); org.junit.Assert.assertEquals(0f, KartStep.dusk(null), 0f)
     }
 }

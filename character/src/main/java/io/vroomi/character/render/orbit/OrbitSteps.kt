@@ -2,6 +2,7 @@ package io.vroomi.character.render.orbit
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
@@ -83,6 +84,62 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
         }
     }
 
+    private val starX = FloatArray(STARS) { hash01(it, 211) }
+    private val starY = FloatArray(STARS) { hash01(it, 212) }
+    private val bandOuter = Ring(cx, cy, 168f, -6f, 0.34f)
+    private val bandInner = Ring(cx, cy, 138f, -6f, 0.34f)
+    private val band = Path()
+
+    /** Half of the wide outer ring as a filled band between [bandInner] and [bandOuter]. */
+    private fun bandPath(front: Boolean): Path {
+        val n = 40; val a0 = if (front) 0f else PI.toFloat()
+        band.reset()
+        for (i in 0..n) { val a = a0 + i * PI.toFloat() / n; if (i == 0) band.moveTo(bandOuter.x(a), bandOuter.y(a)) else band.lineTo(bandOuter.x(a), bandOuter.y(a)) }
+        for (i in n downTo 0) { val a = a0 + i * PI.toFloat() / n; band.lineTo(bandInner.x(a), bandInner.y(a)) }
+        band.close()
+        return band
+    }
+
+    /**
+     * The light the steps add to the display, so that a step shows at a glance and not only as one more fine line:
+     * 2 a deeper star field and a lit moon, 3 the planet's atmosphere (a glow inside its limb and a halo around it),
+     * 4 a wide dust ring as a filled band, 5 two nebula clouds far behind. All of it is steady.
+     */
+    fun DrawScope.light(model: Int, planetR: Float, ink: Ink, lum: Float, front: Boolean) {
+        if (!front) {
+            if (OrbitStep.station(model)) {
+                val a = Offset(cx - dw * 0.30f, cy - 150f); val b = Offset(cx + dw * 0.31f, cy + 130f)
+                drawCircle(Brush.radialGradient(listOf(ink.b.copy(alpha = 0.30f * lum), ink.b.copy(alpha = 0.12f * lum), Color.Transparent), a, 360f), 360f, a)
+                drawCircle(Brush.radialGradient(listOf(ink.a.copy(alpha = 0.26f * lum), ink.a.copy(alpha = 0.10f * lum), Color.Transparent), b, 320f), 320f, b)
+            }
+            if (OrbitStep.moon(model)) {
+                val n = if (OrbitStep.station(model)) STARS else if (OrbitStep.rings(model)) 230 else if (OrbitStep.duo(model)) 170 else 110
+                for (i in 0 until n) {
+                    val x = cx + (starX[i] - 0.5f) * dw; val y = cy + (starY[i] - 0.5f) * 600f
+                    val big = i % 11 == 0
+                    drawCircle((if (i % 4 == 0) ink.bCore else ink.aCore).copy(alpha = (if (big) 0.85f else 0.45f) * lum), if (big) 1.9f else 1.1f, Offset(x, y))
+                    if (big) drawCircle(ink.a.copy(alpha = 0.16f * lum), 5f, Offset(x, y))
+                }
+            }
+            if (OrbitStep.rings(model)) drawPath(bandPath(false), ink.b.copy(alpha = 0.16f * lum))
+            if (OrbitStep.duo(model)) {
+                val c = Offset(cx, cy)
+                drawCircle(Brush.radialGradient(0.62f to Color.Transparent, 0.74f to ink.a.copy(alpha = 0.30f * lum), 1f to Color.Transparent, center = c, radius = planetR * 1.42f), planetR * 1.42f, c)
+            }
+        } else {
+            if (OrbitStep.duo(model)) {
+                val c = Offset(cx, cy)
+                drawCircle(Brush.radialGradient(0f to ink.a.copy(alpha = 0.05f * lum), 0.7f to ink.a.copy(alpha = 0.16f * lum), 1f to ink.aCore.copy(alpha = 0.34f * lum), center = Offset(cx - planetR * 0.25f, cy - planetR * 0.2f), radius = planetR * 1.25f), planetR, c)
+            } else if (OrbitStep.moon(model)) {
+                drawCircle(Brush.radialGradient(0f to ink.a.copy(alpha = 0.10f * lum), 1f to ink.a.copy(alpha = 0.30f * lum), center = Offset(cx, cy), radius = planetR), planetR, Offset(cx, cy))
+            }
+            if (OrbitStep.rings(model)) {
+                drawPath(bandPath(true), ink.b.copy(alpha = 0.26f * lum))
+                drawPath(bandOuter.front, ink.bCore.copy(alpha = 0.55f * lum), style = THIN)
+            }
+        }
+    }
+
     /** One half of what the steps add: [front] false before the planet is drawn, true after it. */
     fun DrawScope.bodies(model: Int, t: Float, ink: Ink, lum: Float, front: Boolean) {
         if (OrbitStep.rings(model)) {
@@ -107,9 +164,10 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
             val a = 0.9f + t * 2f * PI.toFloat() / 48f
             if (moonRing.isFront(a) == front) {
                 val c = Offset(moonRing.x(a), moonRing.y(a))
-                drawCircle(Color.Black, 13f, c)
-                drawCircle(ink.a.copy(alpha = 0.22f * lum), 12f, c, style = BLOOM)
-                drawCircle(ink.aCore.copy(alpha = 0.9f * lum), 12f, c, style = CORE)
+                drawCircle(Color.Black, 19f, c)
+                drawCircle(Brush.radialGradient(listOf(ink.aCore.copy(alpha = 0.42f * lum), ink.a.copy(alpha = 0.14f * lum)), Offset(c.x - 6f, c.y - 6f), 26f), 18f, c)
+                drawCircle(ink.a.copy(alpha = 0.22f * lum), 18f, c, style = BLOOM)
+                drawCircle(ink.aCore.copy(alpha = 0.9f * lum), 18f, c, style = CORE)
                 drawCircle(ink.aCore.copy(alpha = 0.6f * lum), 3.2f, Offset(c.x - 4f, c.y - 3f), style = THIN)
                 drawCircle(ink.aCore.copy(alpha = 0.6f * lum), 2f, Offset(c.x + 4.5f, c.y + 3.5f), style = THIN)
                 drawArc(ink.aCore.copy(alpha = 0.5f * lum), 300f, 120f, false, Offset(c.x - 16f, c.y - 9f), Size(18f, 18f), style = THIN)
@@ -218,5 +276,5 @@ internal class OrbitExtras(private val cx: Float, private val cy: Float, private
         }
     }
 
-    private companion object { const val BELT = 64 }
+    private companion object { const val BELT = 64; const val STARS = 300 }
 }

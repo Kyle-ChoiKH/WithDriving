@@ -63,11 +63,11 @@ class PassageCostTest {
     /** [release] drops the theme's caches and returns what is still held (the app also drops a kit theme's runtime). */
     private class Live(val theme: SceneTheme, val draw: (CanvasDrawScope, ImageBitmap) -> Unit, val caches: () -> Long, val release: () -> Long)
 
-    private fun live(theme: SceneTheme, tm: TextMeasurer, density: Density, options: SceneOptions = this.options): Live = when (theme) {
+    private fun live(theme: SceneTheme, tm: TextMeasurer, density: Density, options: SceneOptions = this.options, kartDriving: Boolean = true): Live = when (theme) {
         SceneTheme.KART -> {
             // The kart scene keeps no cached layers: it is drawn whole every frame.
             val r = SceneRuntime(seed = 3)
-            val driving = CharacterTarget(sizeMode = SizeMode.FULL, kart = io.vroomi.character.KartState(driving = true))
+            val driving = CharacterTarget(sizeMode = SizeMode.FULL, kart = io.vroomi.character.KartState(driving = kartDriving))
             for (i in 0 until 90) r.step(1f / 60f, driving, options, DEFAULT_NOW_MS + i * 16L)
             val cache = TextCache()
             Live(theme, { s, img -> s.draw(density, LayoutDirection.Ltr, Canvas(img), Size(w.toFloat(), h.toFloat())) { r.draw(this, driving, options, tm, cache) } }, { 0L }, { 0L })
@@ -149,7 +149,50 @@ class PassageCostTest {
         println(out)
     }
 
+    /**
+     * A chosen step has to show at once: on a fresh install with the car parked (what the step picker's stage shows),
+     * every step of every theme differs from the one before it over a visible part of the picture. Writes the
+     * measured shares to build/reports/step_visibility.txt.
+     */
+    @Test fun everyStepShowsWhenParked() {
+        val density = Density(1f)
+        val tm = TextMeasurer(createFontFamilyResolver(paparazzi.context), density, LayoutDirection.Ltr)
+        val out = StringBuilder("share of the picture that changes from one step to the next (parked, fresh install, 1920 x 720)\n")
+        val weak = ArrayList<String>()
+        for (theme in SceneTheme.entries) {
+            var before: IntArray? = null
+            val shares = ArrayList<Float>()
+            for (model in 0 until 5) {
+                releaseThemeLayers(null)
+                val img = ImageBitmap(w, h)
+                val l = live(theme, tm, density, options.copy(model = model), kartDriving = false)
+                l.draw(CanvasDrawScope(), img)
+                val px = IntArray(w * h)
+                img.readPixels(px)
+                l.release()
+                before?.let { b ->
+                    var n = 0
+                    for (i in px.indices) {
+                        val p = px[i]; val q = b[i]
+                        if (p != q && (kotlin.math.abs((p shr 16 and 255) - (q shr 16 and 255)) > 24 || kotlin.math.abs((p shr 8 and 255) - (q shr 8 and 255)) > 24 || kotlin.math.abs((p and 255) - (q and 255)) > 24)) n++
+                    }
+                    shares += n.toFloat() / px.size
+                }
+                before = px
+            }
+            out.append("%-13s %s\n".format(theme, shares.joinToString("  ") { "%5.2f%%".format(it * 100f) }))
+            shares.forEachIndexed { i, s -> if (s < MIN_STEP_SHARE) weak += "$theme Lv.${i + 1} -> Lv.${i + 2}: ${"%.2f".format(s * 100f)}%" }
+        }
+        File("build/reports").mkdirs()
+        File("build/reports/step_visibility.txt").writeText(out.toString())
+        println(out)
+        assertTrue("steps that hardly show: $weak", weak.isEmpty())
+    }
+
     private companion object {
+        /** The least share of the picture a step must change (fine line art counts little; a small sprite alone is about 0.3 %). */
+        const val MIN_STEP_SHARE = 0.005f
+
         /** The shared budget of the static layer bitmaps (48 MB; the app holds one theme's layers at a time). */
         const val LAYER_LIMIT = 48L * 1024 * 1024
     }

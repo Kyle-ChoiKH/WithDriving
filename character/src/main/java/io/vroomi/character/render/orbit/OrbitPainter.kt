@@ -189,12 +189,12 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         star(g, sim)
         meteor(g, sim)
         // Back halves (behind the planet's limb they are hidden by its black disc).
-        with(g.extras) { bodies(model, st, OP.ink, lum, front = false) }
+        with(g.extras) { light(model, g.planetR, OP.ink, lum, front = false); bodies(model, st, OP.ink, lum, front = false) }
         orbitLines(g, sim, front = false)
         satellites(g, sim, front = false)
         craft(g, sim, front = false)
         globe(g, sim)
-        with(g.extras) { bodies(model, st, OP.ink, lum, front = true) }
+        with(g.extras) { light(model, g.planetR, OP.ink, lum, front = true); bodies(model, st, OP.ink, lum, front = true) }
         orbitLines(g, sim, front = true)
         markerRing(g, sim)
         station(g, sim, model, st)

@@ -96,6 +96,7 @@ internal class Mech(val style: MechStyle) {
 
     private val out = Stroke(1.3f, join = StrokeJoin.Round)
     private val hair = Stroke(0.9f)
+    private val holo = Stroke(1.5f, join = StrokeJoin.Round)
     private val reactorWindow = Path().apply { addOval(Rect(Offset(0f, -333f), 19f)) }
     private val bands = arrayOf(quad(-37f, -92f, 44f * b, -37.5f, -74f, 42f * b * t, 2f), quad(37f, -92f, 44f * b, 37.5f, -74f, 42f * b * t, 2f))
     private val stripe = quad(-100f, -372f, 56f * b, -100f, -362f, 56f * b, 1f)
@@ -107,6 +108,8 @@ internal class Mech(val style: MechStyle) {
         var reactor = 0.2f; var fanDeg = 0f; var steam = 0f; var steamT = 0f
         var beaconL = 0f; var beaconR = 0f; var visor = 0.35f; var idleT = 0f; var flicker = 1f
         var unitText: TextLayoutResult? = null
+        /** Seconds for the design hologram's scan line (0 holds it still). */
+        var holoT = 0f
     }
 
     private fun color(role: Int): Color = when (role) { P -> style.primary; S -> style.secondary; else -> style.accent }
@@ -120,6 +123,8 @@ internal class Mech(val style: MechStyle) {
     fun DrawScope.draw(stage: Int, sp: Float, pose: Pose) {
         val dip = pose.dip
         val body = dip * 7f
+        // The design hologram stands in the gantry until the armour is on: the chosen unit is seen from the first metre.
+        if (stage < 3) blueprint(if (stage == 2) 0.85f * (1f - sp) + 0.25f else 1f, pose.holoT)
         // Behind the body: radiator fins, the survey unit's attitude nozzles, steam from the back vents.
         if (stage >= 1) translate(0f, body) { back(stage, sp, pose) }
 
@@ -148,6 +153,37 @@ internal class Mech(val style: MechStyle) {
                 if (stage >= 4) markings(if (stage == 4) sp else 1f, pose)
             }
         }
+    }
+
+    /**
+     * The design hologram of the finished unit: its plates in their own colours, see-through, with bright edges, the
+     * visor band, the reactor ring and the unit's equipment in outline. One scan line climbs it slowly ([t] seconds;
+     * 0 holds it still). Its light is steady: nothing blinks.
+     */
+    private fun DrawScope.blueprint(amount: Float, t: Float) {
+        if (amount <= 0.01f) return
+        // The light the projection throws on the floor.
+        drawOval(Brush.radialGradient(listOf(HOLO.copy(alpha = 0.22f * amount), HOLO.copy(alpha = 0f)), Offset(0f, 4f), 150f), Offset(-150f, -14f), Size(300f, 36f))
+        for (pl in plates) {
+            val c = color(pl.role)
+            drawPath(pl.path, lerp(c, HOLO, 0.25f).copy(alpha = 0.34f * amount))
+            drawPath(pl.path, lerp(c, Color.White, 0.45f).copy(alpha = 0.80f * amount), style = holo)
+        }
+        drawRect(style.visor.copy(alpha = 0.75f * amount), Offset(-22f, -425f), Size(44f, 11f))
+        drawCircle(HOLO.copy(alpha = 0.70f * amount), 19f, Offset(0f, -333f), style = holo)
+        drawCircle(HOLO.copy(alpha = 0.22f * amount), 12f, Offset(0f, -333f))
+        val line = lerp(style.accent, Color.White, 0.5f).copy(alpha = 0.75f * amount)
+        if (style.workLamps) for (s in floatArrayOf(-1f, 1f)) drawRect(line, Offset(s * 122f - 7f, -382f), Size(14f, 12f), style = holo)
+        if (style.toolArm) { drawRect(line, Offset(103f, -152f), Size(18f, 30f), style = holo); drawLine(line, Offset(112f, -122f), Offset(112f, -100f), 2f) }
+        if (style.searchlight) drawCircle(line, 12f, Offset(118f, -412f), style = holo)
+        if (style.winch) { drawCircle(line, 15f, Offset(-62f, -232f), style = holo); drawLine(line, Offset(-75f, -232f), Offset(-75f, -154f), 1.4f) }
+        if (style.thrusters) for (s in floatArrayOf(-1f, 1f)) drawRect(line, Offset(s * 132f - 9f, -414f), Size(18f, 30f), style = holo)
+        // Scan lines across the figure, and the one that climbs.
+        var y = -440f
+        while (y < 0f) { drawLine(HOLO.copy(alpha = 0.07f * amount), Offset(-150f, y), Offset(150f, y), 1f); y += 9f }
+        val sy = -((t * 34f) % 450f)
+        drawLine(Color.White.copy(alpha = 0.55f * amount), Offset(-150f, sy), Offset(150f, sy), 1.4f)
+        drawRect(Brush.verticalGradient(listOf(HOLO.copy(alpha = 0f), HOLO.copy(alpha = 0.16f * amount)), startY = sy - 26f, endY = sy), Offset(-150f, sy - 26f), Size(300f, 26f))
     }
 
     /** One plate: its side face (the robot stands three-quarters on), its face, the light on it, its edge. */
@@ -362,6 +398,7 @@ internal class Mech(val style: MechStyle) {
         val BEACON = Color(0xFFFFB03A)
         val LAMP = Color(0xFFFFF0CF)
         val NOZZLE = Color(0xFF8FD0FF)
+        val HOLO = Color(0xFF7FE0FF)
         /** The hangar's key light from the upper left, across the robot's width. */
         val SHADE = Brush.horizontalGradient(0f to Color.White.copy(alpha = 0.17f), 0.45f to Color.Transparent, 1f to Color.Black.copy(alpha = 0.30f), startX = -140f, endX = 140f)
 

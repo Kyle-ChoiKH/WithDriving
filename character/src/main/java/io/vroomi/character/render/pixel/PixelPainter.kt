@@ -73,6 +73,8 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     private var wheelFrame = 0
     /** The vehicle of the upgrade step (set from the frame's model before rendering). */
     private var vehicle = PixelVehicle.ROVER
+    /** The upgrade step (0..4): each one also adds something to the sky ([skySteps]). */
+    private var step = 0
     private var pinFrame = 0
     private var flagFrame = 0
     private var gemFrame = 0
@@ -83,6 +85,7 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
         val sc = PixelModels.scale(f.w, f.h)
         legibility(sim, f, sc)
         vehicle = PixelVehicle.of(f.model)
+        step = f.model.coerceIn(0, 4)
         render(sim, f)
         val (ox, oy) = PixelModels.offset(f.w, f.h, sc)
         // Letterbox in the sky and ground colours, so the bands read as more sky and more ground.
@@ -130,6 +133,7 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
         buf.canvas.translate(sim.shake().toFloat(), 0f)
         buf.blit(sprites.sky(pal), 0, 0)
         skyDetails(sim, cam0 * PixelModels.PARALLAX[0])
+        skySteps(sim, cam0 * PixelModels.PARALLAX[0])
         farRidge(sim, (cam0 * PixelModels.PARALLAX[1]).toInt())
         mid(sim, (cam0 * PixelModels.PARALLAX[2]).toInt())
         near(sim, (cam * PixelModels.PARALLAX[3]).toInt())
@@ -193,6 +197,81 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
             val col = c(if (y < 50) LILAC else CREAM)
             buf.rect(x, y, len, 1, col)
             buf.rect(x + 6, y + 1, len - 18, 1, col)
+        }
+    }
+
+    /**
+     * What each upgrade step adds to the sky, so a step shows at a glance wherever the road is: 2 a ringed planet,
+     * 3 floating islands, 4 a comet, 5 a mothership high overhead. All of it is still (the islands and the ship
+     * only drift with the camera); lights are steady.
+     */
+    private fun skySteps(sim: PixelMechanics, cam: Double) {
+        val night = sim.night > 0.5f
+        if (step >= 1) {
+            // The ringed planet, upper right; its far side in shade.
+            val cx = 408; val cy = 31; val r = 13
+            for (dy in -r..r) {
+                val half = sqrt((r * r - dy * dy).toDouble()).toInt()
+                val band = if (dy in -8..-6 || dy in 1..3 || dy == 8) LILAC else PINK
+                buf.rect(cx - half, cy + dy, half * 2 + 1, 1, if (night) lit(band) else c(band))
+                val shade = (half * 0.45f).toInt()
+                if (shade > 0) buf.rect(cx + half - shade + 1, cy + dy, shade, 1, c(MAGENTA))
+            }
+            for (dx in -24..24) {
+                val t = dx / 24.0
+                val ry = (5.0 * sqrt(1.0 - t * t)).toInt()
+                // The near half of the ring crosses the disc; the far half is hidden behind it.
+                buf.dot(cx + dx, cy + 2 + ry, lit(CREAM))
+                if (abs(dx) > r - 1) buf.dot(cx + dx, cy + 2 - ry, lit(CREAM))
+                if (abs(dx) in 17..23) buf.dot(cx + dx, cy + 3 + ry, c(LILAC))
+            }
+        }
+        if (step >= 2) {
+            // Floating islands: a strip of green, rock tapering under it, one crystal each.
+            val shift = (cam * 2.0).toInt()
+            for (i in 0 until 3) {
+                val w = 26 + i * 6
+                val x = Math.floorMod(150 + i * 118 - shift, VW + 60) - 30
+                val y = 62 + (i * 11) % 19
+                buf.rect(x, y, w, 1, c(LIME)); buf.rect(x, y + 1, w, 1, c(JADE)); buf.rect(x + 1, y + 2, w - 2, 1, c(DEEP_JADE))
+                var inset = 3
+                for (row in 0 until 5) { buf.rect(x + inset, y + 3 + row, w - inset * 2, 1, c(if (row < 2) OCHRE else RUST)); inset += 2 + row }
+                val gx = x + w / 3
+                buf.rect(gx, y - 4, 2, 4, lit(PINK)); buf.dot(gx, y - 5, lit(CREAM)); buf.rect(gx + 2, y - 2, 1, 2, lit(MAGENTA))
+                buf.rect(x + w - 8, y - 3, 1, 3, c(DEEP_JADE)); buf.rect(x + w - 9, y - 5, 3, 2, c(JADE))
+            }
+        }
+        if (step >= 3) {
+            // A comet: a bright head and a long dithered tail.
+            val hx = 236; val hy = 24
+            for (i in 1..54) {
+                val x = hx - i; val y = hy - i / 4
+                if (i < 14 || (i + y) % 2 == 0) buf.dot(x, y, if (i < 20) lit(CREAM) else lit(LILAC))
+                if (i in 4..30 && i % 2 == 0) buf.dot(x, y + 1, lit(LILAC))
+                if (i in 4..22 && i % 3 == 0) buf.dot(x, y - 1, lit(PINK))
+            }
+            buf.rect(hx - 1, hy - 1, 4, 3, lit(CREAM)); buf.rect(hx, hy - 2, 2, 5, lit(CREAM))
+            // A small second moon, low on the right, with its dark side.
+            val mx = 338; val my = 60; val mr = 13
+            for (dy in -mr..mr) {
+                val half = sqrt((mr * mr - dy * dy).toDouble()).toInt()
+                buf.rect(mx - half, my + dy, half * 2 + 1, 1, lit(CREAM))
+                val shade = (half * 0.7f).toInt()
+                if (shade > 0) buf.rect(mx + half - shade + 1, my + dy, shade, 1, c(LILAC))
+            }
+            buf.rect(mx - 7, my - 4, 3, 3, c(LILAC)); buf.rect(mx - 3, my + 4, 2, 2, c(LILAC)); buf.dot(mx - 9, my + 2, c(LILAC))
+        }
+        if (step >= 4) {
+            // The mothership, high overhead: a long hull, a bridge, a row of steady lights.
+            val x = 262 - (cam * 0.5).toInt().coerceIn(-40, 40); val y = 6
+            buf.rect(x + 34, y, 22, 3, c(DUSK)); buf.rect(x + 38, y - 2, 10, 2, c(DUSK)); buf.dot(x + 43, y - 4, lit(CREAM)); buf.rect(x + 43, y - 3, 1, 1, c(DUSK))
+            buf.rect(x + 8, y + 3, 98, 2, c(DUSK))
+            buf.rect(x, y + 5, 118, 4, c(NIGHT_VIOLET))
+            buf.rect(x + 6, y + 9, 104, 2, c(INK)); buf.rect(x + 22, y + 11, 70, 1, c(INK))
+            buf.rect(x, y + 6, 118, 1, c(MAGENTA))
+            for (i in 0 until 11) buf.dot(x + 9 + i * 10, y + 7, lit(LIME))
+            buf.rect(x - 3, y + 5, 3, 4, lit(PINK)); buf.rect(x - 5, y + 6, 2, 2, lit(CREAM))
+            buf.rect(x + 52, y + 12, 14, 2, c(DUSK)); buf.rect(x + 56, y + 14, 6, 1, lit(LIME))
         }
     }
 
