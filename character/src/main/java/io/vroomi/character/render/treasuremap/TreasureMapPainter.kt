@@ -262,6 +262,7 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
         val roseStart = if (MapStep.rose(model)) g.roseR + 16f else 32f
         clipRect(g.ml, g.mt, g.mr, g.mb) {
             graticule(g.ml, g.mt, g.mr, g.mb)
+            if (MapStep.rose(model)) terrain(g.ml, g.mt, g.mr, g.mb)
             if (MapStep.decor(model)) seaLife(g.ml, g.mt, g.mr, g.mb)
             for (i in 0 until 16) {
                 val a = i * PI.toFloat() / 8f

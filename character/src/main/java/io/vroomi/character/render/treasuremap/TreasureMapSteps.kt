@@ -89,6 +89,37 @@ internal fun DrawScope.windMark(c: Offset) {
     drawPath(n, INK)
 }
 
+/**
+ * Step 2 draws the land: little hills with their shaded side and clumps of trees, in the mapmaker's pen, across
+ * the middle of the sheet (the corners stay clear for the seas of step 3). Fixed places: the chart never moves.
+ */
+internal fun DrawScope.terrain(l: Float, t: Float, r: Float, b: Float) {
+    val w = r - l; val h = b - t
+    for (i in 0 until 64) {
+        val u = hash01(i, 301); val v = hash01(i, 302)
+        if (u + v < 0.62f || u + v > 1.38f) continue
+        if (u > 0.40f && u < 0.60f && v > 0.34f && v < 0.66f) continue      // the point of departure stays open
+        if ((u > 0.80f && v < 0.42f) || (u < 0.27f && v > 0.66f)) continue    // so do the rose and the title
+        val x = l + 30f + u * (w - 60f); val y = t + 34f + v * (h - 60f)
+        val sc = 0.9f + hash01(i, 303) * 0.7f
+        if (i % 3 != 0) {
+            val p = Path().apply {
+                moveTo(x - 20f * sc, y); quadraticTo(x - 8f * sc, y - 26f * sc, x + 2f * sc, y - 8f * sc)
+                quadraticTo(x + 10f * sc, y - 20f * sc, x + 22f * sc, y)
+            }
+            drawPath(p, PAPER.copy(alpha = 0.7f)); drawPath(p, INK.copy(alpha = 0.95f), style = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round))
+            for (k in 0 until 4) drawLine(INK.copy(alpha = 0.7f), Offset(x + (4f + k * 4f) * sc, y - (11f - k * 2.6f) * sc), Offset(x + (8f + k * 4f) * sc, y - 1f), 0.8f)
+        } else {
+            for (k in 0 until 3) {
+                val tx = x + (k - 1) * 11f * sc; val ty = y - (if (k == 1) 5f else 0f) * sc
+                drawLine(INK.copy(alpha = 0.7f), Offset(tx, ty), Offset(tx, ty - 7f * sc), 1f)
+                drawCircle(PAPER, 6.4f * sc, Offset(tx, ty - 12f * sc)); drawCircle(INK.copy(alpha = 0.9f), 6.4f * sc, Offset(tx, ty - 12f * sc), style = PEN)
+                drawArc(INK.copy(alpha = 0.5f), 300f, 130f, false, Offset(tx - 4f * sc, ty - 16f * sc), Size(8f * sc, 8f * sc), style = FINE)
+            }
+        }
+    }
+}
+
 /** The point of departure's ornament, there from the first metre: rings, eight ticks, a dotted circle. */
 internal fun DrawScope.departure(x: Float, y: Float, alpha: Float) {
     val c = Offset(x, y)

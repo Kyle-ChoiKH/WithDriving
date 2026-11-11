@@ -182,7 +182,7 @@ private fun ScenarioRow(sc: Scenario, onPlay: () -> Unit) {
  * ring in its semantic colour.
  */
 @Composable
-fun TripSummaryCard(t: TripRecord, modifier: Modifier = Modifier, onDismiss: () -> Unit) {
+fun TripSummaryCard(t: TripRecord, modifier: Modifier = Modifier, nudge: io.vroomi.app.progress.GradeNudge? = null, theme: io.vroomi.character.calibre.SceneTheme = io.vroomi.character.calibre.SceneTheme.KART, onDismiss: () -> Unit) {
     val prefs = io.vroomi.app.ui.motion.currentMotion()
     val dark = LocalDark.current
     val enter = remember { Animatable(if (prefs.still) 1f else 0f) }
@@ -231,6 +231,39 @@ fun TripSummaryCard(t: TripRecord, modifier: Modifier = Modifier, onDismiss: () 
                 Text("%.1f km · %s".format(t.distanceKm * count.value, t.sticker.label), style = VType.body.merge(VType.tabular), color = Ink.primary)
                 Spacer(Modifier.height(Space.s4))
                 Text(stringResource(R.string.trip_biomes, t.biomes), style = VType.callout, color = Ink.secondary)
+            }
+        }
+        // The grade: what this drive earned, or how near the next version is.
+        nudge?.let { n ->
+            Spacer(Modifier.height(Space.s20))
+            Box(Modifier.fillMaxWidth().height(1.dp).drawBehind { drawRect(track) })
+            Spacer(Modifier.height(Space.s16))
+            val tag = { m: Int -> io.vroomi.character.theme.ThemeModels.tag(m) }
+            val name = { m: Int -> io.vroomi.character.theme.ThemeModels.title(theme, m) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                when (n) {
+                    is io.vroomi.app.progress.GradeNudge.Demo -> Text(stringResource(R.string.nudge_demo), style = VType.callout, color = Ink.secondary)
+                    is io.vroomi.app.progress.GradeNudge.Promoted -> {
+                        Medal(n.grade, 40.dp)
+                        Spacer(Modifier.width(Space.s16))
+                        Column {
+                            Text(stringResource(R.string.nudge_promoted, n.grade.label), style = VType.headline, color = Ink.primary)
+                            Spacer(Modifier.height(Space.s4))
+                            Text(stringResource(R.string.nudge_opened, tag(n.model), name(n.model)), style = VType.callout, color = Ink.secondary)
+                        }
+                    }
+                    is io.vroomi.app.progress.GradeNudge.Next -> {
+                        Medal(n.grade, 40.dp, dim = true, number = false)
+                        Spacer(Modifier.width(Space.s16))
+                        Column {
+                            val line = if (n.scoreNeeded != null) stringResource(R.string.nudge_next_score, n.grade.label, n.scoreNeeded)
+                            else stringResource(R.string.nudge_next_km, n.grade.label, n.kmLeft)
+                            Text(line, style = VType.headline.merge(VType.tabular), color = Ink.primary)
+                            Spacer(Modifier.height(Space.s4))
+                            Text(stringResource(R.string.nudge_opens, tag(n.model), name(n.model)), style = VType.callout, color = Ink.secondary)
+                        }
+                    }
+                }
             }
         }
         Spacer(Modifier.height(Space.s32))

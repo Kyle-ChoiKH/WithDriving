@@ -217,9 +217,11 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 if (PaperStep.pullTab(model)) { cloudTab(g, sim); balloon(g, sim) }
                 if (PaperStep.farPlane(model)) standUp(intro, 0, g.foldBack - 26f) { farHills(g, sim) }
                 standUp(intro, 0, g.foldBack) { mountains(g, sim) }
+                if (PaperStep.pullTab(model)) kite(g, sim)
                 standUp(intro, 1, g.foldMid) { scenery(g, sim) }
                 ribbon(g, sim)
                 standUp(intro, 2, g.carY) { carScene(g, sim) }
+                if (PaperStep.farPlane(model)) standUp(intro, 2, g.foldFront) { flowers(g, sim) }
                 standUp(intro, 3, g.foldFront) { fringe(g, sim) }
                 threads(g, sim)
                 garland(g, sim)
@@ -502,6 +504,51 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
         tmp.reset(); tmp.moveTo(x - 15f, y + 70f); tmp.lineTo(x + 15f, y + 70f); tmp.lineTo(x + 12f, y + 92f); tmp.lineTo(x - 12f, y + 92f); tmp.close()
         piece(tmp, PaperInk.KRAFT, Offset.Zero, PaperInk.KRAFT, lift = 0.7f)
         drawLine(PaperInk.KRAFT_DARK, Offset(x - 14f, y + 78f), Offset(x + 14f, y + 78f), 1.4f)
+    }
+
+    /** Step 3's front layer: a row of paper flowers on their own fold, in front of the road (the book now has three layers). */
+    private fun DrawScope.flowers(g: PGeo, sim: PaperSim) {
+        val period = 58f
+        val s = (sim.strip * 1.25).toFloat()
+        val first = floor(s / period).toInt()
+        val off = s - first * period
+        val base = g.foldFront + 8f
+        val count = ((g.r - g.l) / period).toInt() + 3
+        for (k in -1 until count) {
+            val idx = first + k
+            val x = g.l + k * period - off + h01(idx, 71) * 16f
+            val hgt = 36f + h01(idx, 72) * 26f
+            drawLine(PaperInk.BLUE, Offset(x, base), Offset(x, base - hgt), 3.2f)
+            tmp.reset(); tmp.moveTo(x, base - hgt * 0.35f); tmp.quadraticTo(x + 15f, base - hgt * 0.62f, x + 22f, base - hgt * 0.3f); tmp.quadraticTo(x + 10f, base - hgt * 0.24f, x, base - hgt * 0.35f); tmp.close()
+            drawPath(tmp, PaperInk.BLUE)
+            val head = if (Math.floorMod(idx, 3) == 0) PaperInk.YELLOW else PaperInk.PINK
+            val top = base - hgt
+            tmp.reset()
+            if (Math.floorMod(idx, 2) == 0) {
+                tmp.moveTo(x - 12f, top - 18f); tmp.lineTo(x - 6f, top - 9f); tmp.lineTo(x, top - 21f); tmp.lineTo(x + 6f, top - 9f); tmp.lineTo(x + 12f, top - 18f); tmp.lineTo(x + 10f, top + 3f); tmp.lineTo(x - 10f, top + 3f); tmp.close()
+            } else tmp.addOval(Rect(x - 13f, top - 19f, x + 13f, top + 7f))
+            piece(tmp, head, Offset.Zero, lift = 0.5f)
+            if (Math.floorMod(idx, 2) != 0) drawCircle(PaperInk.CARD, 4.6f, Offset(x, top - 6f))
+        }
+        crease(Offset(g.l + 8f, base), Offset(g.r - 8f, base))
+    }
+
+    /** Step 4, on the right page: a paper kite on its string, bows on its tail. It rides the pull tab with the clouds. */
+    private fun DrawScope.kite(g: PGeo, sim: PaperSim) {
+        val x = g.cx + 318f + 46f * sim.cloudSlide; val y = 268f
+        drawLine(PaperInk.KRAFT_DARK, Offset(x, y + 40f), Offset(x - 84f, g.foldBack - 6f), 1.5f)
+        tmp.reset(); tmp.moveTo(x, y - 48f); tmp.lineTo(x + 36f, y); tmp.lineTo(x, y + 42f); tmp.lineTo(x - 36f, y); tmp.close()
+        piece(tmp, PaperInk.PINK, Offset.Zero, lift = 0.8f)
+        clipPath(tmp) {
+            drawRect(PaperInk.YELLOW, Offset(x, y - 48f), Size(36f, 48f))
+            drawRect(PaperInk.BLUE, Offset(x - 36f, y), Size(36f, 42f))
+        }
+        drawLine(PaperInk.CARD, Offset(x, y - 48f), Offset(x, y + 42f), 1.6f); drawLine(PaperInk.CARD, Offset(x - 36f, y), Offset(x + 36f, y), 1.6f)
+        for (i in 0 until 3) {
+            val bx = x - 16f - i * 18f; val by = y + 54f + i * 13f
+            tmp2.reset(); tmp2.moveTo(bx - 9f, by - 6f); tmp2.lineTo(bx + 9f, by + 6f); tmp2.lineTo(bx + 9f, by - 6f); tmp2.lineTo(bx - 9f, by + 6f); tmp2.close()
+            drawPath(tmp2, if (i % 2 == 0) PaperInk.YELLOW else PaperInk.PINK)
+        }
     }
 
     /** Step 5: gold foil stamped on the special edition: a rule inside each page's edge and punched discs in the sky. */

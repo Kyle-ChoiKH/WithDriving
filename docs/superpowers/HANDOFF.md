@@ -94,6 +94,13 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 - 등급 탭: 버전 줄을 눌러 그 테마의 버전을 바로 고른다(저장), 옷과 옷장은 캐릭터가 있는 테마(꼬마차)에서만 보인다. 문구는 "업그레이드" → "버전"("버전 고르기").
 - 전 등급을 연 상태로 보기(디버그 빌드): 에뮬레이터에서 `adb shell run-as io.withdriving.app --user 10`으로 `shared_prefs/vroomi_settings.xml`에 `<int name="gradeReached" value="5" />`를 넣는다.
 
+**2026-11-11 밤: 등급이 오를 때의 변화를 더 크게**(`feat/bolder-ladders`). 사용자 요청: "등급이 바뀔 때 바뀌는 부분이 너무 적다. 변화가 눈에 드러나게 해서 안전운전으로 등급을 올리고 싶게 만들어라."
+- 원칙: 단계는 소품 하나가 아니라 장면 전체를 바꾼다. `step_visibility.txt` 기준 모든 단계가 주차 화면의 0.9% 이상(대부분 2~10%)을 바꾼다(테스트 하한 0.9%).
+- 도트 월드(하늘 요소 확대, 오로라, 모선 광선), 격납고(기체별 등짐 장비로 실루엣이 달라짐 + 기체 색 깃발), 팝업북(3단계 앞줄 꽃밭, 4단계 연), 보물지도(2단계 산·숲 기호), 시계(단계별 시곗줄, 자막 밑 종이 라벨).
+- 주행 후 카드에 등급 안내(`GradeNudge`): 다음 등급까지 남은 거리·점수와 열리는 버전, 승급 축하, 데모는 등급에 안 들어간다는 문구.
+- 밝기: 시계 0.659, 격납고 0.058.
+- 아직 약한 곳: 보물지도 Lv.4(0.95%), 팝업북 Lv.4(1.2%), 태양계 Lv.4(1.4%), 엔진룸 Lv.4(1.9%).
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 

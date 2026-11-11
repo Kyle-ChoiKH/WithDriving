@@ -201,77 +201,94 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     }
 
     /**
-     * What each upgrade step adds to the sky, so a step shows at a glance wherever the road is: 2 a ringed planet,
-     * 3 floating islands, 4 a comet, 5 a mothership high overhead. All of it is still (the islands and the ship
-     * only drift with the camera); lights are steady.
+     * What each upgrade step adds to the sky, large enough to change the whole picture: 2 a ringed planet, 3 floating
+     * islands, 4 an aurora, a comet and a second moon, 5 a mothership with its beams. All of it is still (the islands
+     * and the ship only drift with the camera); lights are steady.
      */
     private fun skySteps(sim: PixelMechanics, cam: Double) {
         val night = sim.night > 0.5f
+        if (step >= 3) {
+            // Aurora ribbons across the top of the sky: three dithered bands that hang in folds.
+            for (band in 0 until 3) {
+                val col = if (band == 0) lit(LIME) else if (band == 1) lit(JADE) else lit(PINK)
+                for (x in 0 until VW) {
+                    val fold = (kotlin.math.sin((x + band * 37) * 0.045) * 5.0 + kotlin.math.sin((x + band * 11) * 0.11) * 2.0).toInt()
+                    val top = 6 + band * 9 + fold
+                    val len = 9 + ((x * 7 + band * 13) % 5)
+                    for (y in top until top + len) if ((x + y) % 2 == 0 && (y - top < 6 || (x + y) % 4 == 0)) buf.dot(x, y, col)
+                }
+            }
+        }
         if (step >= 1) {
             // The ringed planet, upper right; its far side in shade.
-            val cx = 408; val cy = 31; val r = 13
+            val cx = 398; val cy = 40; val r = 24
             for (dy in -r..r) {
                 val half = sqrt((r * r - dy * dy).toDouble()).toInt()
-                val band = if (dy in -8..-6 || dy in 1..3 || dy == 8) LILAC else PINK
+                val band = if (dy in -15..-11 || dy in -3..2 || dy in 9..12 || dy == 18) LILAC else PINK
                 buf.rect(cx - half, cy + dy, half * 2 + 1, 1, if (night) lit(band) else c(band))
                 val shade = (half * 0.45f).toInt()
                 if (shade > 0) buf.rect(cx + half - shade + 1, cy + dy, shade, 1, c(MAGENTA))
             }
-            for (dx in -24..24) {
-                val t = dx / 24.0
-                val ry = (5.0 * sqrt(1.0 - t * t)).toInt()
+            for (dx in -44..44) {
+                val t = dx / 44.0
+                val ry = (9.0 * sqrt(1.0 - t * t)).toInt()
                 // The near half of the ring crosses the disc; the far half is hidden behind it.
-                buf.dot(cx + dx, cy + 2 + ry, lit(CREAM))
-                if (abs(dx) > r - 1) buf.dot(cx + dx, cy + 2 - ry, lit(CREAM))
-                if (abs(dx) in 17..23) buf.dot(cx + dx, cy + 3 + ry, c(LILAC))
+                buf.rect(cx + dx, cy + 3 + ry, 1, 2, lit(CREAM))
+                if (abs(dx) > r) buf.rect(cx + dx, cy + 3 - ry, 1, 2, lit(CREAM))
+                if (abs(dx) in 30..42) buf.dot(cx + dx, cy + 5 + ry, c(LILAC))
             }
         }
         if (step >= 2) {
-            // Floating islands: a strip of green, rock tapering under it, one crystal each.
+            // Floating islands: grass, rock tapering under it, crystals and a tree; a thin waterfall from the largest.
             val shift = (cam * 2.0).toInt()
             for (i in 0 until 3) {
-                val w = 26 + i * 6
-                val x = Math.floorMod(150 + i * 118 - shift, VW + 60) - 30
-                val y = 62 + (i * 11) % 19
-                buf.rect(x, y, w, 1, c(LIME)); buf.rect(x, y + 1, w, 1, c(JADE)); buf.rect(x + 1, y + 2, w - 2, 1, c(DEEP_JADE))
+                val w = 46 + i * 12
+                val x = Math.floorMod(132 + i * 122 - shift, VW + 90) - 45
+                val y = 58 + (i * 13) % 21
+                buf.rect(x, y, w, 2, c(LIME)); buf.rect(x, y + 2, w, 2, c(JADE)); buf.rect(x + 1, y + 4, w - 2, 1, c(DEEP_JADE))
                 var inset = 3
-                for (row in 0 until 5) { buf.rect(x + inset, y + 3 + row, w - inset * 2, 1, c(if (row < 2) OCHRE else RUST)); inset += 2 + row }
-                val gx = x + w / 3
-                buf.rect(gx, y - 4, 2, 4, lit(PINK)); buf.dot(gx, y - 5, lit(CREAM)); buf.rect(gx + 2, y - 2, 1, 2, lit(MAGENTA))
-                buf.rect(x + w - 8, y - 3, 1, 3, c(DEEP_JADE)); buf.rect(x + w - 9, y - 5, 3, 2, c(JADE))
+                for (row in 0 until 9) { buf.rect(x + inset, y + 5 + row, (w - inset * 2).coerceAtLeast(2), 1, c(if (row < 3) OCHRE else RUST)); inset += 2 + row / 2 }
+                val gx = x + w / 4
+                buf.rect(gx, y - 7, 3, 7, lit(PINK)); buf.rect(gx + 1, y - 9, 1, 2, lit(CREAM)); buf.rect(gx + 4, y - 4, 2, 4, lit(MAGENTA))
+                buf.rect(x + w - 12, y - 6, 2, 6, c(DEEP_JADE)); buf.rect(x + w - 15, y - 12, 8, 6, c(JADE)); buf.rect(x + w - 13, y - 14, 4, 2, c(LIME))
+                if (i == 2) for (k in 0 until 16) if (k % 3 != 2) buf.rect(x + w - 5, y + 5 + k, 2, 1, lit(CREAM))
             }
         }
         if (step >= 3) {
             // A comet: a bright head and a long dithered tail.
-            val hx = 236; val hy = 24
-            for (i in 1..54) {
+            val hx = 250; val hy = 30
+            for (i in 1..80) {
                 val x = hx - i; val y = hy - i / 4
-                if (i < 14 || (i + y) % 2 == 0) buf.dot(x, y, if (i < 20) lit(CREAM) else lit(LILAC))
-                if (i in 4..30 && i % 2 == 0) buf.dot(x, y + 1, lit(LILAC))
-                if (i in 4..22 && i % 3 == 0) buf.dot(x, y - 1, lit(PINK))
+                if (i < 20 || (i + y) % 2 == 0) buf.rect(x, y, 1, if (i < 34) 2 else 1, if (i < 30) lit(CREAM) else lit(LILAC))
+                if (i in 4..46 && i % 2 == 0) buf.dot(x, y + 2, lit(LILAC))
+                if (i in 4..36 && i % 3 == 0) buf.dot(x, y - 1, lit(PINK))
             }
-            buf.rect(hx - 1, hy - 1, 4, 3, lit(CREAM)); buf.rect(hx, hy - 2, 2, 5, lit(CREAM))
-            // A small second moon, low on the right, with its dark side.
-            val mx = 338; val my = 60; val mr = 13
+            buf.rect(hx - 2, hy - 2, 7, 5, lit(CREAM)); buf.rect(hx, hy - 3, 3, 7, lit(CREAM))
+            // A second moon, setting behind the skyline on the left, with its dark side.
+            val mx = 26; val my = 88; val mr = 15
             for (dy in -mr..mr) {
                 val half = sqrt((mr * mr - dy * dy).toDouble()).toInt()
                 buf.rect(mx - half, my + dy, half * 2 + 1, 1, lit(CREAM))
                 val shade = (half * 0.7f).toInt()
                 if (shade > 0) buf.rect(mx + half - shade + 1, my + dy, shade, 1, c(LILAC))
             }
-            buf.rect(mx - 7, my - 4, 3, 3, c(LILAC)); buf.rect(mx - 3, my + 4, 2, 2, c(LILAC)); buf.dot(mx - 9, my + 2, c(LILAC))
+            buf.rect(mx - 8, my - 5, 4, 4, c(LILAC)); buf.rect(mx - 4, my + 5, 3, 3, c(LILAC)); buf.rect(mx - 11, my + 2, 2, 2, c(LILAC))
         }
         if (step >= 4) {
-            // The mothership, high overhead: a long hull, a bridge, a row of steady lights.
-            val x = 262 - (cam * 0.5).toInt().coerceIn(-40, 40); val y = 6
-            buf.rect(x + 34, y, 22, 3, c(DUSK)); buf.rect(x + 38, y - 2, 10, 2, c(DUSK)); buf.dot(x + 43, y - 4, lit(CREAM)); buf.rect(x + 43, y - 3, 1, 1, c(DUSK))
-            buf.rect(x + 8, y + 3, 98, 2, c(DUSK))
-            buf.rect(x, y + 5, 118, 4, c(NIGHT_VIOLET))
-            buf.rect(x + 6, y + 9, 104, 2, c(INK)); buf.rect(x + 22, y + 11, 70, 1, c(INK))
-            buf.rect(x, y + 6, 118, 1, c(MAGENTA))
-            for (i in 0 until 11) buf.dot(x + 9 + i * 10, y + 7, lit(LIME))
-            buf.rect(x - 3, y + 5, 3, 4, lit(PINK)); buf.rect(x - 5, y + 6, 2, 2, lit(CREAM))
-            buf.rect(x + 52, y + 12, 14, 2, c(DUSK)); buf.rect(x + 56, y + 14, 6, 1, lit(LIME))
+            // The mothership, high overhead: a long hull, a bridge, a row of steady lights and three soft beams.
+            val x = 150 - (cam * 0.5).toInt().coerceIn(-40, 40); val y = 10
+            for (b in 0 until 3) {
+                val bx = x + 40 + b * 46
+                for (k in 0 until 44) { val half = 3 + k / 5; for (xx in bx - half..bx + half) if ((xx + k) % 2 == 0 && k % 2 == 0) buf.dot(xx, y + 18 + k, lit(LIME)) }
+            }
+            buf.rect(x + 52, y - 2, 40, 5, c(DUSK)); buf.rect(x + 60, y - 5, 20, 3, c(DUSK)); buf.rect(x + 69, y - 9, 1, 4, c(DUSK)); buf.rect(x + 68, y - 10, 3, 1, lit(CREAM))
+            buf.rect(x + 12, y + 3, 160, 3, c(DUSK))
+            buf.rect(x, y + 6, 184, 6, c(NIGHT_VIOLET))
+            buf.rect(x + 10, y + 12, 164, 3, c(INK)); buf.rect(x + 34, y + 15, 116, 2, c(INK))
+            buf.rect(x, y + 8, 184, 1, c(MAGENTA))
+            for (i in 0 until 17) buf.rect(x + 10 + i * 10, y + 10, 2, 1, lit(LIME))
+            buf.rect(x - 5, y + 6, 5, 6, lit(PINK)); buf.rect(x - 8, y + 8, 3, 2, lit(CREAM))
+            for (b in 0 until 3) buf.rect(x + 36 + b * 46, y + 17, 8, 1, lit(LIME))
         }
     }
 

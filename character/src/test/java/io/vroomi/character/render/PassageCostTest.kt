@@ -191,7 +191,7 @@ class PassageCostTest {
 
     private companion object {
         /** The least share of the picture a step must change (fine line art counts little; a small sprite alone is about 0.3 %). */
-        const val MIN_STEP_SHARE = 0.005f
+        const val MIN_STEP_SHARE = 0.009f
 
         /** The shared budget of the static layer bitmaps (48 MB; the app holds one theme's layers at a time). */
         const val LAYER_LIMIT = 48L * 1024 * 1024
