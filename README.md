@@ -22,7 +22,7 @@ Pleos Connect(AAOS 기반)에서 Pleos Connect SDK(Vehicle, NaviHelper, TextToSp
 ### 1-1. APK 설치 (가장 빠른 방법)
 
 ```
-adb install -r apk/TEAMNAME_WithDriving_release.apk
+adb install -r apk/Kyle_WithDriving_release.apk
 ```
 
 - APK 위치: [`apk/`](apk/) 폴더. 파일명 규칙은 `팀명_앱이름_release.apk`이며, `gradle.properties`의 `vroomi.teamName` 값으로 정해집니다.
@@ -593,7 +593,7 @@ docs/           기획서(02), 퍼미션, 주최 측 질문, 캐릭터 독창성
 
 | 플래그 | 기본값 | 의미 |
 |---|---|---|
-| `vroomi.teamName` | `TEAMNAME` | APK 파일명의 팀명 |
+| `vroomi.teamName` | `Kyle` | APK 파일명의 팀명 |
 | `vroomi.allowAaosSpeed` | `false` | AAOS 표준 차속(`PERF_VEHICLE_SPEED`) 사용. 주최 측 확인 후에만 `true` + 매니페스트에 `CAR_SPEED` 추가 |
 | `vroomi.allowHvacControl` | `false` | 음성으로 실차 공조 제어. `CONTROL_CAR_CLIMATE` 승인 후에만 `true` + 매니페스트에 추가 |
 
