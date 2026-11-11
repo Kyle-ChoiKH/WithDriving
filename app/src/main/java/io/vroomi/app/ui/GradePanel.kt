@@ -202,6 +202,12 @@ fun GradePanel(rt: VroomiRuntime) {
             }
         },
         worn = settings.wardrobe,
+        chosen = ThemeAccess.effectiveModel(grade, settings.models[theme]),
+        // A version picked here is saved for this theme (the best open one means "follow the grade"), as in the theme tab.
+        onPick = { m ->
+            val top = ThemeAccess.maxModel(SafetyGrade.current(trips, settings.gradeReached))
+            if (m <= top) rt.settingsStore.update { s -> s.copy(models = if (m >= top) s.models - theme else s.models + (theme to m)) }
+        },
     ) { a, worn -> rt.settingsStore.update { s -> s.copy(wardrobe = if (worn) s.wardrobe - a else s.wardrobe + a) } }
 }
 
@@ -213,8 +219,9 @@ private val LadderCompact = 640.dp
 /**
  * The grade page (stateless, for the app and the snapshots), spec 4.3: the grade's medal, the recent safe score and
  * the safe distance; the next grade's two conditions as progress bars and the score rule; a still of [theme]'s next
- * step ([nextPreview], 8:3) with what it becomes; the ladder of the five grades with [theme]'s step and the kart's
- * outfit each opens; the kart's wardrobe. Two columns on a wide pane, one otherwise.
+ * step ([nextPreview], 8:3) with what it becomes; the ladder of the five grades with the version of [theme] each
+ * opens: an open version is picked by its row ([onPick]; [chosen] carries the check). The kart's outfits and its
+ * wardrobe show only for a theme with a friend on screen. Two columns on a wide pane, one otherwise.
  */
 @Composable
 internal fun GradeContent(
@@ -225,6 +232,8 @@ internal fun GradeContent(
     theme: SceneTheme,
     nextPreview: @Composable (Modifier) -> Unit,
     worn: Set<Accessory>,
+    chosen: Int = ThemeAccess.maxModel(grade),
+    onPick: (Int) -> Unit = {},
     onToggle: (Accessory, Boolean) -> Unit,
 ) {
     Page(stringResource(R.string.tab_grade)) { pane ->
@@ -241,9 +250,12 @@ internal fun GradeContent(
             }
         }
         Spacer(Modifier.height(Space.s32))
-        LadderSection(grade, theme, compact = pane < LadderCompact)
-        Spacer(Modifier.height(Space.s32))
-        WardrobeSection(grade, worn, onToggle)
+        LadderSection(grade, theme, compact = pane < LadderCompact, chosen = chosen, onPick = onPick)
+        // Outfits are the friend's: only the theme with a friend on screen has a wardrobe.
+        if (theme.hasCharacter) {
+            Spacer(Modifier.height(Space.s32))
+            WardrobeSection(grade, worn, onToggle)
+        }
     }
 }
 
@@ -362,25 +374,28 @@ private fun PreviewSection(grade: Grade, theme: SceneTheme, nextPreview: @Compos
 }
 
 @Composable
-private fun LadderSection(grade: Grade, theme: SceneTheme, compact: Boolean) {
-    Section(stringResource(R.string.grade_ladder), stringResource(R.string.grade_ladder_foot)) {
+private fun LadderSection(grade: Grade, theme: SceneTheme, compact: Boolean, chosen: Int, onPick: (Int) -> Unit) {
+    Section(stringResource(R.string.grade_ladder), stringResource(if (theme.hasCharacter) R.string.grade_ladder_foot else R.string.grade_ladder_foot_plain)) {
         Grade.entries.forEachIndexed { i, g ->
             if (i > 0) RowDivider()
-            LadderRow(g, theme, current = g == grade, open = g.level <= grade.level, compact = compact)
+            val m = ThemeAccess.maxModel(g)
+            LadderRow(g, theme, current = g == grade, open = g.level <= grade.level, compact = compact, picked = m == chosen) { onPick(m) }
         }
     }
 }
 
 /**
  * One grade of the ladder: its medal and name, the step of [theme] it opens ("Lv.4" and the step's name) and the
- * kart's outfit. The grade shown sits on a quiet plate; grades not reached yet are dimmed.
+ * kart's outfit (only for a theme with a friend). The grade shown sits on a quiet plate; grades not reached yet are
+ * dimmed. An open row is a choice: pressing it puts that version of the theme on ([picked] shows the check).
  */
 @Composable
-private fun LadderRow(g: Grade, theme: SceneTheme, current: Boolean, open: Boolean, compact: Boolean) {
+private fun LadderRow(g: Grade, theme: SceneTheme, current: Boolean, open: Boolean, compact: Boolean, picked: Boolean, onClick: () -> Unit) {
     val plate = Ink.fill
+    val chrome = LocalChrome.current
     val m = ThemeAccess.maxModel(g)
     val ink = if (open) Ink.primary else Ink.secondary
-    val outfit = outfitOf(g)?.label.orEmpty()
+    val outfit = if (theme.hasCharacter) outfitOf(g)?.label.orEmpty() else ""
     Row(
         Modifier
             .fillMaxWidth()
@@ -391,6 +406,8 @@ private fun LadderRow(g: Grade, theme: SceneTheme, current: Boolean, open: Boole
                     drawRoundRect(plate, Offset(ix, iy), Size(size.width - 2 * ix, size.height - 2 * iy), CornerRadius(r, r))
                 }
             }
+            .pressFeedback(Shapes.card, enabled = open, large = true)
+            .clickable(enabled = open, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = Space.s24, vertical = Space.s12),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -408,12 +425,15 @@ private fun LadderRow(g: Grade, theme: SceneTheme, current: Boolean, open: Boole
         } else {
             Text(g.label, Modifier.width(132.dp), style = VType.headline, color = ink, maxLines = 1)
             Spacer(Modifier.width(Space.s12))
-            Tag(ThemeModels.tag(m), accent = current)
+            Tag(ThemeModels.tag(m), accent = picked)
             Spacer(Modifier.width(Space.s12))
             Text(ThemeModels.title(theme, m), Modifier.weight(1f), style = VType.body, color = ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.width(Space.s16))
             Text(outfit, style = VType.callout, color = Ink.secondary, maxLines = 1)
         }
+        // The version in use.
+        Spacer(Modifier.width(Space.s12))
+        Box(Modifier.size(Dimens.icon)) { if (picked) Image(VIcons.Check, null, Modifier.fillMaxSize(), colorFilter = ColorFilter.tint(chrome.tint)) }
     }
 }
 
