@@ -4,8 +4,8 @@
 
 ## A. 앱·저장소
 
-- [ ] `gradle.properties`의 `vroomi.teamName=TEAMNAME`을 실제 팀명(영문·숫자)으로 바꾸고 다시 빌드 → `apk/<팀명>_Vroomi_release.apk`
-- [ ] `LICENSE`, `signing` 인증서의 `TEAMNAME`도 팀명으로 (인증서는 새로 만들 경우만)
+- [x] `gradle.properties`의 `vroomi.teamName`을 실제 팀명(`Kyle`)으로 바꾸고 다시 빌드 → `apk/Kyle_WithDriving_release.apk`
+- [x] `LICENSE`의 팀명을 `Kyle`로 바꿈 (`signing` 인증서의 이름은 인증서를 새로 만들 경우만)
 - [ ] **`signing/vroomi-release.jks`와 `keystore.properties`를 안전한 곳에 백업** (잃어버리면 같은 앱으로 업데이트할 수 없음). 둘 다 git에 올리지 않음 (`.gitignore`에 포함)
 - [ ] Pleos Connect Emulator에 설치해 실행 확인: `adb install -r apk/<팀명>_Vroomi_release.apk`
 - [ ] 첫 실행 소개 카드 → **데모 드라이브 보기**로 하이라이트(3분)를 끝까지 재생: 끊김 없이 60fps에 가까운지, 꼬마차·자막·버튼이 화면 해상도에 맞게 보이는지 확인 (PC 렌더링은 1920×720 기준이라 실제 화면 비율에서 한 번 봐야 함)
