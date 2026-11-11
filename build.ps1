@@ -27,7 +27,7 @@ $env:Path = (Join-Path $env:JAVA_HOME "bin") + ";" + $env:Path
 
 New-Item -ItemType Directory -Force $Work | Out-Null
 # Mirror sources (skip build outputs and IDE folders). /MIR keeps the copy identical.
-robocopy $src $Work /MIR /XD build .gradle .idea .kotlin apk .git .superpowers /XF local.properties /NFL /NDL /NJH /NJS /NP | Out-Null
+robocopy $src $Work /MIR /XD build .gradle .idea .kotlin apk .git .superpowers .claude /XF local.properties /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -ge 8) { throw "robocopy failed ($LASTEXITCODE)" }
 Set-Content -Path (Join-Path $Work "local.properties") -Value ("sdk.dir=" + ($env:ANDROID_HOME -replace '\\', '\\')) -Encoding ascii
 New-Item -ItemType Directory -Force (Join-Path $Work "apk") | Out-Null
