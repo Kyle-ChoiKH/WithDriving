@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.drawscope.withTransform
 import io.vroomi.character.calibre.SceneTheme
 import kotlin.math.PI
@@ -31,7 +32,8 @@ import kotlin.math.sin
  *
  * A prop is drawn over the finished scene in canvas fractions, so it does not depend on a theme's own layout: it
  * hangs from the top edge, floats in the open part of the picture or stands at the bottom edge as a foreground
- * object. Props are still (nothing blinks or moves), carry no information, and are drawn under the colourway.
+ * object. Props are still (nothing blinks or moves) and carry no information. Things keep their own colours whatever
+ * the colourway; only the props drawn in a theme's own ink (the display's line, the pixel grid) take it ([tinted]).
  */
 object ThemeDecor {
     const val COUNT = 3
@@ -55,6 +57,9 @@ object ThemeDecor {
 
     /** The theme's props in the order they open (empty for the kart). */
     fun names(theme: SceneTheme): List<String> = NAMES[theme].orEmpty()
+
+    /** True when the theme's props are drawn in its own ink and so follow its colourway. */
+    fun tinted(theme: SceneTheme): Boolean = theme == SceneTheme.ORBIT || theme == SceneTheme.PIXEL
 
     /** The grade level (2 silver .. 4 platinum) that opens prop [index]. */
     fun unlockLevel(index: Int): Int = index + 2
@@ -477,11 +482,21 @@ object ThemeDecor {
     }
 }
 
-/** Draws the props of [mask] over the content ([alpha] fades them, for example while the scene shrinks into its corner). */
-fun Modifier.themeDecor(theme: SceneTheme, mask: Int, alpha: () -> Float = { 1f }): Modifier {
+/**
+ * Draws the props of [mask] over the content ([alpha] fades them, for example while the scene shrinks into its
+ * corner). [shown]: the size of the rectangle the content is shown in when that is not the content's own size (a
+ * scene laid out for the window but shown, scaled to fill, in a card): the props then keep to the part in view.
+ */
+fun Modifier.themeDecor(theme: SceneTheme, mask: Int, alpha: () -> Float = { 1f }, shown: () -> Size? = { null }): Modifier {
     if (mask == 0 || !ThemeDecor.has(theme)) return this
     return drawWithContent {
         drawContent()
-        ThemeDecor.draw(this, theme, mask, alpha())
+        val r = shown()
+        if (r == null || r.width <= 0f || r.height <= 0f) ThemeDecor.draw(this, theme, mask, alpha())
+        else {
+            val f = max(r.width / size.width, r.height / size.height)
+            val dx = ((size.width - r.width / f) / 2f).coerceAtLeast(0f); val dy = ((size.height - r.height / f) / 2f).coerceAtLeast(0f)
+            inset(dx, dy) { ThemeDecor.draw(this, theme, mask, alpha()) }
+        }
     }
 }

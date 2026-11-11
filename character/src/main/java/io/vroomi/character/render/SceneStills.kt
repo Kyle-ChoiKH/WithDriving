@@ -74,8 +74,10 @@ class SceneStillRenderer(fontFamilyResolver: FontFamily.Resolver, private val de
                     val paint = androidx.compose.ui.graphics.Paint().apply { colorFilter = androidx.compose.ui.graphics.ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(m)) }
                     drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), paint)
                     drawStill(this, theme, spec)
-                    io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor)
+                    val tinted = io.vroomi.character.theme.ThemeDecor.tinted(theme)
+                    if (tinted) io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor)
                     drawContext.canvas.restore()
+                    if (!tinted) io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor)
                 }
             }
         }

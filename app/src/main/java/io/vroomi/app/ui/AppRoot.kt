@@ -626,7 +626,7 @@ fun AppRoot(rt: VroomiRuntime) {
                         val intro = stage.intro.floatValue
                         // Props leave the picture while the scene is shrunk into its corner.
                         val decorShown = androidx.compose.animation.core.animateFloatAsState(if (target.sizeMode == io.vroomi.character.SizeMode.CORNER) 0f else 1f, label = "decor")
-                        if (lt != null) host.Draw(target, if (intro < 1f) options.copy(intro = intro) else options, m.colorway(lt, colorOf(lt)).themeDecor(lt, decorOf(lt)) { decorShown.value },
+                        if (lt != null) host.Draw(target, if (intro < 1f) options.copy(intro = intro) else options, m.dressed(lt, colorOf(lt), decorOf(lt), alpha = { decorShown.value }, shown = { (if (following) (rectFor(Place.CARD) ?: rectAnim.value) else rectAnim.value).size }),
                             interactive = !moving && place != Place.CARD, onFirstFrame = { stage.firstFrame(lt); firstFrameSeen = true })
                     }
 
@@ -776,6 +776,11 @@ private fun PanelFor(tab: Tab, rt: VroomiRuntime, trips: List<io.vroomi.app.diar
     }
 }
 
+/** The theme's colourway and props over a scene: props in the theme's own ink sit under the colourway, things over it. */
+private fun Modifier.dressed(theme: SceneTheme, color: Int, decor: Int, alpha: () -> Float, shown: () -> androidx.compose.ui.geometry.Size?): Modifier =
+    if (io.vroomi.character.theme.ThemeDecor.tinted(theme)) colorway(theme, color).themeDecor(theme, decor, alpha, shown)
+    else themeDecor(theme, decor, alpha, shown).colorway(theme, color)
+
 @Composable
 private fun pickerContext(
     rt: VroomiRuntime, s: io.vroomi.app.settings.Settings, grade: Grade, modelOf: (SceneTheme) -> Int, onModel: (SceneTheme, Int) -> Unit,
@@ -811,6 +816,10 @@ private fun Modifier.atTopEndOf(rect: () -> Rect?, inset: androidx.compose.ui.un
     }
 }
 
+/** Where the bubble and the trip card go on the home screen [width] wide: beside the grade badge, or under it in a narrow window. */
+internal fun Modifier.underBadge(width: androidx.compose.ui.unit.Dp): Modifier =
+    if (width < Dimens.badgeWidth + Dimens.tripCard + Space.s16) padding(top = Dimens.badgeHeight + Space.s12) else this
+
 /** Home's chrome over the scene: the grade badge, the speech bubble, the demo and talk buttons, the trip card. */
 @Composable
 private fun HomeChrome(
@@ -822,14 +831,16 @@ private fun HomeChrome(
     val settings by rt.settingsStore.settings.collectAsStateWithLifecycle()
     val status = remember(trips, settings.gradeReached, settings.devAllGrades) { GradeStatus.of(trips, VroomiRuntime.shownGrade(trips, settings)) }
     // The chrome-zone contract: status top left, actions bottom right (io.vroomi.character.render.theme.ChromeZones).
-    Box(Modifier.fillMaxSize().padding(Space.parked)) {
+    BoxWithConstraints(Modifier.fillMaxSize().padding(Space.parked)) {
+        // A narrow (split or upright) window has no room beside the badge: the bubble and the trip card go under it.
+        val paneW = maxWidth
         GradeBadge(status.grade, status.stars, status.progress, status.badgeDetail(), Modifier.align(Alignment.TopStart))
         val bubble = when {
             demo && !caption.isNullOrBlank() -> caption
             listen == ListenState.LISTENING -> partial.ifBlank { stringResource(R.string.listening) }
             else -> lastLine
         }
-        if (!bubble.isNullOrBlank()) SpeechBubble(bubble, Modifier.align(Alignment.TopCenter))
+        if (!bubble.isNullOrBlank()) SpeechBubble(bubble, Modifier.align(Alignment.TopCenter).underBadge(paneW))
         HomeActions(
             demo = demo, listening = listen == ListenState.LISTENING, canTalk = listen != ListenState.UNAVAILABLE,
             modifier = Modifier.align(Alignment.BottomEnd),
@@ -838,7 +849,7 @@ private fun HomeChrome(
         )
         lastTrip?.let { trip ->
             val nudge = remember(trip.id, trips, settings.gradeReached) { io.vroomi.app.progress.GradeNudge.of(trip, trips, settings.gradeReached) }
-            TripSummaryCard(trip, Modifier.align(Alignment.TopEnd), nudge, ThemeRegistry.resolve(settings.sceneTheme)) { rt.dismissLastTrip() }
+            TripSummaryCard(trip, Modifier.align(Alignment.TopEnd).underBadge(paneW), nudge, ThemeRegistry.resolve(settings.sceneTheme)) { rt.dismissLastTrip() }
         }
     }
 }

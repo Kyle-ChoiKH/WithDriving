@@ -7,7 +7,8 @@ import com.android.resources.ScreenOrientation
 /**
  * The display the whole-screen snapshots are drawn on. The default is the design display, 1920 × 720 px at 160 dpi
  * (1920 × 720 dp). `VROOMI_SCREEN=<w>x<h>@<dpi>` (for example `1920x720@240`) draws the same screens on another
- * car display, to check the chrome and the scenes on smaller or denser screens.
+ * car display, to check the chrome and the scenes on smaller or denser screens, or in a split or upright window
+ * (`1682x1210@160` is the Pleos emulator's split window, `900x1210@160` an upright one).
  */
 internal object TestScreen {
     private val spec: Triple<Int, Int, Int> = run {
@@ -37,6 +38,6 @@ internal object TestScreen {
     val device: DeviceConfig
         get() = DeviceConfig.PIXEL_5.copy(
             screenWidth = pxW, screenHeight = pxH, xdpi = dpi, ydpi = dpi,
-            density = density(dpi), orientation = ScreenOrientation.LANDSCAPE, softButtons = false,
+            density = density(dpi), orientation = if (pxW >= pxH) ScreenOrientation.LANDSCAPE else ScreenOrientation.PORTRAIT, softButtons = false,
         )
 }
