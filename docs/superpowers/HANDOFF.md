@@ -112,6 +112,13 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 
 **2026-11-12 새벽: #21 병합(사용자 승인) 후 릴리스 APK 교체.** `apk/Kyle_WithDriving_release.apk`를 색상 기능이 들어간 main으로 다시 빌드했다(19.9MB, v2 서명 확인). 에뮬레이터: 릴리스 빌드 쇼케이스 12초 735프레임·끊김 0%, 디버그 빌드에서 색상을 입힌 채 아쿠아리움 쇼케이스 12초 734프레임·끊김 0.14%(색상 레이어의 주행 중 비용은 문제없음).
 
+**2026-11-12: 소품 + 모든 창 모양**(`feat/decor`). 사용자 요청: "꼬마차 옷장처럼 다른 테마에도 추가할 수 있는 것들을", "플레오스가 바꾸는 모든 화면비를 만족하게".
+- 소품(`character/.../theme/ThemeDecor.kt`): 11개 테마 × 3개, 실버·골드·플래티넘에서 열림, 각각 켜고 끔(`Settings.decor` 비트마스크, `ThemeAccess.effectiveDecor`). 완성된 장면 위에 캔버스 비율 좌표로 그리므로 테마 배치와 무관하다. 사물 소품은 색상(colourway) 위에, 테마의 선·픽셀로 그린 소품(태양계·도트 월드)은 색상 아래에 그린다(`ThemeDecor.tinted`). 카드처럼 장면이 잘려 보일 때는 보이는 부분에 맞춘다(`Modifier.themeDecor(shown=)`). 주행 중 구석으로 줄면 숨는다.
+- 창 모양: 키트 테마 `ThemePainter.focusWidth`(좁은 창에서 줄이지 않고 양옆을 자름), `headroom()`(세로 창에서 장면을 가운데 쪽으로 내리고 위를 테마의 윗색으로 채움: 격납고·플라즈마·오르골·태양계), 도트 월드 `PixelModels.MIN_VIEW_W`(정수 배율 유지, 오른쪽 자름, 보석 줄은 보이는 가장자리에). 앱 화면: 좁은 창에서 말풍선·주행 카드를 배지 아래로(`Modifier.underBadge`), 칩 줄은 가로 스크롤.
+- 확인 방법: `AspectSnapshotTest`(테마 × 6가지 화면비), `VROOMI_SCREEN=900x1210@160`으로 앱 화면 스냅샷을 세로 창으로 뽑기(`TestScreen`).
+- 주의: 에뮬레이터에서 `wm size`나 `am task resize`로 창을 바꾸면 Pleos 셸이 꼬인다(재부팅으로 복구). 실제 분할·세로 창은 에뮬레이터에서 확인하지 못했다.
+- 남은 약점: 세로 창의 아쿠아리움·유리병 정원은 아래쪽이 모래·풀로 길게 남는다. 탭 레일은 세로 창에서도 왼쪽 132dp를 차지한다(아래쪽 막대로 바꾸지 않음).
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 

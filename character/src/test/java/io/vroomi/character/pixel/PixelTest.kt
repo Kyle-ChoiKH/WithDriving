@@ -70,6 +70,13 @@ class PixelTest {
         assertEquals(-80, sx); assertEquals(-72, sy)
         assertTrue("hero inside", PixelModels.HERO_X + sx in 0..(288 - 30))
         assertTrue("road inside", PixelModels.ROAD_Y + sy in 0 until 108)
+        // A 16:9, split or upright window keeps the world large and crops its right side: the hero stays in view.
+        assertEquals(4, PixelModels.scale(1280f, 720f))
+        assertEquals(3, PixelModels.scale(1008f, 720f))
+        assertEquals(1, PixelModels.scale(540f, 960f))
+        val (wx, wy) = PixelModels.offset(1280f, 720f, 4)
+        assertEquals(-320, wx); assertEquals(0, wy)
+        assertTrue("hero inside the 16:9 window", PixelModels.HERO_X * 4 + wx in 0..(1280 - 30 * 4))
     }
 
     @Test fun hopApexMeetsTheShard() {

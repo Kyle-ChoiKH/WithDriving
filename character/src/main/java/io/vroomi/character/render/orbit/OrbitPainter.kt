@@ -131,6 +131,8 @@ private class OGeo(val dw: Float) {
 /** The orbit painter: a vector phosphor display of a little star system. */
 internal class OrbitPainter : ThemePainter<OrbitSim>() {
     override val minDesignWidth = 1080f
+    override val focusWidth = 760f
+    override fun headroom(sim: OrbitSim): Color = Color(0xFF000000)
     override val backdrop = Color(0xFF000000)
 
     private var geo: OGeo? = null

@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -387,7 +388,8 @@ private fun GalleryCard(
             Text(hint, style = VType.callout, color = Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             // The applied theme's option chips (the upgrade step first) on their own row, so the name is never cut.
             Spacer(Modifier.height(Space.s12))
-            Row(Modifier.height(Dimens.chipHeight), horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically) {
+            // The chips scroll sideways when the card is too narrow for them all (a split or upright window).
+            Row(Modifier.height(Dimens.chipHeight).horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically) {
                 chips?.invoke(this)
             }
         }
@@ -533,10 +535,12 @@ internal fun StageChrome(
                         }
                         Spacer(Modifier.height(Space.s16))
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically, content = chips)
-                            ThemeRegistry.of(theme).note?.let { n ->
+                            // The chips scroll sideways when a narrow window cannot hold them all.
+                            Row(Modifier.weight(1f, fill = false).horizontalScroll(androidx.compose.foundation.rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(Space.s12), verticalAlignment = Alignment.CenterVertically, content = chips)
+                            // The note needs room of its own: a window too narrow for both shows the chips.
+                            if (this@BoxWithConstraints.maxWidth >= StagePanelNote) ThemeRegistry.of(theme).note?.let { n ->
                                 Spacer(Modifier.width(Space.s24))
-                                Text(stringResource(n), Modifier.weight(1f), style = VType.callout, color = Ink.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
+                                Text(stringResource(n), Modifier.widthIn(max = Dimens.stageNote), style = VType.callout, color = Ink.secondary, maxLines = 3, overflow = TextOverflow.Ellipsis)
                             }
                         }
                     }
@@ -548,6 +552,8 @@ internal fun StageChrome(
 
 /** From this width the stage panel keeps its text and its actions (the upgrade chip first) on one row. */
 private val StagePanelOneRow = 1500.dp
+/** Below this width the stage panel shows the option chips without the theme's note beside them. */
+private val StagePanelNote = 1100.dp
 
 /** The drag handling of the stage: axis-locked horizontal swipe (P5) or downward pull (P4). Taps pass through. */
 internal fun Modifier.stageGestures(

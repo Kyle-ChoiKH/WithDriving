@@ -180,6 +180,8 @@ private val PLATE = arrayOf("SERENADE · 18", "SERENADE · 18", "SERENADE · 36"
  */
 internal class MusicBoxPainter : ThemePainter<MusicBoxSim>() {
     override val minDesignWidth = 1040f
+    override val focusWidth = 960f
+    override fun headroom(sim: MusicBoxSim): Color = Room.wallTop
     override val backdrop = Color(0xFF241A14)
 
     private var geo: BoxGeo? = null

@@ -54,6 +54,8 @@ private class Bench(val dw: Float) {
  */
 internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
     override val minDesignWidth = 1280f
+    override val focusWidth = 1000f
+    override fun headroom(sim: PlasmaSim): Color = Lab.roomTop
     override val backdrop = Lab.roomTop
 
     private val base = LayerSlot(SceneTheme.PLASMA)

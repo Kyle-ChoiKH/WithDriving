@@ -216,9 +216,9 @@ class PassageSnapshotTest {
         val stills = remember { stills(t) }
         Row(Modifier.fillMaxSize().graphicsLayer { alpha = chromeAlpha }) { TabRail(Tab.HOME) {} }
         Stage(stage, stills, sceneRect, IntSize(sceneRect.width.toInt(), sceneRect.height.toInt()), skin = skin)
-        Box(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked).graphicsLayer { alpha = chromeAlpha }) {
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked).graphicsLayer { alpha = chromeAlpha }) {
             GradeBadge(io.vroomi.app.progress.Grade.GOLD, 128, 0.62f, "다음 등급까지 7.4 km", Modifier.align(Alignment.TopStart))
-            if (bubble != null) SpeechBubble(bubble, Modifier.align(Alignment.TopCenter))
+            if (bubble != null) SpeechBubble(bubble, Modifier.align(Alignment.TopCenter).underBadge(maxWidth))
             HomeActions(demo = false, listening = false, canTalk = true, modifier = Modifier.align(Alignment.BottomEnd), onDemo = {}, onTalk = {})
         }
     }
@@ -335,12 +335,12 @@ class PassageSnapshotTest {
 
     @Test fun ui_trip_card() = shot(SceneTheme.KART) {
         HomeLayer(SceneTheme.KART, bubble = null)
-        Box(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked), contentAlignment = Alignment.TopEnd) { TripSummaryCard(trip) {} }
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked), contentAlignment = Alignment.TopEnd) { TripSummaryCard(trip, Modifier.underBadge(maxWidth)) {} }
     }
 
     @Test fun ui_trip_card_dark() = shot(SceneTheme.KART, dark = true) {
         HomeLayer(SceneTheme.KART, bubble = null)
-        Box(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked), contentAlignment = Alignment.TopEnd) { TripSummaryCard(trip.copy(demo = true, score = 78)) {} }
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().padding(start = 132.dp).padding(Space.parked), contentAlignment = Alignment.TopEnd) { TripSummaryCard(trip.copy(demo = true, score = 78), Modifier.underBadge(maxWidth)) {} }
     }
 
     @Test fun ui_rail_indicator_mid() = shot(SceneTheme.AQUARIUM) {

@@ -75,6 +75,8 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
     private var vehicle = PixelVehicle.ROVER
     /** The upgrade step (0..4): each one also adds something to the sky ([skySteps]). */
     private var step = 0
+    /** The right edge (virtual px) of the part of the world the window shows. */
+    private var viewRight = VW
     private var pinFrame = 0
     private var flagFrame = 0
     private var gemFrame = 0
@@ -86,8 +88,10 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
         legibility(sim, f, sc)
         vehicle = PixelVehicle.of(f.model)
         step = f.model.coerceIn(0, 4)
-        render(sim, f)
         val (ox, oy) = PixelModels.offset(f.w, f.h, sc)
+        // The part of the world this window shows: readouts keep to its right edge.
+        viewRight = if (ox < 0) minOf(VW, ((f.w - ox) / sc).toInt()) else VW
+        render(sim, f)
         // Letterbox in the sky and ground colours, so the bands read as more sky and more ground.
         s.drawRect(Color(pal.color(LAVENDER)), Offset(left, top), Size(f.w, f.h / 2f))
         s.drawRect(Color(groundBase(sim.biome)), Offset(left, top + f.h / 2f), Size(f.w, f.h / 2f))
@@ -745,7 +749,7 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
         val n = sim.gems
         if (n <= 0) return
         val sweep = ((sim.decoTime - sim.comboAt) * 10).toInt()
-        val x0 = VW - 10 - PixelMechanics.MAX_GEMS * 12 + 2
+        val x0 = viewRight - 10 - PixelMechanics.MAX_GEMS * 12 + 2
         for (k in 0 until PixelMechanics.MAX_GEMS) {
             val x = x0 + k * 12; val y = 8
             buf.blit(sprites.gem(if (k < n) 0 else 4, pal), x, y)

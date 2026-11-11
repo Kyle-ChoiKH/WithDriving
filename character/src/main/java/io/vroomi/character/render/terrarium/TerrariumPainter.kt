@@ -173,6 +173,7 @@ private class TGeo(val dw: Float, val kind: Int) {
 /** The glass-jar garden painter: a shallow-focus outdoor photograph of a jar on a mossy stone. */
 internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
     override val minDesignWidth = 900f
+    override val focusWidth = 780f
     override val backdrop = Color(0xFF1E2B1F)
 
     private var geo: TGeo? = null

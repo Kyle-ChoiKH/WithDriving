@@ -50,6 +50,8 @@ data class StillSpec(
     val model: Int = 0,
     /** The theme's colourway ([io.vroomi.character.theme.ThemeColorways], 0 = its own colours). */
     val color: Int = 0,
+    /** The theme's props ([io.vroomi.character.theme.ThemeDecor], bit i = prop i). */
+    val decor: Int = 0,
 )
 
 /**
@@ -67,12 +69,15 @@ class SceneStillRenderer(fontFamilyResolver: FontFamily.Resolver, private val de
         LayerCache.scoped {
             CanvasDrawScope().draw(density, LayoutDirection.Ltr, Canvas(img), Size(img.width.toFloat(), img.height.toFloat())) {
                 val m = io.vroomi.character.theme.ThemeColorways.matrix(theme, spec.color)
-                if (m == null) drawStill(this, theme, spec)
+                if (m == null) { drawStill(this, theme, spec); io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor) }
                 else {
                     val paint = androidx.compose.ui.graphics.Paint().apply { colorFilter = androidx.compose.ui.graphics.ColorFilter.colorMatrix(androidx.compose.ui.graphics.ColorMatrix(m)) }
                     drawContext.canvas.saveLayer(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), paint)
                     drawStill(this, theme, spec)
+                    val tinted = io.vroomi.character.theme.ThemeDecor.tinted(theme)
+                    if (tinted) io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor)
                     drawContext.canvas.restore()
+                    if (!tinted) io.vroomi.character.theme.ThemeDecor.draw(this, theme, spec.decor)
                 }
             }
         }

@@ -263,6 +263,50 @@ private fun ColorRow(swatch: androidx.compose.ui.graphics.Color, title: String, 
     }
 }
 
+// ---------------------------------------------------------------- the props sheet
+
+/**
+ * The props sheet of [theme] (chip "소품 · 2개"): one row per prop with the grade that opens it. An open prop is
+ * switched on or off by its row (several can be on at once); a locked one is dimmed.
+ */
+@Composable
+internal fun DecorOptions(theme: SceneTheme, ctx: PickerContext) {
+    SheetHeader(stringResource(R.string.decor_title), stringResource(R.string.decor_hint))
+    val mask = ctx.decorOf(theme)
+    val open = ThemeAccess.openDecor(ctx.grade)
+    val chrome = LocalChrome.current
+    Column(Modifier.fillMaxWidth().grouped(Shapes.card)) {
+        io.vroomi.character.theme.ThemeDecor.names(theme).forEachIndexed { i, name ->
+            if (i > 0) RowDivider()
+            val unlocked = i < open
+            val on = mask and (1 shl i) != 0
+            val unlock = Grade.of(io.vroomi.character.theme.ThemeDecor.unlockLevel(i))
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = Dimens.listRow)
+                    .pressFeedback(Shapes.card, enabled = unlocked, large = true)
+                    .clickable(enabled = unlocked, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.Checkbox) { ctx.onDecor(theme, i) }
+                    .semantics { selected = on }
+                    .padding(start = Space.s24, end = Space.s24, top = Space.s12, bottom = Space.s12),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(name, style = VType.headline, color = if (unlocked) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(Space.s4))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Medal(unlock, 20.dp, number = false)
+                        Spacer(Modifier.width(Space.s8))
+                        Text(stringResource(if (unlocked) R.string.grade_badge else R.string.locked_grade, unlock.label), style = VType.callout, color = Ink.secondary, maxLines = 1)
+                    }
+                }
+                Spacer(Modifier.width(Space.s16))
+                if (on) Image(VIcons.Check, null, Modifier.size(Dimens.icon), colorFilter = ColorFilter.tint(chrome.tint))
+            }
+        }
+    }
+}
+
 /** A colourway's swatch: a disc of the theme's accent as that colourway shows it, with a thin ring. */
 @Composable
 internal fun Swatch(color: androidx.compose.ui.graphics.Color, size: androidx.compose.ui.unit.Dp, dim: Boolean = false) {

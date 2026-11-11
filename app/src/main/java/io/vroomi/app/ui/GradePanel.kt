@@ -189,7 +189,8 @@ fun GradePanel(rt: VroomiRuntime) {
     val theme = ThemeRegistry.resolve(settings.sceneTheme)
     val renderer = rememberSceneStillRenderer()
     val color = ThemeAccess.effectiveColor(grade, settings.colors[theme])
-    val spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, model = gradePreviewModel(grade), color = color)
+    val decor = ThemeAccess.effectiveDecor(grade, settings.decor[theme])
+    val spec = StillSpec(skin = settings.skin, finish = settings.calibreFinish, powertrain = settings.enginePowertrain, model = gradePreviewModel(grade), color = color, decor = decor)
     // Drawn once off the main thread by the theme's own painter (a still, so nothing animates on this page).
     val still by produceState<ImageBitmap?>(null, theme, spec) {
         value = runCatching { withContext(Dispatchers.Default) { renderer.render(theme, HeroStills.W, HeroStills.H, spec) } }.getOrNull()
@@ -205,6 +206,11 @@ fun GradePanel(rt: VroomiRuntime) {
         worn = settings.wardrobe,
         chosen = ThemeAccess.effectiveModel(grade, settings.models[theme]),
         color = color,
+        decor = decor,
+        onDecor = { i ->
+            val open = ThemeAccess.openDecor(SafetyGrade.current(trips, settings.gradeReached))
+            if (i < open) rt.settingsStore.update { s -> s.copy(decor = s.decor + (theme to ((s.decor[theme] ?: 0) xor (1 shl i)))) }
+        },
         // A colourway picked here is saved for this theme (its own colours are the unset state).
         onColor = { c ->
             val top = ThemeAccess.maxModel(SafetyGrade.current(trips, settings.gradeReached))
@@ -243,6 +249,8 @@ internal fun GradeContent(
     onPick: (Int) -> Unit = {},
     color: Int = 0,
     onColor: (Int) -> Unit = {},
+    decor: Int = 0,
+    onDecor: (Int) -> Unit = {},
     onToggle: (Accessory, Boolean) -> Unit,
 ) {
     Page(stringResource(R.string.tab_grade)) { pane ->
@@ -264,6 +272,10 @@ internal fun GradeContent(
         if (io.vroomi.character.theme.ThemeColorways.has(theme)) {
             Spacer(Modifier.height(Space.s32))
             ColorSection(grade, theme, color, onColor)
+        }
+        if (io.vroomi.character.theme.ThemeDecor.has(theme)) {
+            Spacer(Modifier.height(Space.s32))
+            DecorSection(grade, theme, decor, onDecor)
         }
         // Outfits are the friend's: only the theme with a friend on screen has a wardrobe.
         if (theme.hasCharacter) {
@@ -498,6 +510,47 @@ private fun ColorSection(grade: Grade, theme: SceneTheme, chosen: Int, onColor: 
             }
         }
         Text(stringResource(R.string.grade_colors_foot), Modifier.padding(start = Space.s24, end = Space.s24, top = Space.s8), style = VType.callout, color = Ink.secondary)
+    }
+}
+
+/** The theme's props, laid out like the kart's wardrobe: a card each, the grade that opens a locked one, a ring round those in use. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DecorSection(grade: Grade, theme: SceneTheme, mask: Int, onDecor: (Int) -> Unit) {
+    val chrome = LocalChrome.current
+    val open = ThemeAccess.openDecor(grade)
+    Column(Modifier.fillMaxWidth()) {
+        Header(stringResource(R.string.grade_decor))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Space.s16), verticalArrangement = Arrangement.spacedBy(Space.s16)) {
+            io.vroomi.character.theme.ThemeDecor.names(theme).forEachIndexed { i, name ->
+                val unlocked = i < open
+                val worn = mask and (1 shl i) != 0
+                val unlock = Grade.of(io.vroomi.character.theme.ThemeDecor.unlockLevel(i))
+                Column(
+                    Modifier
+                        .width(Dimens.wardrobeCard)
+                        .grouped(Shapes.card)
+                        .drawBehind { if (worn) drawOutline(Shapes.card.createOutline(size, layoutDirection, this), chrome.tint, style = Stroke(Dimens.ring.toPx())) }
+                        .pressFeedback(Shapes.card, enabled = unlocked)
+                        .clickable(enabled = unlocked, interactionSource = remember { MutableInteractionSource() }, indication = null, role = Role.Checkbox) { onDecor(i) }
+                        .heightIn(min = Dimens.listRow + Space.s32)
+                        .padding(Space.s24),
+                ) {
+                    Text(name, style = VType.headline, color = if (unlocked) Ink.primary else Ink.secondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Spacer(Modifier.height(Space.s12))
+                    when {
+                        !unlocked -> Row(verticalAlignment = Alignment.CenterVertically) {
+                            Medal(unlock, 20.dp, number = false)
+                            Spacer(Modifier.width(Space.s8))
+                            Text(stringResource(R.string.locked_grade, unlock.label), style = VType.callout, color = Ink.secondary, maxLines = 1)
+                        }
+                        worn -> Tag(stringResource(R.string.decor_on), check = true)
+                        else -> Text(stringResource(R.string.decor_off), style = VType.callout, color = Ink.secondary)
+                    }
+                }
+            }
+        }
+        Text(stringResource(R.string.grade_decor_foot), Modifier.padding(start = Space.s24, end = Space.s24, top = Space.s8), style = VType.callout, color = Ink.secondary)
     }
 }
 

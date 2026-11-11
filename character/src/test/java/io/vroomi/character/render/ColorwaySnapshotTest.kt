@@ -62,6 +62,24 @@ class ColorwaySnapshotTest {
         }
     }
 
+    /**
+     * Props under a colourway: things keep their own colours (the aquarium's gold chest stays gold in every sea),
+     * props in the theme's own ink follow it (the orbit display's saucer turns with the display).
+     */
+    private fun props(theme: SceneTheme) {
+        val renderer = SceneStillRenderer(createFontFamilyResolver(paparazzi.context), Density(1f))
+        val all = (1 shl io.vroomi.character.theme.ThemeDecor.COUNT) - 1
+        val stills = (0 until ThemeColorways.COUNT).map { renderer.render(theme, 1000, 375, StillSpec(model = 2, color = it, decor = all)) }
+        paparazzi.snapshot("colorway_props_${theme.name.lowercase()}") {
+            Column(Modifier.fillMaxSize()) {
+                stills.forEach { img -> Image(img, null, Modifier.fillMaxWidth().aspectRatio(8f / 3f), contentScale = ContentScale.FillBounds, filterQuality = FilterQuality.Low) }
+            }
+        }
+    }
+
+    @Test fun propsAquarium() = props(SceneTheme.AQUARIUM)
+    @Test fun propsOrbit() = props(SceneTheme.ORBIT)
+
     @Test fun calibre() = sheet(SceneTheme.CALIBRE)
     @Test fun engine() = sheet(SceneTheme.ENGINE)
     @Test fun musicBox() = sheet(SceneTheme.MUSIC_BOX)

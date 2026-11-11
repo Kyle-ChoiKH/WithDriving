@@ -70,6 +70,19 @@ class ThemeFrame {
 internal abstract class ThemePainter<S : ThemeSim> {
     /** The narrowest design width the composition needs (a narrow canvas scales the scene down). */
     open val minDesignWidth: Float = 1000f
+    /**
+     * The width round the centre that has to stay in view. On a canvas narrower than [minDesignWidth] the scene
+     * keeps its size and loses its sides down to this width (the subject stays large in a split or upright window);
+     * only a canvas narrower still scales the scene down. The default keeps the whole composition.
+     */
+    open val focusWidth: Float get() = minDesignWidth
+
+    /**
+     * The colour of the scene's top edge (its wall, ceiling or sky), or null. On an upright canvas, where the
+     * scene is shorter than the canvas, a painter that names it is moved down toward the middle and the space above
+     * is filled with this colour; without it the scene stays at the top and its floor runs on below.
+     */
+    open fun headroom(sim: S): Color? = null
     /** The colour behind a CORNER-sized scene. */
     open val backdrop: Color = Color(0xFF15171C)
     /** Optional: draws in canvas px before [draw] (cached static layers stay crisp). [left], [top]: scene origin. */
@@ -173,6 +186,8 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
     val corner = Spring(0f, 30f, 11f)
     var options = SceneOptions(); private set
     val frame = ThemeFrame()
+    private var headPx = 0f
+    private var headColor: Color? = null
     private var texts: ThemeTexts? = null
     private var lastTm: TextMeasurer? = null
     private val clip = Path()
@@ -201,9 +216,13 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
         val f = frame
         f.w = w; f.h = h; f.density = this; f.options = options
         val kByH = h / DESIGN_H
-        val kByW = w / painter.minDesignWidth
+        val kByW = w / min(painter.focusWidth, painter.minDesignWidth)
         f.k = min(kByH, kByW)
         f.dw = w / f.k; f.dh = h / f.k
+        // An upright canvas: the scene moves down toward the middle under a band of its own top colour.
+        headColor = painter.headroom(sim)
+        headPx = if (headColor != null && f.dh - DESIGN_H > 1f) (f.dh - DESIGN_H) * HEAD_SHARE * f.k else 0f
+        if (headPx > 0f) { f.h = h - headPx; f.dh = f.h / f.k }
         val tx = texts(tm, this)
         val clipped = c > 0.01f
         if (clipped) {
@@ -219,8 +238,9 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
 
     private fun drawBody(s: DrawScope, left: Float, top: Float, w: Float, h: Float, tx: ThemeTexts) = with(s) {
         val f = frame
-        painter.drawPx(this, sim, f, tx, left, top)
-        withTransform({ translate(left, top); scale(f.k, f.k, Offset.Zero) }) {
+        headColor?.let { if (headPx > 0f) drawRect(it, Offset(left, top), Size(w, headPx + 1f)) }
+        painter.drawPx(this, sim, f, tx, left, top + headPx)
+        withTransform({ translate(left, top + headPx); scale(f.k, f.k, Offset.Zero) }) {
             painter.draw(this, sim, f, tx)
         }
         val dim = 0.3f * sim.freeze
@@ -232,11 +252,13 @@ internal class ThemeRuntime<S : ThemeSim>(val theme: SceneTheme, val sim: S, val
         if (sim.moving || corner.value > 0.05f) return
         val f = frame
         if (f.k <= 0f) return
-        painter.tap(sim, x / f.k, y / f.k)
+        painter.tap(sim, x / f.k, (y - headPx) / f.k)
     }
 
     companion object {
         const val DESIGN_H = 600f
+        /** The share of an upright canvas's spare height that goes above the scene (the rest is more floor below). */
+        const val HEAD_SHARE = 0.42f
         fun seasonIndex(s: Season): Int = when (s) { Season.SPRING -> 0; Season.SUMMER -> 1; Season.AUTUMN -> 2; Season.WINTER -> 3 }
     }
 }

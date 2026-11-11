@@ -28,6 +28,8 @@ import kotlin.math.sin
  */
 internal class HangarPainter : ThemePainter<HangarSim>() {
     override val minDesignWidth = 1200f
+    override val focusWidth = 860f
+    override fun headroom(sim: HangarSim): Color = Color(0xFF0B0C0F)
     override val backdrop = Color(0xFF14161A)
 
     private val base = LayerSlot(SceneTheme.HANGAR)

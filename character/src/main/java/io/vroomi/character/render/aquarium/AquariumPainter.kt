@@ -131,6 +131,7 @@ private class AGeo(val dw: Float) {
 /** The aquarium painter: inside the water, with no tank and no room. */
 internal class AquariumPainter : ThemePainter<AquariumSim>() {
     override val minDesignWidth = 1100f
+    override val focusWidth = 700f
     override val backdrop = Color(0xFF062A33)
 
     private var geo: AGeo? = null
