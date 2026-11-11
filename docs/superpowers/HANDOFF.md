@@ -110,6 +110,8 @@ Task 17에서 한 일(`phase-c/integration`, 위 14개 브랜치를 순서대로
 - 단계 변화량 하한을 1.5%로 올렸다(지금 최소 1.81% 보물지도 Lv.2). 테스트 841개 통과.
 - 하지 않은 것: 색상 외의 "추가 아이템"(테마별 소품 고르기), 꼬마차의 색상(옷장·친구가 그 역할).
 
+**2026-11-12 새벽: #21 병합(사용자 승인) 후 릴리스 APK 교체.** `apk/Kyle_WithDriving_release.apk`를 색상 기능이 들어간 main으로 다시 빌드했다(19.9MB, v2 서명 확인). 에뮬레이터: 릴리스 빌드 쇼케이스 12초 735프레임·끊김 0%, 디버그 빌드에서 색상을 입힌 채 아쿠아리움 쇼케이스 12초 734프레임·끊김 0.14%(색상 레이어의 주행 중 비용은 문제없음).
+
 1. **제출 준비**(9장). 팀명은 **Kyle**로 정해졌다(`gradle.properties`의 `vroomi.teamName`). 코드를 고치면 `powershell -ExecutionPolicy Bypass -File .\build.ps1`로 다시 빌드해 `apk/Kyle_WithDriving_release.apk`를 새로 커밋한다(공모전 규정: 저장소 `apk/` 폴더에 release APK).
 2. **에뮬레이터 마저 확인**(선택): 오르골 쇼케이스. 실행: `ANDROID_HOME=C:\vroomi-tools\android-sdk`, `emulator -avd Pleos_Connect_v2.1.0 -no-snapshot-load`, `adb install -r -g <apk>`.
 
