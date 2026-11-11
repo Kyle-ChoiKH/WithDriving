@@ -158,6 +158,9 @@ internal object EngineParts {
 
 // ---------------------------------------------------------------- the whole scene
 
+/** The wall colour of each step's room (null: the plain workshop). */
+private val STUDIO = arrayOf<Color?>(null, Color(0xFF27425E), Color(0xFF5E4127), Color(0xFF1F5A52), Color(0xFF63232D))
+
 internal fun EngineRuntime.draw(ds: DrawScope, tm: TextMeasurer, debugMs: Float? = null): Unit = with(ds) {
     val w = size.width; val h = size.height
     val m = mech
@@ -192,6 +195,13 @@ private fun DrawScope.drawScene(rt: EngineRuntime, texts: EngineTexts, w: Float,
     val n = m.night
     if (n < 0.999f) drawImage(rt.sheetLayer(w, h, false, this))
     if (n > 0.001f) drawImage(rt.sheetLayer(w, h, true, this), alpha = n)
+    // Each step stands in its own room: a grey workshop, a blue assembly hall, a warm dyno cell, a teal test lab,
+    // a crimson pit garage. The room's light washes the wall behind the machine (stronger at the top) and lays a
+    // stripe of the room's colour along the floor; the drawing's inks stay as they are.
+    STUDIO.getOrNull(rt.model)?.let { room ->
+        drawRect(Brush.verticalGradient(0f to room.copy(alpha = 0.62f), 0.7f to room.copy(alpha = 0.30f), 1f to room.copy(alpha = 0.12f), startY = 0f, endY = h))
+        drawRect(androidx.compose.ui.graphics.lerp(room, Color.White, 0.35f).copy(alpha = 0.55f), Offset(0f, h * 0.955f), Size(w, h * 0.012f))
+    }
 
     val zf = FRONT_ZOOM + (1f - FRONT_ZOOM) * rt.zoom.value.coerceIn(0f, 1f)
     val front = zf > 1.25f

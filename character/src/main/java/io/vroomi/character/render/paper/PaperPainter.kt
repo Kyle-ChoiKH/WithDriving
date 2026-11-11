@@ -214,7 +214,7 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 sky(g, sim)
                 // Foil is stamped on the page itself, so the planes stand in front of it.
                 if (PaperStep.special(model)) foil(g)
-                if (PaperStep.pullTab(model)) { cloudTab(g, sim); balloon(g, sim) }
+                if (PaperStep.pullTab(model)) { rainbow(g); cloudTab(g, sim); balloon(g, sim) }
                 if (PaperStep.farPlane(model)) standUp(intro, 0, g.foldBack - 26f) { farHills(g, sim) }
                 standUp(intro, 0, g.foldBack) { mountains(g, sim) }
                 if (PaperStep.pullTab(model)) kite(g, sim)
@@ -531,6 +531,18 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
             if (Math.floorMod(idx, 2) != 0) drawCircle(PaperInk.CARD, 4.6f, Offset(x, top - 6f))
         }
         crease(Offset(g.l + 8f, base), Offset(g.r - 8f, base))
+    }
+
+    /** Step 4: a paper rainbow stands behind the mountains of the left page (clear of the title), in the edition's three inks. */
+    private fun DrawScope.rainbow(g: PGeo) {
+        val c = Offset(g.cx - 272f, g.foldBack + 30f)
+        val inks = arrayOf(PaperInk.PINK, PaperInk.YELLOW, PaperInk.BLUE)
+        for (i in 0 until 3) {
+            val r = 250f - i * 27f
+            drawArc(Color.Black.copy(alpha = 0.10f), 180f, 180f, false, Offset(c.x - r + 5f, c.y - r + 6f), Size(r * 2, r * 2), style = androidx.compose.ui.graphics.drawscope.Stroke(25f))
+            drawArc(inks[i], 180f, 180f, false, Offset(c.x - r, c.y - r), Size(r * 2, r * 2), style = androidx.compose.ui.graphics.drawscope.Stroke(25f))
+        }
+        drawArc(PaperInk.CARD, 180f, 180f, false, Offset(c.x - 263f, c.y - 263f), Size(526f, 526f), style = androidx.compose.ui.graphics.drawscope.Stroke(2f))
     }
 
     /** Step 4, on the right page: a paper kite on its string, bows on its tail. It rides the pull tab with the clouds. */

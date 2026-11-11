@@ -264,12 +264,19 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             graticule(g.ml, g.mt, g.mr, g.mb)
             if (MapStep.rose(model)) terrain(g.ml, g.mt, g.mr, g.mb)
             if (MapStep.decor(model)) seaLife(g.ml, g.mt, g.mr, g.mb)
+            val decor = MapStep.decor(model)
+            // From step 4 the winds are ruled in a portolan's colours (black for the eight winds, green and red between).
+            val c2 = Offset(g.ml + (g.mr - g.ml) * 0.34f, g.mt + (g.mb - g.mt) * 0.70f)
             for (i in 0 until 16) {
                 val a = i * PI.toFloat() / 8f
                 val c = g.compass
-                drawLine(MP.inkFaint.copy(alpha = if (i % 2 == 0) 0.50f else 0.30f), Offset(c.x + cos(a) * roseStart, c.y + sin(a) * roseStart),
-                    Offset(c.x + cos(a) * 3000f, c.y + sin(a) * 3000f), if (i % 4 == 0) 0.8f else 0.5f)
+                val col = if (!decor) MP.inkFaint.copy(alpha = if (i % 2 == 0) 0.50f else 0.30f)
+                else when (i % 4) { 0 -> MP.ink.copy(alpha = 0.55f); 2 -> Color(0xFF2E6B4A).copy(alpha = 0.6f); else -> Color(0xFFA83A2C).copy(alpha = 0.55f) }
+                val wd = if (decor) (if (i % 4 == 0) 1.4f else 1.0f) else (if (i % 4 == 0) 0.8f else 0.5f)
+                drawLine(col, Offset(c.x + cos(a) * roseStart, c.y + sin(a) * roseStart), Offset(c.x + cos(a) * 3000f, c.y + sin(a) * 3000f), wd)
+                if (decor) drawLine(col.copy(alpha = col.alpha * 0.8f), Offset(c2.x + cos(a) * 34f, c2.y + sin(a) * 34f), Offset(c2.x + cos(a) * 3000f, c2.y + sin(a) * 3000f), wd * 0.8f)
             }
+            if (decor) windMark(c2)
         }
         if (MapStep.rose(model)) compassRose(g) else windMark(g.compass)
         cartouche(g, f, framed = MapStep.decor(model))

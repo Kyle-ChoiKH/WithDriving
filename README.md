@@ -269,6 +269,10 @@ VROOMI_SCREEN=1920x720@240 ./gradlew :app:recordPaparazziDebug --tests "*Screens
 | 종이 팝업북 | 핑크 매트 · 오렌지 매트 · 민트 매트 · 코발트 매트 · 크라프트 |
 | 도트 월드 | 라벤더 월드 · 선셋 월드 · 민트 월드 · 네이비 월드 · 모노 그린 |
 
+| 아쿠아리움 | 유리병 정원 | 엔진룸 | 도트 월드 |
+|---|---|---|---|
+| ![](docs/screenshots/colorways_aquarium.png) | ![](docs/screenshots/colorways_terrarium.png) | ![](docs/screenshots/colorways_engine.png) | ![](docs/screenshots/colorways_pixel.png) |
+
 색상은 완성된 그림 위에 색 행렬 한 겹을 씌우는 방식이라(`ThemeColorways`) 그리기 코드는 그대로이고, 기본 색상에서는 추가 비용이 없습니다.
 
 ### 테마 갤러리

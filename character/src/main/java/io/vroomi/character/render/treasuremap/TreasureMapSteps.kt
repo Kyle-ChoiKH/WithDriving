@@ -95,13 +95,13 @@ internal fun DrawScope.windMark(c: Offset) {
  */
 internal fun DrawScope.terrain(l: Float, t: Float, r: Float, b: Float) {
     val w = r - l; val h = b - t
-    for (i in 0 until 64) {
+    for (i in 0 until 84) {
         val u = hash01(i, 301); val v = hash01(i, 302)
         if (u + v < 0.62f || u + v > 1.38f) continue
         if (u > 0.40f && u < 0.60f && v > 0.34f && v < 0.66f) continue      // the point of departure stays open
         if ((u > 0.80f && v < 0.42f) || (u < 0.27f && v > 0.66f)) continue    // so do the rose and the title
         val x = l + 30f + u * (w - 60f); val y = t + 34f + v * (h - 60f)
-        val sc = 0.9f + hash01(i, 303) * 0.7f
+        val sc = 1.5f + hash01(i, 303) * 0.9f
         if (i % 3 != 0) {
             val p = Path().apply {
                 moveTo(x - 20f * sc, y); quadraticTo(x - 8f * sc, y - 26f * sc, x + 2f * sc, y - 8f * sc)
