@@ -10,13 +10,13 @@ enum class Cue(val action: String) {
     REVERSE("후진"), NAVI_NEAR("목적지 근처"), ARRIVE("도착"), CHARGE("충전"),
     FAN("바람 세게"), COOL("에어컨 켜기"), WARM("온도 올리기"),
     TURN_LEFT("왼쪽 깜빡이"), TURN_RIGHT("오른쪽 깜빡이"), LIGHTS("전조등"), WIPER("와이퍼"), DEFROST("서리 제거"),
-    ECO("에코 모드"), SPORT("스포츠 모드"), CRUISE("크루즈"),
+    ECO("에코 모드"), SPORT("스포츠 모드"), CRUISE("크루즈"), MUSIC("음악 재생"),
 }
 
 /** A short demo about one kind of control: its cues play in this order, each with the theme's own reaction. */
 enum class Lesson(val title: String, val cues: List<Cue>) {
     DRIVE("출발부터 도착까지", listOf(Cue.START, Cue.ACCEL, Cue.STAR, Cue.BRAKE, Cue.HARSH, Cue.STOP, Cue.REVERSE, Cue.NAVI_NEAR, Cue.ARRIVE, Cue.CHARGE)),
-    CLIMATE("온도와 바람", listOf(Cue.FAN, Cue.COOL, Cue.WARM)),
+    CLIMATE("온도 · 바람 · 음악", listOf(Cue.FAN, Cue.COOL, Cue.WARM, Cue.MUSIC)),
     LIGHTS("깜빡이 · 전조등 · 와이퍼", listOf(Cue.TURN_LEFT, Cue.TURN_RIGHT, Cue.LIGHTS, Cue.WIPER, Cue.DEFROST)),
     MODES("주행 모드", listOf(Cue.ECO, Cue.SPORT, Cue.CRUISE)),
 }
@@ -31,6 +31,7 @@ object ThemeReactions {
 
     private val TABLE: Map<SceneTheme, Map<Cue, String>> = mapOf(
         SceneTheme.KART to mapOf(
+            Cue.MUSIC to "브루미가 콧노래로 따라 불러요",
             Cue.START to "브루미가 꼬마차에 폴짝 올라타 같이 부웅!",
             Cue.ACCEL to "전기 불꽃 슝, 속도선이 생겨요",
             Cue.STAR to "별이 날아와요 (250m마다)",
@@ -51,6 +52,7 @@ object ThemeReactions {
             Cue.CRUISE to "선글라스 끼고 여유롭게",
         ),
         SceneTheme.PAPER to mapOf(
+            Cue.MUSIC to "종이 음표가 종이 자동차에서 솟아요",
             Cue.START to "크라프트지 길 띠가 흐르고 종이 풍경이 미끄러져요",
             Cue.ACCEL to "당김 탭이 움직여 종이 해 바퀴를 돌려요",
             Cue.STAR to "여백에서 색종이 동그라미가 날아와요",
@@ -64,6 +66,7 @@ object ThemeReactions {
             Cue.WIPER to "실에 매단 종이 빗방울이 흔들려요",
         ),
         SceneTheme.CALIBRE to mapOf(
+            Cue.MUSIC to "금빛 음표가 케이스 옆으로 흘러요",
             Cue.START to "크로노그래프 시작, 칼럼휠이 한 칸",
             Cue.ACCEL to "로터가 빨라지며 태엽을 감아요",
             Cue.STAR to "별 하나에 보석 하나가 반짝",
@@ -82,6 +85,7 @@ object ThemeReactions {
             Cue.SPORT to "로즈골드로 바뀌어요",
         ),
         SceneTheme.ENGINE to mapOf(
+            Cue.MUSIC to "엔진 위로 따뜻한 음표가 피어올라요",
             Cue.START to "가상 8단 변속기가 1단에 물려요",
             Cue.ACCEL to "회전수가 오르고 2단, 3단으로 변속해요",
             Cue.HARSH to "엔진이 마운트 위에서 한 번 출렁",
@@ -98,6 +102,7 @@ object ThemeReactions {
             Cue.SPORT to "늦게 변속해요",
         ),
         SceneTheme.MUSIC_BOX to mapOf(
+            Cue.MUSIC to "유리 뚜껑 아래서 금빛 음표가 올라요",
             Cue.START to "달린 거리 100m마다 태엽이 한 칸씩 감겨요",
             Cue.ACCEL to "템포가 올라가요 (마디가 바뀔 때)",
             Cue.STAR to "별을 모으면 장식음이 울려요",
@@ -112,6 +117,7 @@ object ThemeReactions {
             Cue.SPORT to "무대 조명이 호박색으로",
         ),
         SceneTheme.PLASMA to mapOf(
+            Cue.MUSIC to "빛이 박자에 맞춰 숨 쉬고 음표가 나와요",
             Cue.START to "전류가 깨어나요",
             Cue.ACCEL to "보랏빛 가닥이 늘어나고 진공관이 달아올라요",
             Cue.STAR to "빛점 하나가 유리 위에 머물러요",
@@ -122,6 +128,7 @@ object ThemeReactions {
             Cue.WIPER to "유리구에 빗방울이 맺혀요",
         ),
         SceneTheme.HANGAR to mapOf(
+            Cue.MUSIC to "로봇이 무릎으로 박자를 타요",
             Cue.START to "조립이 시작돼요 (달린 거리만큼만)",
             Cue.ACCEL to "원자로 불빛이 밝아지고 증기가 뿜어져요",
             Cue.STAR to "크레인이 작은 부품을 가져와요",
@@ -133,6 +140,7 @@ object ThemeReactions {
             Cue.WIPER to "문 밖에 비가 내리고 바닥에 물빛이 어려요",
         ),
         SceneTheme.TERRARIUM to mapOf(
+            Cue.MUSIC to "꽃이 박자에 흔들리고 음표가 반딧불처럼",
             Cue.START to "1km마다 식물이 조금씩 자라요",
             Cue.ACCEL to "연못 물과 늘어진 잎이 뒤로 살짝 기울어요",
             Cue.STAR to "별을 모으면 새싹, 콤보면 꽃",
@@ -149,6 +157,7 @@ object ThemeReactions {
             Cue.SPORT to "황금빛 오후 햇살",
         ),
         SceneTheme.AQUARIUM to mapOf(
+            Cue.MUSIC to "조개가 흥얼, 음표가 물방울처럼 올라요",
             Cue.START to "차속에 맞춰 물고기 떼가 헤엄쳐요",
             Cue.ACCEL to "수면과 수초가 뒤로 기울어요",
             Cue.STAR to "조개가 진주를 보여 줘요",
@@ -165,6 +174,7 @@ object ThemeReactions {
             Cue.SPORT to "노을빛 햇살 한 줄기",
         ),
         SceneTheme.ORBIT to mapOf(
+            Cue.MUSIC to "행성에서 음표가 전파처럼 퍼져요",
             Cue.START to "정거장을 떠나 궤도를 돌아요 (1km = 한 바퀴)",
             Cue.ACCEL to "주 엔진 불꽃이 길어져요",
             Cue.STAR to "작은 위성이 생겨요",
@@ -180,6 +190,7 @@ object ThemeReactions {
             Cue.SPORT to "호박색 불꽃",
         ),
         SceneTheme.TREASURE_MAP to mapOf(
+            Cue.MUSIC to "배 위로 잉크 음표가 번져요",
             Cue.START to "지나온 길만 잉크로 그려요",
             Cue.STAR to "그 자리에 ✕ 표시",
             Cue.HARSH to "잉크 방울이 튀어요",
@@ -190,6 +201,7 @@ object ThemeReactions {
             Cue.WIPER to "양피지에 빗방울, 갓 그린 잉크가 살짝 번져요",
         ),
         SceneTheme.PIXEL to mapOf(
+            Cue.MUSIC to "도트 음표가 뿅, 조종사가 고개를 까딱",
             Cue.START to "배기 연기가 퐁퐁",
             Cue.ACCEL to "차속만큼 도트 세계가 빨리 흘러요",
             Cue.STAR to "탐사차가 깡충 뛰어 보석 조각을 잡아요",
@@ -277,7 +289,7 @@ object DemoCatalog {
         val s = Script(theme)
         s.key("gear" to "P", "speed" to 0, "door" to false, "fan" to 1, "temp" to 22, "ac" to false, "lights" to false, "wiper" to false,
             "defrost" to false, "turn" to "NONE", "brake" to false, "mode" to "NORMAL", "safety" to false, "battery" to 60, "evCharging" to false,
-            "cruise" to false, "navi" to false)
+            "cruise" to false, "navi" to false, "music" to false)
         s.wait(2f)
         if (lesson != Lesson.DRIVE) { s.key("gear" to "D"); s.wait(1f); s.speedTo(50f, 5f); s.wait(1.5f) }
         for ((i, cue) in cues.withIndex()) s.play(cue, next = cues.getOrNull(i + 1))
@@ -383,6 +395,7 @@ object DemoCatalog {
                 Cue.ECO -> { key("mode" to "ECO", cue = cue); wait(7f); key("mode" to "NORMAL"); wait(1f) }
                 Cue.SPORT -> { key("mode" to "SPORT", cue = cue); wait(7f); key("mode" to "NORMAL"); wait(1f) }
                 Cue.CRUISE -> { key("cruise" to true, cue = cue); wait(7f); key("cruise" to false); wait(1f) }
+                Cue.MUSIC -> { key("music" to true, cue = cue); wait(8f); key("music" to false); wait(1.5f) }
             }
         }
     }

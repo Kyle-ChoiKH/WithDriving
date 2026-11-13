@@ -38,6 +38,7 @@ import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /**
  * Box geometry in box units for one upgrade step (rebuilt when the design width or the step changes). The step
@@ -274,6 +275,8 @@ internal class MusicBoxPainter : ThemePainter<MusicBoxSim>() {
             glass(g, sim)
         }
         light(g, sim, f)
+        // Music in the car: the box listens, and golden notes rise from under its glass.
+        drawMusicNotes(g.x + 120f, BoxGeo.FLOOR - 250f, Color(0xFFFFF0C8), sim.listening, sim.decoTime, glow = Color(0xFFE0A84A))
     }
 
     // ------------------------------------------------------------------ static (cached)

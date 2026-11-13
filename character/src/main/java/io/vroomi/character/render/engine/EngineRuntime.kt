@@ -98,8 +98,16 @@ internal class EngineRuntime {
 
     fun setView(v: EngineView) { view = v; pendingView = null; fade = 1f; zoom.snap(if (v == EngineView.SIDE) 1f else 0f) }
 
+    /** Another app plays music: 0..1, swelling over a second (half in calm mode). */
+    var listening = 0f; private set
+    /** Seconds of the notes' clock (it stands still during a safety warning). */
+    var noteT = 0.0; private set
+
     fun step(dt: Float, t: CharacterTarget, o: SceneOptions, choice: EnginePowertrain, forced: Powertrain?, nowMs: Long, neutralThrottle: Double = 0.0) {
         lastOptions = o
+        val musicT = if (t.car.musicPlaying == true) (if (o.calm || o.reducedMotion) io.vroomi.character.theme.ThemeSim.CALM_MUSIC else 1f) else 0f
+        listening = io.vroomi.character.theme.ThemeSim.approach(listening, musicT, dt)
+        if (t.car.safetyWarningActive != true) noteT += dt
         this.choice = choice; this.forced = forced
         mech.turbo = IceStep.turbo(model)
         moving = t.kart.driving || t.car.moving

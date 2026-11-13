@@ -38,6 +38,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /*
  * TERRARIUM, art direction: a shallow-focus nature photograph. A glass jar garden stands outdoors on a mossy
@@ -256,6 +257,8 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
         val top = glassTop.get(gk, f.w.roundToInt(), f.h.roundToInt(), f.density) { withTransform({ scale(k, k, Offset.Zero) }) { glassOverlay(g, f, sim.season, nightKey == 1L) } }
         drawNative(top, f, 0f, 0f)
         moth(g, sim)
+        // Music in the car: the flower sways on the beat and little notes rise from the jar like fireflies.
+        drawMusicNotes(g.x + g.half * 0.45f, g.lipY - 6f, Color(0xFFFFF4C2), sim.listening, sim.decoTime, glow = Color(0xFFFFD86B))
         val intro = f.options.intro
         if (intro < 1f) drawRect(g.focusVeil, size = Size(f.dw, f.dh), alpha = 1f - Intro.out(intro, 0.05f, 0.8f))
     }
@@ -690,7 +693,7 @@ internal class TerrariumPainter : ThemePainter<TerrariumSim>() {
     private fun DrawScope.flowerPlant(g: TGeo, sim: TerrariumSim) {
         val at = g.flower
         val h = 76f + 100f * sim.fraction(TerrariumSim.FLOWER)
-        val sw = sim.sway * sin(sim.swayPhase + 2.0).toFloat() * 2.4f - sim.tilt * 0.6f
+        val sw = sim.sway * sin(sim.swayPhase + 2.0).toFloat() * 2.4f - sim.tilt * 0.6f + 7f * sim.listening * (sim.beat - 0.5f) * (if (sim.reducedMotion) 0f else 1f)
         val petal = PETAL[sim.season]
         val leaf = LEAF[sim.season]; val lit = LEAF_LIT[sim.season]
         rotate(sw, at) {

@@ -141,6 +141,7 @@ class ScenarioSampler(private val scenario: Scenario) {
                 "navi" -> s.copy(naviGuidanceActive = bool(raw))
                 "arrive" -> if (bool(raw) == true) s.copy(naviArrivedAtMs = frameMs, naviGuidanceActive = false) else s
                 "safety" -> s.copy(safetyWarningActive = bool(raw))
+                "music" -> s.copy(musicPlaying = bool(raw))
                 else -> s // speed / naviRemainingM handled by interpolation; unknown keys ignored
             }
         }

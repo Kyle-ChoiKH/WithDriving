@@ -16,6 +16,7 @@ import io.vroomi.character.render.theme.ThemeTexts
 import kotlin.math.PI
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /**
  * HANGAR: a lit hangar and the user's own robot on its gantry (spec 5.12). The robot is built by the distance
@@ -82,7 +83,9 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
         val stage = sim.stage
         // A finished robot shifts its weight a little while it waits (decoration time stands still during a safety hold).
         val idle = if (stage >= 5 && !sim.reducedMotion && !sim.calm) (0.06 + 0.06 * sin(t * 0.9)).toFloat() else 0f
-        pose.dip = (sim.kneeDip + idle).coerceAtMost(1f)
+        // Music in the car: the robot keeps time with its knees.
+        val groove = if (sim.reducedMotion) 0f else 0.12f * sim.listening * sim.beat
+        pose.dip = (sim.kneeDip + idle + groove).coerceAtMost(1f)
         pose.headTurn = sim.headTurn
         pose.wave = sim.wave; pose.waveT = t.toFloat()
         pose.reactor = sim.reactor
@@ -96,6 +99,8 @@ internal class HangarPainter : ThemePainter<HangarSim>() {
         pose.holoT = if (sim.calm || sim.reducedMotion) 0f else t.toFloat()
         val m = mech(f.model)
         withTransform({ translate(cx, Bay.FEET); scale(Bay.ROBOT, Bay.ROBOT, Offset.Zero) }) { with(m) { draw(stage, sim.stageProgress, pose) } }
+
+        drawMusicNotes(cx + 90f, 190f, Color.White, sim.listening, t, glow = Color(0xFFFFB347))
 
         // The clamps and the amber lamp (after harsh braking), in front of the robot's waist.
         clamps(cx, sim.clamp, sim.lampAngle)

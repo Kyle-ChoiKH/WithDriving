@@ -98,6 +98,7 @@ class HandsOnDrive(private val apply: ((VehicleSnapshot) -> VehicleSnapshot) -> 
             Cue.WIPER -> toggle(cue) { s, on -> s.copy(wiperActive = on) }
             Cue.DEFROST -> toggle(cue) { s, on -> s.copy(defrostOn = on) }
             Cue.CRUISE -> toggle(cue) { s, on -> s.copy(cruiseOn = on) }
+            Cue.MUSIC -> toggle(cue) { s, on -> s.copy(musicPlaying = on) }
             else -> Unit
         }
     }
@@ -146,14 +147,14 @@ class HandsOnDrive(private val apply: ((VehicleSnapshot) -> VehicleSnapshot) -> 
         /** Every control the strip can show, in its order. */
         val CONTROLS = listOf(
             Cue.ACCEL, Cue.BRAKE, Cue.HARSH, Cue.STOP, Cue.TURN_LEFT, Cue.TURN_RIGHT, Cue.LIGHTS, Cue.WIPER, Cue.DEFROST,
-            Cue.FAN, Cue.COOL, Cue.WARM, Cue.ECO, Cue.SPORT, Cue.CRUISE,
+            Cue.FAN, Cue.COOL, Cue.WARM, Cue.ECO, Cue.SPORT, Cue.CRUISE, Cue.MUSIC,
         )
 
         /** The button's short label. */
         fun label(cue: Cue): String = when (cue) {
             Cue.ACCEL -> "가속"; Cue.BRAKE -> "브레이크"; Cue.HARSH -> "급제동"; Cue.STOP -> "멈추기"
             Cue.TURN_LEFT -> "◀ 깜빡이"; Cue.TURN_RIGHT -> "깜빡이 ▶"; Cue.LIGHTS -> "전조등"; Cue.WIPER -> "와이퍼"; Cue.DEFROST -> "서리 제거"
-            Cue.FAN -> "바람"; Cue.COOL -> "에어컨"; Cue.WARM -> "따뜻하게"; Cue.ECO -> "에코"; Cue.SPORT -> "스포츠"; Cue.CRUISE -> "크루즈"
+            Cue.FAN -> "바람"; Cue.COOL -> "에어컨"; Cue.WARM -> "따뜻하게"; Cue.ECO -> "에코"; Cue.SPORT -> "스포츠"; Cue.CRUISE -> "크루즈"; Cue.MUSIC -> "음악"
             else -> cue.action
         }
 

@@ -36,6 +36,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /*
  * TREASURE_MAP, art direction: a copperplate engraving chart, full-bleed. Ivory paper with the copper plate's
@@ -198,6 +199,8 @@ internal class TreasureMapPainter : ThemePainter<TreasureMapSim>() {
             head(g, sim)
             labels(g, sim)
             rain(g, sim)
+            // Music in the car: the pen hums along, inked notes drift up from the ship.
+            if (inkReach >= 1f) drawMusicNotes(mx(sim.headX) + 18f, my(sim.headY) - 30f, MP.ink, sim.listening, sim.decoTime, size = 26f, rise = 110f)
         }
         scaleBar(g, sim, MapStep.rose(f.model))
         arrival(g, sim)
