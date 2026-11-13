@@ -54,6 +54,7 @@ class VehicleHub(
 
     private val mode = MutableStateFlow(SourceMode.AUTO)
     private val navi = MutableStateFlow(NaviState())
+    private val music = MutableStateFlow<Boolean?>(null)
 
     @Volatile private var realSpeedKmh: Float? = null
     private val processor = SignalProcessor()
@@ -94,6 +95,11 @@ class VehicleHub(
         navi.value = state
     }
 
+    /** Whether another app plays music now (null = unknown); a demo's own "music" key wins over it. */
+    fun updateMusic(playing: Boolean?) {
+        music.value = playing
+    }
+
     private fun chooseSource(now: Long): ActiveSource {
         val pleosCaps = pleos?.capabilities?.value
         val pleosAlive = pleosCaps != null && pleosCaps.available.isNotEmpty()
@@ -126,12 +132,14 @@ class VehicleHub(
                 naviGuidanceActive = n.guidanceActive,
                 naviRemainingM = n.remainingM,
                 naviArrivedAtMs = n.arrivedAtMs,
+                musicPlaying = music.value,
             )
             caps = pleos.capabilities.value
                 .with(Capability.SPEED, speed != null)
                 .with(Capability.NAVI, n.guidanceActive != null)
         } else {
-            raw = simulator.snapshot.value.copy(speedSource = SpeedSourceKind.SIMULATED)
+            val sim = simulator.snapshot.value
+            raw = sim.copy(speedSource = SpeedSourceKind.SIMULATED, musicPlaying = sim.musicPlaying ?: music.value)
             caps = simulator.capabilities.value
         }
         _capabilities.value = caps

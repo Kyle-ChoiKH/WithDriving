@@ -53,6 +53,8 @@ data class VehicleSnapshot(
     val naviArrivedAtMs: Long? = null,
     // Safety
     val safetyWarningActive: Boolean? = null,
+    // Media: another app is playing music (from Android's playback callback, no permission; null = unknown)
+    val musicPlaying: Boolean? = null,
     // Odometer (total distance driven, km)
     val odometerKm: Float? = null,
 ) {

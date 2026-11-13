@@ -33,6 +33,7 @@ import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.min
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /**
  * Moving parts, built once in design units (the draw loop only transforms them and picks the colour), and the
@@ -241,6 +242,8 @@ private fun DrawScope.drawScene(rt: EngineRuntime, texts: EngineTexts, w: Float,
             }
             if (small > 0.01f) drawDrawingText(rt, texts, P, small)
             drawGlass(m, P)
+            // Music in the car: warm notes rise from the engine bay like heat shimmer.
+            drawMusicNotes(EL.W * 0.5f, 120f, Color(0xFFFFE6B0), rt.listening, rt.noteT, size = 44f, rise = 110f, glow = Color(0xFFFFA94D))
             val fa = (1f - rt.zoom.value).coerceIn(0f, 1f)
             if (fa > 0.02f) drawFrontSection(m.powertrain, fa, small, texts, P)
         }

@@ -37,6 +37,14 @@ class ScenarioTest {
         assertNull(plain.theme); assertNull(plain.powertrain)
     }
 
+    @Test fun musicKeyStepsMusicPlaying() {
+        val s = ScenarioParser.parse(""" { "id": "m", "title": "m", "keyframes": [ { "t": 0, "speed": 0 }, { "t": 5, "music": true }, { "t": 9, "music": false } ] } """)
+        val sampler = ScenarioSampler(s)
+        assertNull(sampler.sample(1f, VehicleSnapshot(), 1_000, 0).musicPlaying)
+        assertEquals(true, sampler.sample(6f, VehicleSnapshot(), 6_000, 0).musicPlaying)
+        assertEquals(false, sampler.sample(10f, VehicleSnapshot(), 10_000, 0).musicPlaying)
+    }
+
     @Test fun modelFieldParsed() {
         assertEquals(4, ScenarioParser.parse("""{"id":"x","title":"t","durationS":1,"model":4,"keyframes":[]}""").model)
         assertEquals(0, ScenarioParser.parse("""{"id":"x","title":"t","durationS":1,"model":0,"keyframes":[]}""").model)

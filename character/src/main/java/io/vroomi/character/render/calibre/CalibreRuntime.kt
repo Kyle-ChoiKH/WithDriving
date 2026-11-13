@@ -103,8 +103,16 @@ internal class CalibreRuntime(initialReserveH: Float = 41f) {
 
     fun releaseLayers() { layerCache.clear(); lastKey = Long.MIN_VALUE; lastLayers = null; studio.release() }
 
+    /** Another app plays music: 0..1, swelling over a second (half in calm mode). */
+    var listening = 0f; private set
+    /** Seconds of the notes' clock (it stands still during a safety warning). */
+    var noteT = 0.0; private set
+
     fun step(dt: Float, t: CharacterTarget, o: SceneOptions, finish: CalibreFinish, nowMs: Long) {
         this.finish = finish
+        val musicT = if (t.car.musicPlaying == true) (if (o.calm || o.reducedMotion) io.vroomi.character.theme.ThemeSim.CALM_MUSIC else 1f) else 0f
+        listening = io.vroomi.character.theme.ThemeSim.approach(listening, musicT, dt)
+        if (t.car.safetyWarningActive != true) noteT += dt
         lastOptions = o
         moving = t.kart.driving || t.car.moving
         mech.step(dt, t, nowMs, o.hourOfDay, finish, o.calm, o.reducedMotion)

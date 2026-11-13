@@ -39,6 +39,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /** Deterministic hash → [0, 1) (this theme's own). */
 private fun h01(a: Int, b: Int): Float {
@@ -229,6 +230,8 @@ internal class PaperPainter : ThemePainter<PaperSim>() {
                 standUp(intro, 3, g.foldFront) { fringe(g, sim) }
                 threads(g, sim)
                 garland(g, sim)
+                // Music in the car: cut-paper notes pop up from the paper car.
+                drawMusicNotes(g.carX + 60f, g.carY + sim.bounce - 90f, PaperInk.BLUE, sim.listening, sim.decoTime, size = 40f, rise = 170f)
             }
             pullTab(g, sim)
             title(g.cx + 70f, 100f, sdx, if (PaperStep.special(model)) PaperInk.GOLD else PaperInk.BLUE, PaperInk.REG_BLUE, TITLE_SCALE, TITLE, legibility(sim, f, CutType.H * TITLE_SCALE))

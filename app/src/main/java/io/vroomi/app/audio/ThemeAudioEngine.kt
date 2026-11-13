@@ -116,6 +116,7 @@ class ThemeAudioEngine(context: Context, private val synth: ThemeSynth) {
 
     private fun renderLoop(track: AudioTrack) {
         val buf = FloatArray(BLOCK)
+        MusicWatcher.ownPlayers.incrementAndGet() // before play, so the playback callback never mistakes it for music
         runCatching { track.play() }
         var gain = 0f
         while (running) {
@@ -136,6 +137,7 @@ class ThemeAudioEngine(context: Context, private val synth: ThemeSynth) {
             runCatching { track.write(buf, 0, BLOCK, AudioTrack.WRITE_BLOCKING) }
         }
         runCatching { track.pause(); track.flush(); track.release() }
+        MusicWatcher.ownPlayers.decrementAndGet()
     }
 
     companion object {

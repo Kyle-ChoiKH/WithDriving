@@ -37,6 +37,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /*
  * ORBIT, art direction: a vector phosphor display. Thin glowing lines on pure black with a soft bloom and a
@@ -255,6 +256,8 @@ internal class OrbitPainter : ThemePainter<OrbitSim>() {
         station(g, sim, model, st)
         satellites(g, sim, front = true)
         craft(g, sim, front = true)
+        // Music in the car: notes drift off the planet like a radio signal.
+        drawMusicNotes(g.cx + g.planetR * 0.85f, g.cy - g.planetR * 0.75f, Color.White, sim.listening, sim.decoTime, glow = Color(0xFF7FD3FF))
         telemetry(g, sim, f)
         // The instrument columns: drawn gauges without lettering, so they stay while the car moves.
         val e = if (intro < 1f) Intro.out(intro, 0.4f, 0.6f) else 1f

@@ -26,6 +26,7 @@ import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /** Where things stand on the bench for one design width: the globe in the middle, the instruments either side. */
 private class Bench(val dw: Float) {
@@ -139,7 +140,7 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
         val gas = GAS[model.coerceIn(0, GAS.size - 1)]
         gasV = gas[0]; gasM = gas[1]; gasV2 = gas[2]; gasM2 = gas[3]
         // Brightness of everything the globe emits: the slow breath, dimmer while braking and when held.
-        val b = sim.flicker * (1f - 0.42f * sim.braking) * (1f - 0.5f * sim.freeze)
+        val b = sim.flicker * (1f - 0.42f * sim.braking) * (1f - 0.5f * sim.freeze) * (1f + 0.22f * sim.listening * sim.beat)
 
         // The globe's light on the bench and inside the glass.
         drawOval(Brush.radialGradient(listOf(gasV.copy(alpha = 0.16f * b), gasV.copy(alpha = 0f)), Offset(c.x, desk + 30f), 300f), Offset(c.x - 300f, desk + 4f), Size(600f, 60f))
@@ -168,6 +169,8 @@ internal class PlasmaPainter : ThemePainter<PlasmaSim>() {
         }
 
         glass(sim, c, r)
+        // Music in the car: the globe breathes on the beat and notes of light leave the glass.
+        drawMusicNotes(c.x + r * 0.62f, c.y - r * 0.78f, Lab.core, sim.listening, sim.decoTime, glow = gasM)
 
         // The instruments' light.
         if (PlasmaStep.counter(model)) counterDigits(g.counterX, desk, sim.odometerM, tx, 1f - 0.4f * sim.freeze)

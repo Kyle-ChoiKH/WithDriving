@@ -89,4 +89,25 @@ class ThemeKitTest {
         run(1f)
         assertTrue(!p.speedKnown)
     }
+
+    @Test fun musicSwellsWhilePlayingAndTheBeatPulses() {
+        val p = Probe()
+        var c = CarSignals(speedKmh = 0f, gear = GearState.PARK)
+        var now = 0L
+        val beats = ArrayList<Float>()
+        fun run(s: Float) { repeat((s * 60).toInt()) { p.step(1f / 60f, CharacterTarget(car = c), now, 14f); now += 16; beats += p.beat } }
+        run(1f)
+        assertEquals(0f, p.listening, 0f)
+        c = c.copy(musicPlaying = true); beats.clear()
+        run(3f)
+        assertTrue("swells in: ${p.listening}", p.listening > 0.99f)
+        assertTrue("the beat pulses", beats.max() > 0.9f && beats.min() < 0.1f)
+        c = c.copy(musicPlaying = false)
+        run(3f)
+        assertEquals(0f, p.listening, 0f)
+        // Calm mode keeps the reaction gentle.
+        c = c.copy(musicPlaying = true)
+        repeat(240) { p.step(1f / 60f, CharacterTarget(car = c), now, 14f, calm = true); now += 16 }
+        assertTrue("calm: ${p.listening}", p.listening in 0.3f..0.6f)
+    }
 }

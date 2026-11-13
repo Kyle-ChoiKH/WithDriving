@@ -40,6 +40,7 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /** Moving levers and small parts, built once per layer size (cache px coordinates). */
 internal class MovingParts(private val L: CalibreLayers) {
@@ -432,6 +433,7 @@ private fun DrawScope.drawCaseback(L: CalibreLayers, rt: CalibreRuntime, hands: 
 
     // ---- sapphire crystal: condensation, rain, reflection (parallax 6 px)
     translate(px * 2f, py * 2f) { drawCrystal(L, m, bk) }
+    musicNotes(L, rt)
 
 }
 
@@ -594,7 +596,12 @@ private fun DrawScope.drawDial(L: CalibreLayers, rt: CalibreRuntime, hands: Cali
     translate(px * 0.5f, py * 0.5f) { drawDialFrame(L, rt, hands, text, nowMs) }
     drawCrownAndPushers(L, m, mirrored = false)
     translate(px * 2f, py * 2f) { drawCrystal(L, m) }
+    musicNotes(L, rt)
 }
+
+/** Music in the car: silver notes drift up past the case, upper right. */
+private fun DrawScope.musicNotes(L: CalibreLayers, rt: CalibreRuntime) =
+    drawMusicNotes(L.c.x + L.u * 0.98f, L.c.y - L.u * 0.78f, Color(0xFF8C6A2E), rt.listening, rt.noteT, size = L.u * 0.16f, rise = L.u * 0.8f, glow = Color(0xFFF2E1B0))
 
 private fun DrawScope.drawLumeGlow(L: CalibreLayers, hands: CalibreTime.Hands, night: Float, studio: CalibreStudio) {
     val c = L.c; val u = L.u

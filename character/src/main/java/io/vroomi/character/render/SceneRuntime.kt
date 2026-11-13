@@ -362,6 +362,10 @@ internal class SceneRuntime(seed: Int = 7) {
         val settled = seatU == 0f || seatU == 1f
         val eligible = t.action == Action.NONE && !t.still && t.sizeMode != SizeMode.CORNER &&
             !o.calm && !o.reducedMotion && settled && t.mood != Mood.DIZZY && t.mood != Mood.SLEEPY
+        // Music in the car: the friend hums along for as long as it plays (no other fidget meanwhile).
+        val music = t.car.musicPlaying == true && eligible
+        if (music && fidget != Fidget.HUM) { fidget = Fidget.HUM; fidgetT = 0f; fidgetDur = 1f }
+        if (fidget == Fidget.HUM && music) { fidgetT = 0f; nextFidget = 2f; return }
         if (fidget != Fidget.NONE) {
             fidgetT += dt
             if (fidgetT >= fidgetDur || !eligible) { fidget = Fidget.NONE; fidgetT = 0f }
@@ -449,8 +453,11 @@ internal class SceneRuntime(seed: Int = 7) {
             particles.spawn(PType.ZZZ, mouthX + 0.02f, mouthY - sN * 0.45f, 0.03f, -0.05f, 2.6f, 0.016f)
         }
         val orgel = skin == io.vroomi.character.CharacterSkin.ORGEL && driving && sp > 3f
-        if (fidget == Fidget.HUM || fidget == Fidget.DRUM || orgel) repeat(rate(PType.NOTE, if (orgel) 1.1f else 1.6f, dt)) {
-            particles.spawn(PType.NOTE, mouthX + 0.01f, mouthY - sN * 0.15f, 0.03f + r.nextFloat() * 0.03f, -0.09f, 1.8f, 0.016f, r.nextFloat())
+        // Singing along to the car's music: more notes, bigger and longer-lived than a passing hum.
+        val singing = fidget == Fidget.HUM && t.car.musicPlaying == true
+        if (fidget == Fidget.HUM || fidget == Fidget.DRUM || orgel) repeat(rate(PType.NOTE, if (singing) 2.2f else if (orgel) 1.1f else 1.6f, dt)) {
+            particles.spawn(PType.NOTE, mouthX + 0.01f, mouthY - sN * 0.15f, 0.03f + r.nextFloat() * 0.03f, if (singing) -0.11f else -0.09f,
+                if (singing) 2.6f else 1.8f, if (singing) 0.03f else 0.016f, r.nextFloat())
         }
         if (corner) return
         if (driving && seatU >= 1f) {

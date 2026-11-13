@@ -137,6 +137,7 @@ class VroomiRuntime(private val app: Application) {
         ux.start()
 
         scope.launch { navi.state.collect { hub.updateNavi(it) } }
+        io.vroomi.app.audio.MusicWatcher(app) { hub.updateMusic(it) }.start()
         scope.launch { settingsStore.settings.map { it.sourceMode }.distinctUntilChanged().collect { hub.setMode(it) } }
         scope.launch(logic) {
             hub.events.collect { e ->

@@ -636,6 +636,20 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
 
     // ------------------------------------------------------------------ the rover and its pilot
 
+    /** Music in the car: two 4×6 pixel notes climb from ([x], [y]) in whole pixels and blink out at the top. */
+    private fun musicNotes(sim: PixelMechanics, x: Int, y: Int) {
+        for (i in 0 until 2) {
+            val u = ((sim.decoTime / 2.4 + i * 0.5) % 1.0)
+            if (u > 0.85) continue
+            val nx = x + i * 7 + (u * 6).toInt()
+            val ny = y - 6 - (u * 18).toInt()
+            val col = c(if (i == 0) CREAM else LIME)
+            buf.rect(nx + 2, ny, 1, 5, col)       // stem
+            buf.dot(nx + 3, ny + 1, col)          // flag
+            buf.rect(nx, ny + 4, 3, 2, col)       // head
+        }
+    }
+
     private fun hero(sim: PixelMechanics) {
         val hop = sim.hop().toInt()
         val kx = HERO_X + sim.heroOffsetX.toInt()
@@ -655,6 +669,7 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
             for (r in 0 until 3 - clearRows) buf.rect(fx + 6, fy + 4 + r, 5, 1, c(MIST))
         }
         if (sim.warmth <= -0.99f) { buf.dot(fx + 2, fy + 3, c(CREAM)); buf.dot(fx + 3, fy + 2, c(CREAM)) }
+        if (sim.listening > 0.5f) musicNotes(sim, fx + 14, fy - 2)
         if (sim.arrival > 5.0) return // the hangar door is down
         val wf = wheelFrame
         // A floating vehicle's shadow stays on the road (it does not hop with it).

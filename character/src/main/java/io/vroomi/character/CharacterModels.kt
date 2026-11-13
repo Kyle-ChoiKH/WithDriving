@@ -122,6 +122,8 @@ data class CarSignals(
     val brakePressed: Boolean? = null,
     val cruiseOn: Boolean? = null,
     val doorOpen: Boolean? = null,
+    /** Another app is playing music (null = unknown). */
+    val musicPlaying: Boolean? = null,
     /** Increments on every harsh-braking event. */
     val harshBrakeSeq: Int = 0,
     /** Increments on every navigation arrival. */
@@ -140,7 +142,7 @@ data class CarSignals(
             wiperActive = s.wiperActive, headlightsOn = s.headlightsOn, turnSignal = s.turnSignal,
             evCharging = s.evCharging, evBatteryPct = s.evBatteryPct, drivingMode = s.drivingMode,
             safetyWarningActive = s.safetyWarningActive, brakePressed = s.brakePressed, cruiseOn = s.cruiseOn, doorOpen = s.doorOpen,
-            harshBrakeSeq = harshBrakeSeq, arrivalSeq = arrivalSeq,
+            musicPlaying = s.musicPlaying, harshBrakeSeq = harshBrakeSeq, arrivalSeq = arrivalSeq,
         )
     }
 }

@@ -32,6 +32,7 @@ import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import io.vroomi.character.render.theme.drawMusicNotes
 
 /*
  * AQUARIUM, art direction: immersive underwater. The viewer is inside the water: no tank, no glass, no room.
@@ -178,7 +179,7 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
         clipRect(0f, 0f, f.dw, f.dh) {
             val model = f.model
             val st = if (sim.reducedMotion) 0f else sim.decoTime.toFloat() * (if (sim.calm) 0.5f else 1f)
-            val sway = if (sim.reducedMotion) 0f else (3f + 5f * sim.fan) * (if (sim.calm) 0.5f else 1f)
+            val sway = if (sim.reducedMotion) 0f else (3f + 5f * sim.fan + 5f * sim.listening * sim.beat) * (if (sim.calm) 0.5f else 1f)
             if (AquaStep.garden(model)) kelp(g, sim)
             stepBehind(g.step, model, st, sim.plantPhase.toFloat(), sway)
             dimRays(g, sim, f)
@@ -193,6 +194,8 @@ internal class AquariumPainter : ThemePainter<AquariumSim>() {
             grass(g, sim, far = false, model)
             stepFront(g.step, model, st, sim.plantPhase.toFloat(), sway)
             bubbles(g, sim)
+            // Music in the car: the clam hums, its notes rise like bubbles.
+            drawMusicNotes(g.tx(640f) + 10f, g.sandY - 44f, Color.White, sim.listening, sim.decoTime, rise = 170f, glow = AP.nacre)
             snow(g, sim, f)
             surface(g, sim, f)
             tint(g, sim, f)
