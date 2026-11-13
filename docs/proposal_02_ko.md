@@ -363,7 +363,7 @@ MAU = (Pleos Connect 탑재 운행 차량 수) × (App Market 방문 비율) × 
 - **시연 영상**: 첨부 파일 `WithDriving_시연영상.mp4` (Pleos Connect Emulator에서 release APK를 실행해 녹화). 같은 파일이 저장소 `docs/media/demo.mp4`에 있습니다.
 - **GitHub 저장소**: 주소와 최종 커밋 번호는 접수 메일에 적었습니다. 소스 전체, README(실행 방법·테스트 환경), 테스트가 들어 있습니다.
 - **APK**: 저장소 `apk/Kyle_WithDriving_release.apk` (실행 가능한 release 빌드)
-- **화면 자료**: 저장소 `docs/screenshots/`(549장), 주행 GIF `docs/media/`
+- **화면 자료**: 저장소 `docs/screenshots/`(552장, 에뮬레이터에서 찍은 화면 3장 포함), 주행 GIF `docs/media/`
 - **근거 자료**: 시나리오 상태 로그(`docs/scenario-logs/`), 퍼미션 표(`docs/permissions.md`), 캐릭터 독창성 검토(`docs/character-originality.md`), 오픈소스 고지(`THIRD_PARTY_NOTICES.md`)
 
 ---
