@@ -35,7 +35,8 @@ class MusicWatcher(context: Context, private val onChange: (Boolean?) -> Unit) {
     }
 
     private fun report(configs: List<AudioPlaybackConfiguration>) {
-        val now = othersPlay(configs.map { it.audioAttributes.usage }, ownPlayers.get())
+        // The callback lists only the players that are playing now; a paused player drops out of it.
+        val now = othersPlay(configs.map { it.audioAttributes.let { a -> a.usage to a.contentType } }, ownPlayers.get())
         if (now != last) { last = now; onChange(now) }
     }
 
@@ -43,8 +44,16 @@ class MusicWatcher(context: Context, private val onChange: (Boolean?) -> Unit) {
         /** Vroomi's own media players that are playing now (the theme sound). */
         val ownPlayers = AtomicInteger(0)
 
-        /** True when more media players are active than Vroomi's own [own]. */
-        fun othersPlay(activeUsages: List<Int>, own: Int): Boolean =
-            activeUsages.count { it == AudioAttributes.USAGE_MEDIA } > own.coerceAtLeast(0)
+        /** True when more music players (usage, content type) are active than Vroomi's own [own]. */
+        fun othersPlay(active: List<Pair<Int, Int>>, own: Int): Boolean =
+            active.count { (usage, content) -> isMusic(usage, content) } > own.coerceAtLeast(0)
+
+        /**
+         * Media, or a player that never said what it is: older players that only set the music stream (the emulator's
+         * own music app among them) report an unknown usage, so they count unless they say they are speech or a cue.
+         */
+        fun isMusic(usage: Int, content: Int): Boolean = usage == AudioAttributes.USAGE_MEDIA ||
+            usage == AudioAttributes.USAGE_UNKNOWN &&
+            content != AudioAttributes.CONTENT_TYPE_SPEECH && content != AudioAttributes.CONTENT_TYPE_SONIFICATION
     }
 }
