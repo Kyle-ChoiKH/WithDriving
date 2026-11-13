@@ -136,8 +136,10 @@ class ThemeAudioEngine(context: Context, private val synth: ThemeSynth) {
             currentGain = gain
             runCatching { track.write(buf, 0, BLOCK, AudioTrack.WRITE_BLOCKING) }
         }
-        runCatching { track.pause(); track.flush(); track.release() }
+        // Uncount before the pause: the playback callback that the pause sets off must already see the right number,
+        // or music that plays on after the theme sound would stay unnoticed until the next change.
         MusicWatcher.ownPlayers.decrementAndGet()
+        runCatching { track.pause(); track.flush(); track.release() }
     }
 
     companion object {

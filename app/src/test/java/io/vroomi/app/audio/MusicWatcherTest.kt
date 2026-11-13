@@ -30,4 +30,14 @@ class MusicWatcherTest {
         assertFalse(MusicWatcher.othersPlay(listOf(USAGE_UNKNOWN to CONTENT_TYPE_SPEECH), 0))
         assertFalse(MusicWatcher.othersPlay(listOf(USAGE_UNKNOWN to CONTENT_TYPE_SONIFICATION), 0))
     }
+
+    @Test fun aVoiceOnTheMediaStreamIsNotMusic() {
+        // The platform's text-to-speech (the app's own fallback voice, a navigation voice) speaks as media + speech.
+        assertFalse(MusicWatcher.othersPlay(listOf(USAGE_MEDIA to CONTENT_TYPE_SPEECH), 0))
+        assertFalse(MusicWatcher.othersPlay(listOf(USAGE_MEDIA to CONTENT_TYPE_SONIFICATION), 0))
+        // Music under a voice still counts.
+        assertTrue(MusicWatcher.othersPlay(listOf(USAGE_MEDIA to CONTENT_TYPE_SPEECH, USAGE_MEDIA to CONTENT_TYPE_MUSIC), 0))
+        // A player that says media but not what kind (many streaming players) is music.
+        assertTrue(MusicWatcher.othersPlay(listOf(USAGE_MEDIA to CONTENT_TYPE_UNKNOWN), 0))
+    }
 }

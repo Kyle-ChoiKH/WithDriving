@@ -50,10 +50,11 @@ class MusicWatcher(context: Context, private val onChange: (Boolean?) -> Unit) {
 
         /**
          * Media, or a player that never said what it is: older players that only set the music stream (the emulator's
-         * own music app among them) report an unknown usage, so they count unless they say they are speech or a cue.
+         * own music app among them) report an unknown usage. Neither counts when it says it is speech or a cue: the
+         * platform's text-to-speech talks as media + speech by default, and a voice is nothing to hum along to.
          */
-        fun isMusic(usage: Int, content: Int): Boolean = usage == AudioAttributes.USAGE_MEDIA ||
-            usage == AudioAttributes.USAGE_UNKNOWN &&
-            content != AudioAttributes.CONTENT_TYPE_SPEECH && content != AudioAttributes.CONTENT_TYPE_SONIFICATION
+        fun isMusic(usage: Int, content: Int): Boolean =
+            (usage == AudioAttributes.USAGE_MEDIA || usage == AudioAttributes.USAGE_UNKNOWN) &&
+                content != AudioAttributes.CONTENT_TYPE_SPEECH && content != AudioAttributes.CONTENT_TYPE_SONIFICATION
     }
 }
