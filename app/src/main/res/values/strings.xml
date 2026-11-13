@@ -82,7 +82,8 @@
     <string name="stars_total">별 %1$d개</string>
     <string name="demo_drive">데모 드라이브</string>
     <string name="demo_end">데모 끝내기</string>
-    <string name="demo_badge">데모 · 시뮬레이터</string>
+    <!-- Shown after the "데모" tag while no caption is up, so it must not start with that word again. -->
+    <string name="demo_badge">시뮬레이터 주행 중</string>
     <string name="demo_hint">실제 차는 그대로 두고, 가상 주행 신호로 이 테마가 어떻게 반응하는지 보여 줘요. 화면에 \"내 조작 → 테마의 반응\"이 나와요.</string>
     <string name="demo_drive_of">데모 드라이브 · %1$s</string>
     <string name="demo_hands_on_section">직접 해 보기</string>
