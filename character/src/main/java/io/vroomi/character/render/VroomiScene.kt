@@ -263,7 +263,9 @@ private fun DrawScope.drawParticles(rt: SceneRuntime, w: Float, h: Float, n: Flo
                 drawLine(c, Offset(x, y + z), Offset(x + z, y + z), strokeWidth = 2.5f)
             }
             PType.NOTE -> {
-                val c = lerp(Pal.note, Color(0xFFE4574B), p.hue[i]).alpha(0.85f * a)
+                // Indigo to red by day; against the night sky the same notes pale towards moonlight so they still read.
+                // A note stays solid for most of its life and fades only at the end (a plain fade left it faint throughout).
+                val c = lerp(lerp(Pal.note, Color(0xFFE4574B), p.hue[i]), Color(0xFFF4EEFF), 0.62f * n).alpha(0.9f * (a * 1.8f).coerceAtMost(1f))
                 drawOval(c, Offset(x - sz * 0.5f, y - sz * 0.3f), Size(sz, sz * 0.7f))
                 drawLine(c, Offset(x + sz * 0.45f, y), Offset(x + sz * 0.45f, y - sz * 1.4f), strokeWidth = 3f)
                 drawLine(c, Offset(x + sz * 0.45f, y - sz * 1.4f), Offset(x + sz * 1.0f, y - sz * 1.0f), strokeWidth = 3f, cap = StrokeCap.Round)

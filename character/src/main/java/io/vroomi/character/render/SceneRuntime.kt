@@ -92,6 +92,7 @@ internal class SceneRuntime(seed: Int = 7) {
 
     // Fidgets
     var fidget = Fidget.NONE; var fidgetT = 0f; var fidgetDur = 0f; var nextFidget = 4f
+    private var musicWas = false
     var hopY = 0f
 
     var emitAcc = FloatArray(PType.entries.size)
@@ -362,10 +363,12 @@ internal class SceneRuntime(seed: Int = 7) {
         val settled = seatU == 0f || seatU == 1f
         val eligible = t.action == Action.NONE && !t.still && t.sizeMode != SizeMode.CORNER &&
             !o.calm && !o.reducedMotion && settled && t.mood != Mood.DIZZY && t.mood != Mood.SLEEPY
-        // Music in the car: the friend hums along for as long as it plays (no other fidget meanwhile).
+        // Music in the car: the friend hums along in bouts. One starts the moment the music does; between bouts the
+        // eyes open and the other fidgets take their turns, so a drive with music on is not one long hum with eyes shut.
         val music = t.car.musicPlaying == true && eligible
-        if (music && fidget != Fidget.HUM) { fidget = Fidget.HUM; fidgetT = 0f; fidgetDur = 1f }
-        if (fidget == Fidget.HUM && music) { fidgetT = 0f; nextFidget = 2f; return }
+        if (music && !musicWas) { start(Fidget.HUM); fidgetDur = MUSIC_HUM_S; nextFidget = MUSIC_REST_S }
+        if (!music && musicWas && fidget == Fidget.HUM) { fidget = Fidget.NONE; fidgetT = 0f }
+        musicWas = music
         if (fidget != Fidget.NONE) {
             fidgetT += dt
             if (fidgetT >= fidgetDur || !eligible) { fidget = Fidget.NONE; fidgetT = 0f }
@@ -374,7 +377,8 @@ internal class SceneRuntime(seed: Int = 7) {
         if (!eligible) return
         nextFidget -= dt
         if (nextFidget > 0f) return
-        nextFidget = 5f + rnd.nextFloat() * 6f
+        nextFidget = if (music) MUSIC_REST_S + rnd.nextFloat() * 3f else 5f + rnd.nextFloat() * 6f
+        if (music && rnd.nextFloat() < MUSIC_HUM_CHANCE) { start(Fidget.HUM); fidgetDur = MUSIC_HUM_S; return }
         val options: Array<Fidget> = when {
             driving && steadyS > 45f -> arrayOf(Fidget.YAWN, Fidget.HUM, Fidget.LOOK_BACK, Fidget.BIRD)
             driving && sp > 3f -> arrayOf(Fidget.LOOK_BACK, Fidget.HUM, Fidget.LOOK_UP, Fidget.DRUM, Fidget.BIRD)
@@ -482,6 +486,12 @@ internal class SceneRuntime(seed: Int = 7) {
     }
 
     companion object {
+        /** While music plays: one humming bout lasts this long, */
+        const val MUSIC_HUM_S = 7f
+        /** the friend rests at least this long after any fidget, */
+        const val MUSIC_REST_S = 3f
+        /** and the next fidget is another hum this often (otherwise one of the usual ones). */
+        const val MUSIC_HUM_CHANCE = 0.65f
         const val FAR_SLOT = 0.42
         const val MID_SLOT = 0.17
 

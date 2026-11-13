@@ -33,6 +33,11 @@ class MusicSnapshotTest {
         VroomiSceneStill(music, KitShots.day, Modifier.fillMaxSize(), seconds = 4f)
     }
 
+    /** At night the notes pale so they stand out from the dark sky. */
+    @Test fun kartHumsAlongAtNight() = paparazzi.snapshot("music_kart_night") {
+        VroomiSceneStill(music, KitShots.night, Modifier.fillMaxSize(), seconds = 4f)
+    }
+
     @Test fun calibreNotes() = paparazzi.snapshot("music_calibre") {
         CalibreSceneStill(music, KitShots.day, CalibreFinish.AUTO, Modifier.fillMaxSize(), seconds = onBeat)
     }

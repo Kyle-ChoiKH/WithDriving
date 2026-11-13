@@ -129,8 +129,11 @@ abstract class ThemeSim {
     var turn = TurnSignal.NONE; private set
     /** Another app plays music: 0..1 (swells over 1 s; at most [CALM_MUSIC] in calm mode). */
     var listening = 0f; private set
-    /** A soft pulse at [MUSIC_BPM] (0..1, 1 on the beat) to sway with; it keeps running so a reaction can fade on it. */
+    /** A soft pulse at [MUSIC_BPM] (0..[groove], highest on the beat) to sway with; it keeps running so a reaction can fade on it. */
     var beat = 0f; private set
+    /** How far the scene moves with the beat: 1 while the music is new, [GROOVE_SETTLED] once it has played a while. */
+    var groove = 1f; private set
+    private var musicS = 0.0
     var biome = Biome.CITY; private set
 
     // ---- one-shot event times (decoTime) for painters
@@ -210,11 +213,15 @@ abstract class ThemeSim {
         val pct = c.evBatteryPct
         battery = if (pct == null) -1f else if (battery < 0f) pct / 100f else approach(battery, pct / 100f, (dt * 0.2).toFloat())
 
-        // Music: the app cannot hear the song, so the sway keeps a fixed, unhurried tempo of its own.
+        // Music: the app cannot hear the song, so the sway keeps a fixed, unhurried tempo of its own. The scene moves
+        // with it fully while the music is new and then settles: music often plays for a whole drive, and a display
+        // beside the driver must not pulse all the way.
         val musicT = if (c.musicPlaying == true) (if (calm || reducedMotion) CALM_MUSIC else 1f) else 0f
         listening = approach(listening, musicT, (dt / 1.0).toFloat())
+        musicS = if (c.musicPlaying == true) musicS + dt else 0.0
+        groove = approach(groove, if (musicS < GROOVE_OPEN_S) 1f else GROOVE_SETTLED, (dt / GROOVE_EASE_S).toFloat())
         val swing = 0.5 + 0.5 * kotlin.math.cos(2.0 * Math.PI * frac(decoTime * MUSIC_BPM / 60.0))
-        beat = (swing * swing * swing).toFloat()
+        beat = (swing * swing * swing).toFloat() * groove
 
         // Blinker: the car's 1.5 Hz rhythm, soft lamps, one flash-guarded pulse per "on" edge.
         val t = c.turnSignal ?: TurnSignal.NONE
@@ -269,6 +276,11 @@ abstract class ThemeSim {
         const val BLINK_HZ = 1.5
         const val MUSIC_BPM = 96.0
         const val CALM_MUSIC = 0.45f
+        /** The beat moves the scene fully for this long after the music starts... */
+        const val GROOVE_OPEN_S = 12.0
+        /** ...then eases (over [GROOVE_EASE_S] per unit) to this share for as long as it plays. */
+        const val GROOVE_SETTLED = 0.5f
+        const val GROOVE_EASE_S = 4.0
         const val DEFROST_S = 2.5
         const val REGION_BLINK = 0
         const val REGION_STAR = 1

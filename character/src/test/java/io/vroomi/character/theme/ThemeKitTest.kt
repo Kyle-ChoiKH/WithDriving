@@ -102,6 +102,11 @@ class ThemeKitTest {
         run(3f)
         assertTrue("swells in: ${p.listening}", p.listening > 0.99f)
         assertTrue("the beat pulses", beats.max() > 0.9f && beats.min() < 0.1f)
+        // Music often plays for a whole drive: after the opening the scene moves less with it, but still does.
+        run(20f); beats.clear(); run(5f)
+        assertEquals(ThemeSim.GROOVE_SETTLED, p.groove, 0.01f)
+        assertTrue("settled: ${beats.max()}", beats.max() in 0.4f..0.55f && beats.min() < 0.1f)
+        assertTrue("still listening", p.listening > 0.99f)
         c = c.copy(musicPlaying = false)
         run(3f)
         assertEquals(0f, p.listening, 0f)

@@ -119,7 +119,7 @@ class PixelMechanics(private val sound: SoundEvents = SoundEvents()) : ThemeSim(
         // Idle bob (1 px at 1 Hz) in P and N.
         bob = if ((parked || gear == GearState.NEUTRAL) && !still && !arrived) (if (sin(anim * 2 * Math.PI) > 0) 1 else 0) else 0
         // Music in the car: the pilot nods on the beat (one pixel), parked or driving.
-        if (listening > 0.5f && !still && !arrived && beat > 0.5f) bob = 1
+        if (listening > 0.5f && !still && !arrived && beat > 0.5f * groove) bob = 1
 
         if (hopStart > lastHopSound && decoTime >= hopStart) { lastHopSound = hopStart; music.sfx(PixelSound.HOP) }
         // Gem shards: caught at the hop's apex (driving) or after floating down (parked).

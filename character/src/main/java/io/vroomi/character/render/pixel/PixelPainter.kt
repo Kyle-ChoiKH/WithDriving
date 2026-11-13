@@ -643,7 +643,8 @@ internal class PixelPainter : ThemePainter<PixelMechanics>() {
             if (u > 0.85) continue
             val nx = x + i * 7 + (u * 6).toInt()
             val ny = y - 6 - (u * 18).toInt()
-            val col = c(if (i == 0) CREAM else LIME)
+            // At night the notes glow like the signs, or they would sink into the dark street.
+            val col = (if (i == 0) CREAM else LIME).let { if (sim.night > 0.5f) lit(it) else c(it) }
             buf.rect(nx + 2, ny, 1, 5, col)       // stem
             buf.dot(nx + 3, ny + 1, col)          // flag
             buf.rect(nx, ny + 4, 3, 2, col)       // head
