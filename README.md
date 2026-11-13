@@ -28,6 +28,18 @@ adb install -r apk/Kyle_WithDriving_release.apk
 - APK 위치: [`apk/`](apk/) 폴더. 파일명 규칙은 `팀명_앱이름_release.apk`이며, `gradle.properties`의 `vroomi.teamName` 값으로 정해집니다.
 - APK가 GitHub 업로드 용량을 넘으면 GitHub Releases에 올리고, 여기에 Release 주소를 적습니다: `(Release 링크 자리)`
 - 이 앱은 `android.hardware.type.automotive`를 요구하므로 **Pleos Connect Emulator(AAOS)** 나 실차에만 설치됩니다.
+- 처음 실행하면 시스템이 차량 신호 권한을 한 번 묻습니다("위드라이빙에서 … 허용하시겠습니까?"). **허용**을 누르면 소개 카드가 나옵니다.
+
+**테스트 환경** (이 저장소의 release APK를 설치해 확인한 환경)
+
+| 항목 | 값 |
+|---|---|
+| 에뮬레이터 | Pleos Connect Emulator **v2.1.0** (AVD `Pleos_Connect_v2.1.0`) |
+| OS | Android 14 (API 34), Android Automotive OS |
+| 화면 규격 | 2560 × 1440 px, 160dpi. 앱 창은 그 안의 약 1682 × 1210 px(오른쪽 영역) |
+| 확인한 것 | 첫 실행, 하이라이트 데모(3분), 테마 12종의 데모, 직접 조작, 음악 반응, Virtual Console의 실제 차량 신호 |
+
+시연 영상: [`docs/media/demo.mp4`](docs/media/demo.mp4) (위 에뮬레이터에서 release APK를 실행해 녹화)
 
 ### 1-2. 데모 드라이브 (설치 후 바로)
 
@@ -58,7 +70,23 @@ adb install -r apk/Kyle_WithDriving_release.apk
 
 신호를 하나씩 직접 바꿔 보려면: **설정** 탭 → 맨 아래 **버전 글자를 5번** 누르면 개발자 패널이 열립니다. 속도·풍량·온도 슬라이더와 브레이크·깜빡이·와이퍼·전조등·문·충전·안전 경고·길안내 토글이 있고, 음성 명령 입력창에 "시원하게 해줘"를 넣으면 말로 한 것과 같은 경로로 처리됩니다.
 
-실제 SDK 콜백을 보여 주려면 설정 탭의 **차량 신호**를 `실제 차량`으로 두고, Pleos Connect Virtual Console로 값을 바꿉니다([에뮬레이터 설정 가이드](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/setup-connect-sdk-emulator)). 개발자 패널 첫 줄의 `source=PLEOS`로 실제 콜백인지 확인할 수 있습니다.
+### 1-2b. 실제 차량 신호로 확인 (Virtual Console)
+
+데모가 아니라 **Pleos Vehicle SDK의 실제 콜백**으로 반응하는 것을 보려면 Pleos Connect Virtual Console로 값을 바꿉니다([에뮬레이터 설정 가이드](https://document.pleos.ai/docs/connect/guide/getting-started/application-development/setup-connect-sdk-emulator)). 설정 탭의 **차량 신호**는 기본값 `자동` 그대로 두면 됩니다.
+
+| Virtual Console에서 바꾸는 값 (기어는 P) | 앱의 반응 (꼬마차 테마) |
+|---|---|
+| 풍량 7 | 브루미가 바람을 불어 줌, "후~ 시원하게!" |
+| 설정 온도 18°C | 눈송이와 입김 |
+| 전조등 Low beam + 와이퍼 Low | 밤하늘, 비, 노란 우비 |
+| 방향지시등 Blink left | 머리 위 ↰ 표지판, 꼬마차 깜빡이 |
+| 운전석 문 열림 | "안녕하세요!" |
+
+![Virtual Console의 실제 신호에 반응하는 화면](docs/screenshots/emulator_real_signals.png)
+
+- **기어를 D로 두면 에뮬레이터가 앱을 가립니다.** Pleos Connect Emulator는 adb로 설치한 앱을 차량이 주행 상태일 때 "주행 중에는 사용할 수 없습니다" 화면으로 덮습니다. 안드로이드 오토모티브는 신뢰된 경로로 설치된 앱에만 주행 중 표시를 허용하기 때문입니다. 이 앱은 매니페스트에 `distractionOptimized`를 선언했고 주행 화면도 그 기준으로 만들었지만, 실차에서 주행 중에 보이려면 App Market을 통한 설치와 승인이 필요할 것으로 봅니다. 그래서 **주행 중 반응은 앱 안의 데모 드라이브로**(차는 P단) 확인합니다.
+- 주행 모드(에코·스포츠) 신호는 이 에뮬레이터가 지원하지 않습니다(`ERROR_NOT_SUPPORTED_PROPERTY`). 그 반응만 꺼지고 나머지는 동작합니다.
+- 디버그 빌드에서는 개발자 패널 첫 줄의 `source=PLEOS`로 실제 콜백인지 확인할 수 있습니다.
 
 ### 1-3. 소스에서 빌드
 
@@ -680,8 +708,7 @@ docs/           기획서(02), 퍼미션, 주최 측 질문, 캐릭터 독창성
 
 - 기획서(접수양식 02, 1~8번): [`docs/proposal_02_ko.md`](docs/proposal_02_ko.md)
 - 퍼미션 표: [`docs/permissions.md`](docs/permissions.md)
-- 주최 측 문의 초안: [`docs/questions-to-organizers.md`](docs/questions-to-organizers.md)
 - 캐릭터 독창성 검토: [`docs/character-originality.md`](docs/character-originality.md)
-- 시연 영상 대본: [`docs/demo-video-script.md`](docs/demo-video-script.md) · 숏폼 대본: [`docs/shortform-script.md`](docs/shortform-script.md)
+- 시연 영상: [`docs/media/demo.mp4`](docs/media/demo.mp4) · 구성: [`docs/demo-video-script.md`](docs/demo-video-script.md) · 숏폼 대본: [`docs/shortform-script.md`](docs/shortform-script.md)
 - 제출 체크리스트: [`docs/submission-checklist.md`](docs/submission-checklist.md)
 - 오픈소스 고지: [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) · 라이선스: [`LICENSE`](LICENSE)
