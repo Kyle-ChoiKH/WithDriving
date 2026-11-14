@@ -4,8 +4,8 @@ import io.vroomi.character.calibre.SceneTheme
 
 /**
  * The five upgrade steps of every theme ([io.vroomi.character.render.SceneOptions.model] 0..4 = Lv.1..5) and their
- * names, exactly as the step tables of the design (docs/superpowers/specs/2026-11-09-theme-overhaul-design.md,
- * section 5) give them. The names are shown as they are in the model sheet and the grade tab.
+ * names, exactly as the step tables of the theme overhaul design give them (the proposal lists them per theme).
+ * The names are shown as they are in the model sheet and the grade tab.
  */
 object ThemeModels {
     const val COUNT = 5
